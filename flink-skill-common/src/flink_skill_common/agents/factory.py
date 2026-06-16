@@ -1,0 +1,49 @@
+"""Agno agent construction helpers for migration skills."""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
+from pathlib import Path
+
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+from agno.skills import LocalSkills, Skills
+
+
+def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAIChat:
+    return OpenAIChat(id=model_id, base_url=base_url, api_key=api_key)
+
+
+def eager_skill_instructions(skill_dir: Path, skill_name: str) -> list[str]:
+    """Load skill body up front so CLI migrations avoid an extra tool round-trip."""
+    skills = Skills(loaders=[LocalSkills(str(skill_dir), validate=False)])
+    skill = skills.get_skill(skill_name)
+    if skill and skill.instructions.strip():
+        return [skill.instructions]
+    return []
+
+
+def build_migrate_agent(
+    *,
+    name: str,
+    skill_dir: Path,
+    instructions: list[str],
+    model: OpenAIChat,
+    tools: Sequence[Callable[..., str]] | None = None,
+) -> Agent:
+    """Create Agno agent with skill loaded from skill_dir."""
+    agent_tools = list(tools) if tools else []
+    return Agent(
+        name=name,
+        model=model,
+        skills=Skills(loaders=[LocalSkills(str(skill_dir), validate=False)]),
+        tools=agent_tools,
+        instructions=instructions,
+        markdown=True,
+    )
+
+
+def run_agent_response(agent: Agent, prompt: str) -> str:
+    """Run agent and return response content as string."""
+    response = agent.run(prompt)
+    return str(response.content) if hasattr(response, "content") else str(response)

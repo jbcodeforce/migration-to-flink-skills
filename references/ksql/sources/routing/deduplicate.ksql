@@ -1,0 +1,29 @@
+CREATE STREAM clicks (ip_address VARCHAR, url VARCHAR)
+    WITH (KAFKA_TOPIC='clicks',
+          PARTITIONS=1,
+          FORMAT='JSON');
+
+CREATE TABLE detected_clicks AS
+    SELECT
+        ip_address AS key1,
+        url AS key2,
+        AS_VALUE(ip_address) AS ip_address,
+        COUNT(ip_address) as ip_count,
+        AS_VALUE(url) AS url,
+        FORMAT_timestamp(FROM_UNIXTIME(EARLIEST_BY_OFFSET(ROWTIME)), 'yyyy-MM-dd HH:mm:ss.SSS') AS timestamp
+    FROM clicks WINDOW TUMBLING (SIZE 2 MINUTES, RETENTION 1000 DAYS)
+    GROUP BY ip_address, url
+    EMIT CHANGES;
+
+CREATE STREAM raw_values_clicks (ip_address STRING, ip_count BIGINT, url STRING, timestamp STRING)
+    WITH (KAFKA_TOPIC='DETECTED_CLICKS',
+          PARTITIONS=1,
+          FORMAT='JSON');
+
+SELECT
+    ip_address,
+    url,
+    timestamp
+FROM raw_values_clicks
+WHERE ip_count = 1
+EMIT CHANGES;

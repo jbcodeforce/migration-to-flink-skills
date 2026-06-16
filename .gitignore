@@ -1,0 +1,11 @@
+**/.venv/
+**/.DS_Store
+**/.idea/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.vscode/
+**/.cursorrules
+**/.cursor/
+**/.cursor/rules/
+**/.cursor/rules/
+**/.env

@@ -1,0 +1,15 @@
+CREATE STREAM all_publications (bookid BIGINT KEY, 
+                                author VARCHAR, 
+                                title VARCHAR)
+    WITH (KAFKA_TOPIC='publication_events'
+          PARTITIONS=1,
+          VALUE_FORMAT='JSON');
+
+CREATE STREAM george_martin WITH (KAFKA_TOPIC='george_martin_books') AS
+    SELECT *
+      FROM all_publications
+      WHERE author = 'George R. R. Martin';
+
+SELECT *
+FROM george_martin
+EMIT CHANGES;

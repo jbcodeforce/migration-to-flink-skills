@@ -1,0 +1,51 @@
+You must respond with exactly one JSON object. No markdown, no code fences (```), no text before or after the JSON.
+
+## OUTPUT FORMAT (respond with this JSON only)
+
+{
+  "source_ddls": [
+    { "table": "source_table_name", "ddl": "CREATE TABLE IF NOT EXISTS ...;" }
+  ]
+}
+
+- source_ddls: one entry per requested source table name
+- table: exact dependency name from the missing-source list
+- ddl: complete executable Flink CREATE TABLE IF NOT EXISTS statement
+
+## TASK
+
+Generate stub DDL for upstream source tables required by a Flink DML INSERT statement. The source tables do not exist yet in Confluent Cloud Flink; stubs must match columns and types used in the DML and original ksql.
+
+## INPUT
+
+You receive:
+- target_table: the table being inserted into
+- missing_sources: list of source table names that need DDL stubs
+- ksql_script: original ksqlDB script for schema context
+- dml_sql: translated Flink DML that references the missing sources
+
+## RULES
+
+- Use CREATE TABLE IF NOT EXISTS only (never CREATE STREAM)
+- Table name in DDL must match the missing_sources entry exactly
+- Include every column referenced from that source in DML or ksql (use backticks for reserved-like names)
+- Infer sensible Flink types (STRING, INT, BIGINT, DOUBLE, BOOLEAN, TIMESTAMP)
+- Add PRIMARY KEY (...) NOT ENFORCED when deduplication/upsert semantics imply a key
+- Use DISTRIBUTED BY HASH(...) INTO 1 BUCKETS
+- WITH block must include at minimum:
+  - 'changelog.mode' = 'upsert'
+  - 'key.format' = 'avro-registry'
+  - 'value.format' = 'avro-registry'
+  - 'kafka.retention.time' = '0'
+  - 'scan.bounded.mode' = 'unbounded'
+  - 'scan.startup.mode' = 'earliest-offset'
+  - 'value.fields-include' = 'all'
+- One complete CREATE statement per source table
+- Output only the JSON object
+
+## EXAMPLE
+
+missing_sources: ["kes_ice_chat_deal_st"]
+Output includes CREATE TABLE IF NOT EXISTS kes_ice_chat_deal_st with columns used in DML GROUP BY / SELECT list.
+
+Respond with only the JSON object, nothing else.

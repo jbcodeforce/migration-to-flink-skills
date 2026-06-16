@@ -1,0 +1,11 @@
+CREATE STREAM pageviews (msg VARCHAR)
+  WITH (KAFKA_TOPIC ='pageviews',
+        PARTITIONS=1,
+        VALUE_FORMAT='JSON');
+
+SET 'auto.offset.reset'='earliest';
+SET 'ksql.streams.cache.max.bytes.buffering' = '10000000';
+
+SELECT COUNT(*) AS msg_count
+FROM pageviews
+EMIT CHANGES;

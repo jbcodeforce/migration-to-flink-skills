@@ -1,0 +1,40 @@
+[project]
+name = "ksql-flink-skill"
+version = "0.1.0"
+description = "Harness and CLI for ksqlDB to Flink SQL migration skill"
+readme = "../README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "agno>=2.0.0",
+    "flink-skill-common",
+    "openai>=1.40.0",
+    "python-dotenv>=1.0.0",
+    "typer>=0.12.0",
+]
+
+[tool.uv.sources]
+flink-skill-common = { path = "../../flink-skill-common", editable = true }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.14.0",
+]
+
+[project.scripts]
+ksql-flink-migrate = "ksql_flink_skill.cli:main"
+ksql-flink-agent = "ksql_flink_skill.agents.migrate_agent:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ksql_flink_skill"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "integration: tests requiring a live OpenAI-compatible LLM",
+]
