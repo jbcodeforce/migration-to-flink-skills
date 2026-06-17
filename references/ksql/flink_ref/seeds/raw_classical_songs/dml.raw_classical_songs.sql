@@ -1,4 +1,4 @@
-INSERT INTO raw_classical_songs (artist, title) VALUES
+INSERT INTO raw_classical_songs(artist,title) VALUES
     ('Ludwig van Beethoven', 'Symphony No. 9'),
     ('Wolfgang Amadeus Mozart', 'Eine kleine Nachtmusik'),
     ('Johann Sebastian Bach', 'Toccata and Fugue in D minor'),

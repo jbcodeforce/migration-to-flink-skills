@@ -10,7 +10,8 @@ from flink_skill_common.agents.factory import (
     make_openai_model,
     run_agent_response,
 )
-from flink_skill_common.deploy import FlinkStatementAgnoTools, ddl_statement_name, dml_statement_name
+from flink_skill_common.deploy.agno_tools import FlinkStatementAgnoTools
+from flink_skill_common.deploy.statements import ddl_statement_name, dml_statement_name
 from flink_skill_common.llm import llm_reachable, resolve_llm_model
 
 from ksql_flink_skill.config import (

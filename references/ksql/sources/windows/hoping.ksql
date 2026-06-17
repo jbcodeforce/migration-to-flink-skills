@@ -1,0 +1,25 @@
+CREATE STREAM temperature_readings (id VARCHAR KEY, timestamp VARCHAR, reading BIGINT)
+    WITH (KAFKA_TOPIC='temperature_readings',
+          VALUE_FORMAT='JSON',
+          TIMESTAMP='TIMESTAMP',
+          TIMESTAMP_FORMAT='yyyy-MM-dd HH:mm:ss',
+          PARTITIONS=1);
+
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:15:30', 55);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:20:30', 50);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:25:30', 45);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:30:30', 40);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:35:30', 45);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:40:30', 50);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:45:30', 55);
+INSERT INTO temperature_readings (id, timestamp, reading) VALUES ('1', '2020-01-15 02:50:30', 60);
+
+CREATE TABLE average_temps AS
+    SELECT
+        id AS key,
+        AS_VALUE(id) AS id,
+        SUM(reading) / COUNT(reading) AS avg_reading
+    FROM temperature_readings
+    WINDOW HOPPING (SIZE 10 MINUTES, ADVANCE BY 5 MINUTES)
+    GROUP BY id;
+    

@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 from flink_skill_common.deploy.flink_statement_manager import FlinkStatementManager
 from flink_skill_common.deploy.statements import (
-    _deploy_table,
     ddl_statement_name,
     dml_statement_name,
     discover_source_ddl_files,
@@ -47,6 +46,15 @@ def test_deploy_order_sources_before_target(tmp_path: Path):
     dml_path.write_text("INSERT INTO target SELECT id FROM src_st;")
 
     manager = MagicMock(spec=FlinkStatementManager)
+    manager._deploy_source_ddls = lambda tests_dir, messages: FlinkStatementManager._deploy_source_ddls(
+        manager, tests_dir, messages
+    )
+    manager._wait_for_deploy_phase = lambda statement_name: FlinkStatementManager._wait_for_deploy_phase(
+        manager, statement_name
+    )
+    manager.deploy_table = lambda *args, **kwargs: FlinkStatementManager.deploy_table(
+        manager, *args, **kwargs
+    )
     create_calls: list[str] = []
 
     def track_create(name: str, sql: str):
@@ -66,7 +74,7 @@ def test_deploy_order_sources_before_target(tmp_path: Path):
         "detail": "",
     }
 
-    result = _deploy_table(manager, "target", ddl_path, dml_path, tests_dir=tests_dir)
+    result = manager.deploy_table("target", ddl_path, dml_path, tests_dir=tests_dir)
 
     assert create_calls[0] == ddl_statement_name("src_st")
     assert create_calls[1] == ddl_statement_name("target")

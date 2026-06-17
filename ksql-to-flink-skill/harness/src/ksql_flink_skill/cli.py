@@ -8,7 +8,7 @@ import typer
 
 from ksql_flink_skill.agents.migrate_agent import run_agent_deploy_retry, run_migration
 from ksql_flink_skill.config import agent_deploy_on_failure as agent_deploy_on_failure_env
-from ksql_flink_skill.deploy import DeployError, deploy_table, require_flink_deploy_ready
+from ksql_flink_skill.deploy import DeployError, FlinkStatementManager, require_flink_deploy_ready
 from ksql_flink_skill.output import extract_sql_blocks, write_output, write_source_ddls
 from ksql_flink_skill.sources import generate_source_ddls
 from ksql_flink_skill.sql_utils import (
@@ -30,7 +30,7 @@ def _run_deploy(
 ) -> None:
     require_flink_deploy_ready()
     try:
-        result = deploy_table(table, ddl_path, dml_path, tests_dir=tests_dir)
+        result = FlinkStatementManager().deploy_table(table, ddl_path, dml_path, tests_dir=tests_dir)
     except DeployError as exc:
         if agent_on_failure:
             typer.echo(f"Deploy failed, invoking agent retry: {exc}", err=True)

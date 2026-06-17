@@ -5,21 +5,50 @@ from __future__ import annotations
 import json
 import time
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Iterator, Literal
 
 import confluent_sql
 from confluent_sql.exceptions import OperationalError, StatementNotFoundError
 
 from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings
+from flink_skill_common.deploy.statements import (
+    ddl_statement_name,
+    discover_source_ddl_files,
+    dml_statement_name,
+)
+
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 SqlKind = Literal["snapshot_ddl", "streaming_dml", "batch_dml", "streaming_ddl"]
 
-SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "APPLIED", "STOPPED"})
-FAILURE_PHASES = frozenset({"FAILED", "FAILING", "DELETING"})
+SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "APPLIED", "STOPPED", "DELETED"})
+FAILURE_PHASES = frozenset({"FAILED", "FAILING"})
 
 
 class StatementManagerError(RuntimeError):
     """Flink statement operation failed."""
+
+
+class DeployError(RuntimeError):
+    """Flink table deploy failed."""
+
+
+@dataclass
+class DeployResult:
+    table_name: str
+    ddl_statement: str
+    dml_statement: str
+    ddl_phase: str
+    dml_phase: str
+    health_status: str = ""
+    exceptions: str = ""
+    success: bool = True
+    messages: list[str] = field(default_factory=list)
+    source_statements: list[tuple[str, str]] = field(default_factory=list)
 
 
 def classify_sql(sql: str) -> SqlKind:
@@ -43,14 +72,9 @@ def classify_sql(sql: str) -> SqlKind:
 
 
 def _statement_phase(stmt: Any) -> str:
-    phase = getattr(stmt, "phase", None)
-    if phase is not None and hasattr(phase, "name"):
-        return str(phase.name)
-    if phase is not None and hasattr(phase, "value"):
-        return str(phase.value)
     status = getattr(stmt, "status", None)
-    if isinstance(status, dict) and status.get("phase"):
-        return str(status["phase"])
+    if isinstance(status, dict):
+        return str(status.get("phase", "UNKNOWN"))
     return "UNKNOWN"
 
 
@@ -189,7 +213,7 @@ class FlinkStatementManager:
                 stmt = cur.statement
         else:
             raise StatementManagerError(f"Unsupported SQL kind for {statement_name}: {kind}")
-
+        print(f"Statement {statement_name} results: {stmt}")
         return {
             "name": statement_name,
             "phase": _statement_phase(stmt),
@@ -203,6 +227,7 @@ class FlinkStatementManager:
             try:
                 return self._submit_on_connection(conn, statement_name, sql)
             except OperationalError as exc:
+                print(f"OperationalError: {exc}")
                 if exc.http_status_code != 409:
                     detail = str(exc)
                     if exc.http_status_code is not None:
@@ -284,3 +309,118 @@ class FlinkStatementManager:
             "healthy": healthy,
             "detail": status.get("detail", ""),
         }
+
+    def _wait_for_deploy_phase(self, statement_name: str) -> str:
+        try:
+            result = self.wait_for_phase(statement_name, SUCCESS_PHASES | FAILURE_PHASES)
+        except StatementManagerError as exc:
+            raise DeployError(str(exc)) from exc
+        return str(result.get("phase", "UNKNOWN"))
+
+    def _deploy_source_ddls(
+        self,
+        tests_dir: Path | None,
+        messages: list[str],
+    ) -> list[tuple[str, str]]:
+        """Deploy source stub DDLs from tests/ddl.*.sql before target statements."""
+        source_statements: list[tuple[str, str]] = []
+        if tests_dir is None:
+            return source_statements
+
+        for source_table, source_path in discover_source_ddl_files(tests_dir):
+            source_sql = source_path.read_text().strip()
+            if not source_sql:
+                continue
+            source_name = ddl_statement_name(source_table)
+            try:
+                self.create_statement(source_name, source_sql)
+            except StatementManagerError as exc:
+                raise DeployError(
+                    f"create-flink-statement failed for {source_name}: {exc}"
+                ) from exc
+
+            messages.append(f"Created source DDL statement {source_name}")
+
+            phase = self._wait_for_deploy_phase(source_name)
+            messages.append(f"Source DDL {source_name} phase: {phase}")
+            source_statements.append((source_name, phase))
+
+            if phase in FAILURE_PHASES:
+                exceptions = self.get_statement_exceptions(source_name)
+                raise DeployError(
+                    f"Source DDL {source_name} failed with phase {phase}: {exceptions}"
+                )
+
+        return source_statements
+
+    def deploy_table(
+        self,
+        table_name: str,
+        ddl_path: Path,
+        dml_path: Path,
+        tests_dir: Path | None = None,
+    ) -> DeployResult:
+        """Deploy source DDLs (tests/), target DDL, then DML to Confluent Cloud Flink."""
+        ddl_sql = ddl_path.read_text().strip()
+        dml_sql = dml_path.read_text().strip() if dml_path.is_file() else ""
+
+        ddl_name = ddl_statement_name(table_name)
+        dml_name = dml_statement_name(table_name)
+        messages: list[str] = []
+
+        source_statements = self._deploy_source_ddls(tests_dir, messages)
+
+        if not ddl_sql:
+            raise DeployError(f"DDL file is empty: {ddl_path}")
+
+        try:
+            self.create_statement(ddl_name, ddl_sql)
+        except StatementManagerError as exc:
+            raise DeployError(f"create-flink-statement failed for {ddl_name}: {exc}") from exc
+        messages.append(f"Created DDL statement {ddl_name}")
+
+        ddl_phase = self._wait_for_deploy_phase(ddl_name)
+        messages.append(f"DDL {ddl_name} phase: {ddl_phase}")
+
+        if ddl_phase in FAILURE_PHASES:
+            exceptions = self.get_statement_exceptions(ddl_name)
+            raise DeployError(f"DDL {ddl_name} failed with phase {ddl_phase}: {exceptions}")
+
+        dml_phase = ""
+        health = ""
+        exceptions = ""
+
+        if dml_sql:
+            try:
+                self.create_statement(dml_name, dml_sql)
+            except StatementManagerError as exc:
+                raise DeployError(f"create-flink-statement failed for {dml_name}: {exc}") from exc
+            messages.append(f"Created DML statement {dml_name}")
+
+            dml_phase = self._wait_for_deploy_phase(dml_name)
+            messages.append(f"DML {dml_name} phase: {dml_phase}")
+
+            if dml_phase in FAILURE_PHASES:
+                exceptions = json.dumps(self.get_statement_exceptions(dml_name))
+                raise DeployError(f"DML {dml_name} failed with phase {dml_phase}: {exceptions}")
+
+            health_result = self.check_statement_health(dml_name)
+            health = json.dumps(health_result)
+            messages.append(f"Health: {health[:200]}")
+
+        success = (ddl_phase in SUCCESS_PHASES or ddl_phase == "NOT_FOUND") and (
+            not dml_sql or dml_phase in SUCCESS_PHASES or dml_phase == "NOT_FOUND"
+        )
+
+        return DeployResult(
+            table_name=table_name,
+            ddl_statement=ddl_name,
+            dml_statement=dml_name if dml_sql else "",
+            ddl_phase=ddl_phase,
+            dml_phase=dml_phase,
+            health_status=health,
+            exceptions=exceptions,
+            success=success,
+            messages=messages,
+            source_statements=source_statements,
+        )

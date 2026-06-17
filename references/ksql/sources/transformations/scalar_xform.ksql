@@ -1,0 +1,6 @@
+SELECT id,
+       SPLIT(title, '::')[1] AS title,
+       CAST(SPLIT(title, '::')[2] AS INT) AS year,
+       genre
+FROM movies
+EMIT CHANGES;

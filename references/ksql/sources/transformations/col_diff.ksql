@@ -1,0 +1,17 @@
+CREATE STREAM customer_purchases (
+        id VARCHAR,
+        current_purchase DOUBLE,
+        previous_purchase DOUBLE,
+        txn_ts VARCHAR,
+        first_name VARCHAR,
+        last_name  VARCHAR)
+    WITH (KAFKA_TOPIC='customer_purchases',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);
+
+SET 'auto.offset.reset'='earliest';
+SELECT first_name,
+       last_name,
+       current_purchase - previous_purchase as purchase_diff
+FROM customer_purchases
+EMIT CHANGES;

@@ -1,0 +1,16 @@
+CREATE STREAM movies (id INT, title VARCHAR, genre VARCHAR)
+    WITH (KAFKA_TOPIC='movies',
+          PARTITIONS=1,
+          VALUE_FORMAT='AVRO');
+
+CREATE STREAM movies_by_id
+    WITH (KAFKA_TOPIC='movies_by_id') AS
+SELECT *
+FROM movies
+    PARTITION BY id;
+
+CREATE STREAM movies_by_title
+    WITH (KAFKA_TOPIC='movies_by_title') AS
+        SELECT *
+        FROM movies
+        PARTITION BY SPLIT(title, '::')[1];

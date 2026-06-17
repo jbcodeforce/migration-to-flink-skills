@@ -1,0 +1,28 @@
+CREATE STREAM activity_stream (
+        num_shares INT,
+        amount DOUBLE,
+        txn_ts VARCHAR,
+        first_name VARCHAR,
+        last_name  VARCHAR,
+        symbol VARCHAR)
+    WITH (KAFKA_TOPIC='activity-stream',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);
+
+INSERT INTO activity_stream (num_shares, amount, txn_ts, first_name, last_name, symbol)
+    VALUES (300, 5004.89, '2024-09-04 02:35:43', 'Tony', 'Stark', 'IMEP');
+INSERT INTO activity_stream (num_shares, amount, txn_ts, first_name, last_name, symbol)
+    VALUES (425, 1000.91, '2024-09-04 02:35:44', 'Nick', 'Fury', 'IMEP');
+INSERT INTO activity_stream (num_shares, amount, txn_ts, first_name, last_name, symbol)
+    VALUES (918, 8004.54, '2024-09-04 02:35:45', 'Natasha', 'Romanov', 'STRK');
+INSERT INTO activity_stream (num_shares, amount, txn_ts, first_name, last_name, symbol)
+    VALUES (100, 6088.22, '2024-09-04 02:35:46', 'Wanda', 'Maximoff', 'STRK');
+
+CREATE STREAM activity_summary AS
+  SELECT first_name + ' ' + last_name +
+       ' purchased ' +
+       CAST(num_shares AS VARCHAR) +
+       ' shares of ' +
+       symbol AS summary
+  FROM activity_stream
+  EMIT CHANGES;

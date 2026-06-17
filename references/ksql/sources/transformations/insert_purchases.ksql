@@ -1,0 +1,8 @@
+INSERT INTO customer_purchases (current_purchase, previous_purchase, txn_ts, first_name, last_name)
+    VALUES (50.89, 28.99, '2024-08-04 02:35:43', 'Tony', 'Stark');
+INSERT INTO customer_purchases (current_purchase, previous_purchase, txn_ts, first_name, last_name)
+    VALUES (23.12, 12.99, '2024-08-04 02:35:44', 'Nick', 'Fury');
+INSERT INTO customer_purchases (current_purchase, previous_purchase, txn_ts, first_name, last_name)
+    VALUES (20.00, 6.99, '2024-08-04 02:35:45', 'Natasha', 'Romanov');
+INSERT INTO customer_purchases (current_purchase, previous_purchase, txn_ts, first_name, last_name)
+    VALUES (99.29, 1.99, '2024-08-04 02:35:46', 'Wanda', 'Maximoff');

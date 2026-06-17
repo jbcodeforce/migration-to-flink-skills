@@ -2,7 +2,7 @@
 
 ## 2026-06-10 — Initial build
 
-- Mirrored `research/spark-to-flink-skill/` structure for ksqlDB path.
+- Mirrored `spark-to-flink-skill/` structure for ksqlDB path.
 - Prompts synced from `shift_left_utils/.../prompts/ksql_fsql/`.
 - Pipeline matches `KsqlToFlinkSqlAgent`: clean → single translate pass (no mandatory validation).
 - Golden pairs from `ksql_tutorial/sources/` vs `ksql_tutorial/flink_ref/`.

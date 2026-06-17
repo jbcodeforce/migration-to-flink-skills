@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ksql_flink_skill.deploy import deploy_table, ddl_statement_name, require_flink_deploy_ready
+from ksql_flink_skill.deploy import FlinkStatementManager, ddl_statement_name, require_flink_deploy_ready
 
 pytestmark = pytest.mark.integration
 
@@ -27,7 +27,7 @@ def test_live_deploy_minimal_ddl(tmp_path: Path, require_deploy):
     dml_path.write_text("")
 
     try:
-        result = deploy_table(table, ddl_path, dml_path)
+        result = FlinkStatementManager().deploy_table(table, ddl_path, dml_path)
         assert result.ddl_statement == ddl_name
         assert result.ddl_phase in {"RUNNING", "COMPLETED", "APPLIED", "STOPPED"}
     except Exception as exc:

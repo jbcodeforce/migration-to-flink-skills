@@ -76,7 +76,7 @@ def load_env() -> None:
 
 def llm_base_url() -> str:
     load_env()
-    return os.getenv("SL_LLM_BASE_URL", "http://localhost:1337/v1")
+    return os.getenv("SL_LLM_BASE_URL", "http://localhost:7999/v1")
 
 
 def llm_model() -> str:
@@ -186,7 +186,3 @@ def flink_deploy_settings() -> FlinkDeploySettings:
         timeout_seconds=flink_deploy_timeout_seconds(),
     )
 
-
-def require_flink_deploy_ready() -> FlinkDeploySettings:
-    """Validate Flink deploy settings are present."""
-    return flink_deploy_settings()

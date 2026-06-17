@@ -3,6 +3,11 @@ CREATE STREAM pageviews (msg VARCHAR)
         PARTITIONS=1,
         VALUE_FORMAT='JSON');
 
+INSERT INTO pageviews (msg) VALUES ('https://www.acme.com/home');
+INSERT INTO pageviews (msg) VALUES ('https://www.acme.com/search');
+INSERT INTO pageviews (msg) VALUES ('https://www.acme.com/home');
+INSERT INTO pageviews (msg) VALUES ('https://www.acme.com/products');
+
 SET 'auto.offset.reset'='earliest';
 SET 'ksql.streams.cache.max.bytes.buffering' = '10000000';
 

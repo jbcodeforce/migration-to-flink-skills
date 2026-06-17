@@ -115,19 +115,3 @@ def test_get_statement_exceptions(settings):
 
     assert result["exceptions"][0]["message"] == "boom"
 
-
-def test_list_statements(settings):
-    manager = FlinkStatementManager(settings)
-    conn = MagicMock()
-    resp = MagicMock()
-    resp.json.return_value = {
-        "data": [{"name": "t-ddl", "status": {"phase": "RUNNING", "detail": ""}}]
-    }
-    conn._request.return_value = resp
-
-    with patch.object(manager, "connect") as mock_connect:
-        mock_connect.return_value.__enter__.return_value = conn
-        result = manager.list_statements(page_size=10)
-
-    assert result["count"] == 1
-    assert result["statements"][0]["name"] == "t-ddl"

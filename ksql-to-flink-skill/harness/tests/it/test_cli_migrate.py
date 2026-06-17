@@ -6,7 +6,7 @@ from unittest.mock import patch
 from typer.testing import CliRunner
 
 from ksql_flink_skill.cli import app
-from ksql_flink_skill.deploy import DeployResult
+from flink_skill_common.deploy.flink_statement_manager import DeployResult
 
 
 runner = CliRunner()
@@ -60,7 +60,8 @@ def test_migrate_deploys_by_default(tmp_path: Path):
             ),
         ):
             with patch("ksql_flink_skill.cli.require_flink_deploy_ready"):
-                with patch("ksql_flink_skill.cli.deploy_table", return_value=deploy_result) as mock_deploy:
+                with patch("ksql_flink_skill.cli.FlinkStatementManager") as mock_manager_cls:
+                    mock_manager_cls.return_value.deploy_table.return_value = deploy_result
                     result = runner.invoke(
                         app,
                         [
@@ -74,4 +75,4 @@ def test_migrate_deploys_by_default(tmp_path: Path):
                     )
     assert result.exit_code == 0
     assert "Deploy OK" in result.output
-    mock_deploy.assert_called_once()
+    mock_manager_cls.return_value.deploy_table.assert_called_once()

@@ -9,6 +9,5 @@ CREATE TABLE IF NOT EXISTS raw_classical_songs (
     'scan.bounded.mode' = 'unbounded',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
-    'value.avro-registry.schema-context' = '.flink-dev',
     'value.format' = 'avro-registry'
 );

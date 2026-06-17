@@ -1,0 +1,30 @@
+CREATE TABLE repair_center_table (repair_state VARCHAR PRIMARY KEY, long DOUBLE, lat DOUBLE)
+       WITH (KAFKA_TOPIC='repair_center',
+             PARTITIONS=1,
+             VALUE_FORMAT='AVRO');
+
+INSERT INTO repair_center_table (repair_state, long, lat) VALUES ('NSW', 151.1169, -33.863);
+INSERT INTO repair_center_table (repair_state, long, lat) VALUES ('VIC', 145.1549, -37.9389);
+
+CREATE STREAM insurance_event_stream (customer_name VARCHAR, phone_model VARCHAR, event VARCHAR,
+                                      state VARCHAR, long DOUBLE, lat DOUBLE)
+       WITH (KAFKA_TOPIC='phone_event_raw',
+             PARTITIONS=1,
+             VALUE_FORMAT='AVRO');
+
+INSERT INTO insurance_event_stream (customer_name, phone_model, event, state, long, lat)
+    VALUES ('Lindsey', 'iPhone 11 Pro', 'dropped', 'NSW', 151.25664, -33.85995);
+INSERT INTO insurance_event_stream (customer_name, phone_model, event, state, long, lat)
+    VALUES ('Debbie', 'Samsung Note 20', 'water', 'NSW', 151.24504, -33.89640);
+
+CREATE STREAM insurance_event_with_repair_info AS
+  SELECT * FROM insurance_event_stream iev
+  INNER JOIN repair_center_table rct
+  ON iev.state = rct.repair_state
+  EMIT CHANGES;
+
+SELECT iev_customer_name,
+    iev_state,
+    GEO_DISTANCE(iev_lat, iev_long, rct_lat, rct_long, 'miles') AS dist_to_repairer_km
+FROM insurance_event_with_repair_info
+EMIT CHANGES;

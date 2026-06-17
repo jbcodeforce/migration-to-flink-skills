@@ -1,16 +1,13 @@
 """Deploy Flink SQL to Confluent Cloud via confluent-sql."""
 
-from flink_skill_common.deploy import (
+from flink_skill_common.config import FlinkDeployNotReadyError, require_flink_deploy_ready
+from flink_skill_common.deploy.agno_tools import FlinkStatementAgnoTools
+from flink_skill_common.deploy.flink_statement_manager import (
     DeployError,
     DeployResult,
-    FlinkDeployNotReadyError,
-    FlinkStatementAgnoTools,
     FlinkStatementManager,
-    ddl_statement_name,
-    deploy_table,
-    dml_statement_name,
-    require_flink_deploy_ready,
 )
+from flink_skill_common.deploy.statements import ddl_statement_name, dml_statement_name
 
 __all__ = [
     "DeployError",
@@ -19,7 +16,6 @@ __all__ = [
     "FlinkStatementAgnoTools",
     "FlinkStatementManager",
     "ddl_statement_name",
-    "deploy_table",
     "dml_statement_name",
     "require_flink_deploy_ready",
 ]

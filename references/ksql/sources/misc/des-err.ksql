@@ -1,0 +1,14 @@
+CREATE STREAM sensors_raw (id VARCHAR, timestamp VARCHAR, enabled BOOLEAN)
+  WITH (KAFKA_TOPIC = 'sensors-raw',
+        VALUE_FORMAT = 'JSON',
+        TIMESTAMP = 'TIMESTAMP',
+        TIMESTAMP_FORMAT = 'yyyy-MM-dd HH:mm:ss',
+        PARTITIONS = 1);
+
+SELECT
+    message->deserializationError->errorMessage,
+    encode(message->deserializationError->RECORDB64, 'base64', 'utf8') AS MSG,
+    message->deserializationError->cause
+  FROM KSQL_PROCESSING_LOG
+  EMIT CHANGES;
+

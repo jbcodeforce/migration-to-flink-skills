@@ -1,0 +1,4 @@
+INSERT INTO movies (id, title, genre) VALUES (294, 'Die Hard::1988', 'action');
+INSERT INTO movies (id, title, genre) VALUES (1, 'Twisters::2024', 'drama');
+INSERT INTO movies (id, title, genre) VALUES (2, 'Unfrosted::2024', 'comedy');
+INSERT INTO movies (id, title, genre) VALUES (3, 'Family Switch::2023', 'comedy');

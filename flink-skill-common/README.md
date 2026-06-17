@@ -1,6 +1,6 @@
 # flink-skill-common
 
-Shared Python library for the ksql-to-flink and spark-to-flink migration skill harnesses.
+Shared Python library for the ksql-to-flink and spark-to-flink migration.
 
 ## Modules
 
@@ -14,6 +14,10 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration skill h
 | `fixtures` | `GoldenPair` dataclass and fixture existence checks |
 | `agents.factory` | Agno agent construction helpers |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
+
+## Core principles
+
+Agno Agent can load skills from folder and use them as part of the system prompt. 
 
 ## Usage
 

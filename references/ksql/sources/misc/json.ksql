@@ -1,0 +1,14 @@
+CREATE STREAM data_stream (
+    JSONType1 VARCHAR,
+    JSONType2 VARCHAR,
+    JSONType3 VARCHAR
+) WITH (KAFKA_TOPIC='data_stream',
+        VALUE_FORMAT='JSON',
+        PARTITIONS=1);
+
+
+SELECT EXTRACTJSONFIELD (JSONType1, '$.oneOnlyField') AS special_info,
+       CAST(EXTRACTJSONFIELD (JSONType2, '$.numberField') AS DOUBLE) AS runfld,
+       EXTRACTJSONFIELD (JSONType3, '$.fieldD') AS description
+FROM data_stream
+EMIT CHANGES;

@@ -1,0 +1,42 @@
+CREATE STREAM orders (order_id STRING KEY, customer_id STRING, item_id STRING, purchase_date STRING)
+    WITH (KAFKA_TOPIC='orders',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);
+
+CREATE TABLE customers (customer_id STRING PRIMARY KEY, customer_name STRING)
+    WITH (KAFKA_TOPIC='customers',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);
+
+CREATE TABLE items (item_id STRING PRIMARY KEY, item_name STRING)
+    WITH (KAFKA_TOPIC='items',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);
+
+INSERT INTO items VALUES ('101', 'Television 60-in');
+INSERT INTO items VALUES ('102', 'Laptop 15-in');
+INSERT INTO items VALUES ('103', 'Speakers');
+
+INSERT INTO customers VALUES ('1', 'Adrian Garcia');
+INSERT INTO customers VALUES ('2', 'Robert Miller');
+INSERT INTO customers VALUES ('3', 'Brian Smith');
+
+INSERT INTO orders VALUES ('abc123', '1', '101', '2024-09-01');
+INSERT INTO orders VALUES ('abc345', '1', '102', '2024-09-01');
+INSERT INTO orders VALUES ('abc678', '2', '101', '2024-09-01');
+INSERT INTO orders VALUES ('abc987', '3', '101', '2024-09-03');
+INSERT INTO orders VALUES ('xyz123', '2', '103', '2024-09-03');
+INSERT INTO orders VALUES ('xyz987', '2', '102', '2024-09-05');
+
+CREATE STREAM orders_enriched AS
+    SELECT customers.customer_id AS customer_id, customers.customer_name AS customer_name,
+           orders.order_id, orders.purchase_date,
+           items.item_id, items.item_name
+    FROM orders
+    LEFT JOIN customers on orders.customer_id = customers.customer_id
+    LEFT JOIN items on orders.item_id = items.item_id;
+
+
+SELECT *
+FROM orders_enriched
+EMIT CHANGES;

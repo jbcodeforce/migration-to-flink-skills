@@ -1,0 +1,36 @@
+CREATE TABLE movies (
+        title VARCHAR PRIMARY KEY,
+        id INT,
+        release_year INT
+   ) WITH (
+       KAFKA_TOPIC='movies',
+       PARTITIONS=1,
+       VALUE_FORMAT='JSON'
+   );
+
+CREATE TABLE lead_actors (
+        title VARCHAR PRIMARY KEY,
+        actor_name VARCHAR
+    ) WITH (
+         KAFKA_TOPIC='lead_actors',
+         PARTITIONS=1,
+         VALUE_FORMAT='JSON'
+    );
+
+INSERT INTO lead_actors (TITLE, ACTOR_NAME) VALUES ('Twisters', 'Glen Powell');
+INSERT INTO lead_actors (TITLE, ACTOR_NAME) VALUES ('Barbie', 'Ryan Gosling');
+INSERT INTO lead_actors (TITLE, ACTOR_NAME) VALUES ('Oppenheimer', 'Cillian Murphy');
+INSERT INTO lead_actors (TITLE, ACTOR_NAME) VALUES ('Blink Twice', 'Channing Tatum');
+
+INSERT INTO movies (ID, TITLE, RELEASE_YEAR) VALUES (48, 'Twisters', 2024);
+INSERT INTO movies (ID, TITLE, RELEASE_YEAR) VALUES (294, 'Barbie', 2023);
+INSERT INTO movies (ID, TITLE, RELEASE_YEAR) VALUES (128, 'Oppenheimer', 2024);
+INSERT INTO movies (ID, TITLE, RELEASE_YEAR) VALUES (42, 'Blink Twice', 2024);
+
+CREATE TABLE movies_enriched AS
+    SELECT m.id, m.title, m.release_year, l.actor_name
+    FROM movies m
+    INNER JOIN lead_actors l
+    ON m.title = l.title;
+
+SELECT * FROM movies_enriched;

@@ -31,7 +31,7 @@ You receive:
 - Include every column referenced from that source in DML or ksql (use backticks for reserved-like names)
 - Infer sensible Flink types (STRING, INT, BIGINT, DOUBLE, BOOLEAN, TIMESTAMP)
 - Add PRIMARY KEY (...) NOT ENFORCED when deduplication/upsert semantics imply a key
-- Use DISTRIBUTED BY HASH(...) INTO 1 BUCKETS
+- Use DISTRIBUTED BY HASH(...) INTO 6 BUCKETS and match the list of key as the one in primary keys.
 - WITH block must include at minimum:
   - 'changelog.mode' = 'upsert'
   - 'key.format' = 'avro-registry'

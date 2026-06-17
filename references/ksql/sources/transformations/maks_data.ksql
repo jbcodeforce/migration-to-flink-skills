@@ -1,0 +1,21 @@
+CREATE STREAM purchases (order_id INT, customer_name VARCHAR, date_of_birth VARCHAR,
+                         product VARCHAR, order_total_usd DOUBLE, town VARCHAR, country VARCHAR)
+    WITH (KAFKA_TOPIC='purchases',
+          PARTITIONS=1,
+          VALUE_FORMAT='JSON');
+
+INSERT INTO purchases (order_id, customer_name, date_of_birth, product, order_total_usd, town, country)
+    VALUES (1, 'Britney', '02/29/2000', 'Heart Rate Monitor', 119.93, 'Denver', 'USA');
+INSERT INTO purchases (order_id, customer_name, date_of_birth, product, order_total_usd, town, country)
+    VALUES (2, 'Michael', '06/08/1981', 'Foam Roller', 34.95, 'Los Angeles', 'USA');
+INSERT INTO purchases (order_id, customer_name, date_of_birth, product, order_total_usd, town, country)
+    VALUES (3, 'Kimmy', '05/19/1978', 'Hydration Belt', 50.00, 'Tuscan', 'USA');
+INSERT INTO purchases (order_id, customer_name, date_of_birth, product, order_total_usd, town, country)
+    VALUES (4, 'Samantha', '08/05/1983', 'Wireless Headphones', 175.93, 'Tulsa', 'USA');
+
+CREATE STREAM purchases_pii_obfuscated
+    WITH (KAFKA_TOPIC='purchases_pii_obfuscated', VALUE_FORMAT='JSON', PARTITIONS=1) AS
+    SELECT MASK(customer_name) AS customer_name,
+           MASK(date_of_birth) AS date_of_birth,
+           order_id, product, order_total_usd, town, country
+    FROM purchases;

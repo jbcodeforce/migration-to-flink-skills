@@ -1,0 +1,81 @@
+CREATE STREAM orders (
+    id VARCHAR,
+    timestamp VARCHAR,
+    amount DOUBLE,
+    customer STRUCT<first_name VARCHAR,
+                    last_name VARCHAR,
+                    phone_number VARCHAR,
+                    address STRUCT<street VARCHAR,
+                                   number VARCHAR,
+                                   zipcode VARCHAR,
+                                   city VARCHAR,
+                                   state VARCHAR>>,
+    product STRUCT<sku VARCHAR,
+                   name VARCHAR,
+                   vendor STRUCT<vendor_name VARCHAR,
+                                 country VARCHAR>>)
+    WITH (KAFKA_TOPIC='orders',
+          VALUE_FORMAT='JSON',
+          TIMESTAMP='TIMESTAMP',
+          TIMESTAMP_FORMAT='yyyy-MM-dd HH:mm:ss',
+          PARTITIONS=1);
+
+INSERT INTO orders (id, timestamp, amount, customer, product)
+    VALUES ('1', '2024-01-18 01:12:05', 89.99,
+    STRUCT(first_name := 'Bob',
+           last_name := 'Smith',
+           address := STRUCT(street := 'Main',
+                             number := '12',
+                             zipcode := '01020',
+                             city := 'Springfield',
+                             state := 'MA')),
+    STRUCT(sku := '87923',
+           name := 'deck of cards',
+           vendor := STRUCT(vendor_name := 'Best Brands',
+                             country := 'US')));
+
+INSERT INTO orders (id, timestamp, amount, customer, product)
+    VALUES ('2', '2024-01-18 01:12:05', 89.99,
+    STRUCT(first_name := 'Jane',
+           last_name := 'Jackson',
+           address := STRUCT(street := 'Conservation Way',
+                             number := '81',
+                             zipcode := '01020',
+                             city := 'Springfield',
+                             state := 'MA')),
+    STRUCT(sku := '3992',
+           name := 'dog leash',
+           vendor := STRUCT(vendor_name := 'Petz',
+                             country := 'US')));
+
+SET 'auto.offset.reset'='earliest';
+
+CREATE STREAM flattened_orders AS
+    SELECT
+        id AS order_id,
+        timestamp AS order_ts,
+        amount AS order_amount,
+        customer->first_name AS cust_first_name,
+        customer->last_name AS cust_last_name,
+        customer->phone_number AS cust_phone_number,
+        customer->address->street AS cust_addr_street,
+        customer->address->number AS cust_addr_number,
+        customer->address->zipcode AS cust_addr_zipcode,
+        customer->address->city AS cust_addr_city,
+        customer->address->state AS cust_addr_state,
+        product->sku AS prod_sku,
+        product->name AS prod_name,
+        product->vendor->vendor_name AS prod_vendor_name,
+        product->vendor->country AS prod_vendor_country
+    FROM
+        orders;
+
+SELECT
+    order_id,
+    order_ts,
+    order_amount,
+    cust_first_name,
+    cust_last_name,
+    prod_name
+FROM flattened_orders
+EMIT CHANGES;

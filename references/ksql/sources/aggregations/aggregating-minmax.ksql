@@ -1,0 +1,18 @@
+CREATE STREAM movie_sales (title VARCHAR, release_year INT, total_sales BIGINT)
+    WITH (KAFKA_TOPIC='movie-sales',
+          PARTITIONS=1,
+          VALUE_FORMAT='AVRO');
+
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Twisters', 2024, 369712130);
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Deadpool & Wolverine', 2024, 1318259708);
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Oppenheimer', 2023, 975579184);
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Barbie', 2023, 1445638421);
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Avatar: The Way of Water', 2022, 2320250281);
+INSERT INTO movie_sales (title, release_year, total_sales) VALUES ('Jurassic World Dominion', 2022, 1001978080);
+
+SELECT release_year, 
+       MIN(total_sales) AS min_total_sales, 
+       MAX(total_sales) AS max_total_sales 
+FROM movie_sales
+GROUP BY release_year
+EMIT CHANGES;

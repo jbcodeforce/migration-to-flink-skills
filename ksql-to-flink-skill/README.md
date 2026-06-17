@@ -6,11 +6,17 @@ See [SPEC.md](SPEC.md).
 
 ## Approach
 
-1. **Skill** (`skill/SKILL.md` + `skill/references/`) — agent playbook for ksqlDB → Flink translation.
-2. **Harness** (`harness/`) — Agno agent with `LocalSkills` loading the same skill, calling oMLX via `OpenAIChat`. Shared Python utilities live in [`../flink-skill-common/`](../flink-skill-common/) (`compare`, `output`, `llm`, `deploy`, etc.).
-3. **Text fixtures** — ksql inputs in the [flink_project_demos/ksql_tutorial/sources/](https://github.com/jbcodeforce/flink_project_demos/tree/main/ksql_tutorial), with goldens refernces in `flink_ref/` folder.
+1. **Skill** (`skill/SKILL.md` + `skill/references/`) — agent playbook for ksqlDB → Flink translation. Can be used with Claude Code, Cursor 
+2. **Harness** (`harness/`) — Solution based on Agno agent with `LocalSkills` loading the same skill, calling oMLX via `OpenAIChat` API. Shared Python utilities live in [`../flink-skill-common/`](../flink-skill-common/) (`compare`, `output`, `llm`, `deploy`, etc.).
+3. **Text fixtures** — ksql inputs in the [./references/ksql/sources/](./references/ksql/sources), with goldens refernces in `flink_ref/` folder.
 
-Harness steps: clean (deterministic) → agent migration via skill (LLM) → parse DDL/DML → write files → generate source stub DDLs in `tests/` when DML references missing tables → deploy source DDLs, target DDL, then DML to Confluent Cloud Flink via [confluent-sql](https://pypi.org/project/confluent-sql/).
+The Harness steps are: 
+* clean source ksql (deterministic)
+* agent migration via skill (LLM)
+* parse DDL/DML
+* write files
+* generate source stub DDLs in `tests/` when DML references missing tables
+* deploy source DDLs, target DDL, then DML to Confluent Cloud Flink via [confluent-sql](https://pypi.org/project/confluent-sql/).
 
 Deploy requires Flink API credentials in `harness/.env`. See [docs/FLINK_DEPLOY.md](docs/FLINK_DEPLOY.md).
 
@@ -22,10 +28,10 @@ cp .env.example .env
 uv sync --extra dev
 
 # No LLM required
-uv run pytest tests/ -m "not integration"
+uv run pytest tests/ut -m "not integration"
 
 # Live LLM (oMLX)
-uv run pytest tests/
+uv run pytest tests/it
 ```
 
 ### Migrate one file
