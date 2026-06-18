@@ -9,3 +9,5 @@
 **/.cursor/rules/
 **/.cursor/rules/
 **/.env
+**/site/
+**/__pycache__/

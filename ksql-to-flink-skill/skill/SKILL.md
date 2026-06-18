@@ -22,7 +22,7 @@ Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` become
 ```
 - [ ] 1. Clean input (remove DROP, SET, comments)
 - [ ] 2. Translate full script in one pass
-- [ ] 3. Validate: no CREATE STREAM in DDL output
+- [ ] 3. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
 - [ ] 4. Write ddl.{table}.sql and dml.{table}.sql
 - [ ] 5. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
 - [ ] 6. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)

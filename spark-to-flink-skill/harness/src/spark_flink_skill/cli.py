@@ -7,7 +7,13 @@ from pathlib import Path
 import typer
 
 from spark_flink_skill.agents.migrate_agent import MigrationError, run_migration
-from spark_flink_skill.output import extract_sql_blocks, write_output
+from spark_flink_skill.output import extract_sql_blocks, resolve_table_paths, write_output
+from flink_skill_common.sql_validate import (
+    SqlValidationError,
+    log_validation_issues,
+    raise_on_errors,
+    validate_statements,
+)
 from spark_flink_skill.sql_utils import (
     LlmConfigError,
     clean_sql_input,
@@ -56,11 +62,9 @@ def migrate(
         except MigrationError as exc:
             typer.echo(f"Migration failed: {exc}", err=True)
             raise typer.Exit(1) from exc
-        ddl, dml = extract_sql_blocks(response)
-        if ddl.strip():
-            ddls.append(ddl)
-        if dml.strip():
-            dmls.append(dml)
+        stmt_ddls, stmt_dmls = extract_sql_blocks(response)
+        ddls.extend(stmt_ddls)
+        dmls.extend(stmt_dmls)
 
     if not ddls and not dmls:
         typer.echo(
@@ -70,9 +74,17 @@ def migrate(
         )
         raise typer.Exit(1)
 
-    ddl_path, dml_path = write_output(table, ddls, dmls, out_dir)
-    typer.echo(f"Wrote {ddl_path}")
-    typer.echo(f"Wrote {dml_path}")
+    try:
+        offline_issues = validate_statements(ddls, dmls)
+        log_validation_issues(offline_issues)
+        raise_on_errors(offline_issues)
+    except SqlValidationError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+    ddl_paths, dml_paths = write_output(table, ddls, dmls, out_dir)
+    for path in ddl_paths + dml_paths:
+        typer.echo(f"Wrote {path}")
 
 
 def main() -> None:

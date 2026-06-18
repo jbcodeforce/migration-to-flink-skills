@@ -24,11 +24,11 @@ def test_live_migration_matches_golden(pair_name: str, require_llm, tmp_path: Pa
     pair = next(p for p in ksql_golden_pairs() if p.name == pair_name)
     cleaned = clean_ksql_input(pair.source_file.read_text())
     response = run_migration(pair.table_name, cleaned)
-    ddl, dml = extract_sql_blocks(response)
-
-    ddls = [ddl] if ddl.strip() else []
-    dmls = [dml] if dml.strip() else []
-    ddl_path, dml_path = write_output(pair.table_name, ddls, dmls, tmp_path)
+    ddls, dmls = extract_sql_blocks(response)
+    ddl_paths, dml_paths = write_output(pair.table_name, ddls, dmls, tmp_path)
+    ddl_path, dml_path = resolve_table_paths(ddl_paths, dml_paths, pair.table_name)
+    assert ddl_path is not None
+    assert dml_path is not None
 
     ddl_cmp = compare_files_unordered(pair.flink_ddl, ddl_path)
     dml_cmp = compare_files_unordered(pair.flink_dml, dml_path)

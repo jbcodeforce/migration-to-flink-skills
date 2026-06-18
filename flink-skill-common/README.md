@@ -11,6 +11,7 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration.
 | `llm` | OpenAI-compatible LLM reachability and model resolution |
 | `config` | `HarnessContext`, LLM settings, `FlinkDeploySettings`, deploy preflight |
 | `sql_preprocess` | Comment/DROP stripping and CREATE statement splitting |
+| `sql_validate` | Offline (sqlglot) and remote (confluent-sql) SQL syntax validation |
 | `fixtures` | `GoldenPair` dataclass and fixture existence checks |
 | `agents.factory` | Agno agent construction helpers |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |

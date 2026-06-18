@@ -1,8 +1,8 @@
-# Worked examples (ksql_tutorial golden pairs)
+# Worked examples (references/ksql golden pairs)
 
 ## merge.ksql → dim_all_songs
 
-KSQL: `ksql_tutorial/sources/routing/merge.ksql`
+KSQL: `references/ksql/sources/routing/merge.ksql`
 
 - Defines `rock_songs`, `classical_songs`, `all_songs` streams
 - Merges with `INSERT INTO all_songs`
@@ -14,7 +14,7 @@ Flink golden: `flink_ref/dimensions/songs/all_song/sql-scripts/`
 
 ## stream_stream.ksql → shipped_orders
 
-KSQL: `ksql_tutorial/sources/joins/stream_stream.ksql`
+KSQL: `references/ksql/sources/joins/stream_stream.ksql`
 
 - `orders` and `shipments` streams with interval join `WITHIN 7 DAYS`
 
@@ -25,7 +25,7 @@ Flink golden: `flink_ref/joins/shipped_orders/sql-scripts/`
 
 ## splitting.ksql → dim_acting_events_drama
 
-KSQL: `ksql_tutorial/sources/routing/splitting.ksql`
+KSQL: `references/ksql/sources/routing/splitting.ksql`
 
 - Splits `acting_events` by genre into drama, fantasy, other streams
 

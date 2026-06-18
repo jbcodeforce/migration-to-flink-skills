@@ -31,13 +31,14 @@ def test_live_migration_matches_golden(pair_name: str, require_llm, tmp_path: Pa
     dmls: list[str] = []
     for stmt in statements:
         response = run_migration(pair.table_name, stmt)
-        ddl, dml = extract_sql_blocks(response)
-        if ddl.strip():
-            ddls.append(ddl)
-        if dml.strip():
-            dmls.append(dml)
+        stmt_ddls, stmt_dmls = extract_sql_blocks(response)
+        ddls.extend(stmt_ddls)
+        dmls.extend(stmt_dmls)
 
-    ddl_path, dml_path = write_output(pair.table_name, ddls, dmls, tmp_path)
+    ddl_paths, dml_paths = write_output(pair.table_name, ddls, dmls, tmp_path)
+    ddl_path, dml_path = resolve_table_paths(ddl_paths, dml_paths, pair.table_name)
+    assert ddl_path is not None
+    assert dml_path is not None
 
     ddl_cmp = compare_files_unordered(pair.flink_ddl, ddl_path)
     dml_cmp = compare_files_unordered(pair.flink_dml, dml_path)

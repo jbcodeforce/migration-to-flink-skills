@@ -3,22 +3,52 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Optional
 
-from flink_skill_common.config import llm_base_url, llm_model, load_env
+from flink_skill_common.config import llm_api_key, llm_base_url, llm_model, load_env
+
+
+logger = logging.getLogger(__name__)
 
 
 class LlmConfigError(RuntimeError):
     """Raised when SL_LLM_MODEL is missing or invalid for the configured server."""
 
 
-def _fetch_models_payload(base_url: Optional[str] = None, timeout: float = 2.0) -> dict:
+def _models_request(
+    base_url: str,
+    *,
+    api_key: str | None = None,
+):
+    import urllib.request
+
+    url = base_url.rstrip("/") + "/models"
+    req = urllib.request.Request(url)
+    key = api_key if api_key is not None else llm_api_key()
+    if key:
+        req.add_header("Authorization", f"Bearer {key}")
+    return req
+
+
+def _fetch_models_payload(
+    base_url: Optional[str] = None,
+    *,
+    api_key: str | None = None,
+    timeout: float = 2.0,
+) -> dict | None:
     import urllib.error
     import urllib.request
 
+    load_env()
     url = (base_url or llm_base_url()).rstrip("/") + "/models"
-    with urllib.request.urlopen(url, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        req = _models_request(base_url or llm_base_url(), api_key=api_key)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
+        logger.error(f"Error fetching models payload from {url}: {e}")
+        return None
 
 
 def fetch_available_models(base_url: Optional[str] = None, timeout: float = 2.0) -> list[str]:
@@ -30,9 +60,8 @@ def fetch_model_context_windows(
     base_url: Optional[str] = None, timeout: float = 2.0
 ) -> dict[str, int]:
     """Return model id -> max context window from /models metadata."""
-    try:
-        payload = _fetch_models_payload(base_url, timeout=timeout)
-    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+    payload = _fetch_models_payload(base_url, timeout=timeout)
+    if not payload:
         return {}
     windows: dict[str, int] = {}
     for item in payload.get("data", []):
@@ -97,14 +126,24 @@ def ensure_model_context(
 
 
 def llm_reachable(base_url: Optional[str] = None, timeout: float = 2.0) -> bool:
-    """Return True if an OpenAI-compatible /models endpoint responds."""
-    import urllib.error
-
-    try:
-        _fetch_models_payload(base_url, timeout=timeout)
-        return True
-    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+    """Return True if an OpenAI-compatible /models endpoint responds with model data."""
+    load_env()
+    if not base_url:
+        base_url = llm_base_url()
+    if not base_url:
+        logger.error("LLM base URL is not set")
         return False
+
+    url = base_url.rstrip("/") + "/models"
+    payload = _fetch_models_payload(base_url, timeout=timeout)
+    if not payload:
+        return False
+
+    data = payload.get("data")
+    if not isinstance(data, list) or not data:
+        logger.error(f"LLM at {url} returned no models")
+        return False
+    return True
 
 
 def is_agent_error_response(text: str) -> bool:

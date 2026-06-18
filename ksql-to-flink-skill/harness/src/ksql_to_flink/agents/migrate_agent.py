@@ -1,0 +1,167 @@
+"""Agno agent with ksql-to-flink skill for ksqlDB migration."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from flink_skill_common.agents.factory import (
+    build_migration_agent,
+    make_openai_model,
+    run_agent_response,
+)
+from flink_skill_common.deploy.agno_tools import FlinkStatementAgnoTools
+from flink_skill_common.deploy.statements import ddl_statement_name, dml_statement_name
+from flink_skill_common.llm import llm_reachable, resolve_llm_model
+
+from flink_skill_common.config import (
+    agent_deploy_max_retries,
+    llm_api_key,
+    llm_base_url,
+    load_env,
+    skill_dir,
+)
+
+
+def _make_model():
+    return make_openai_model(
+        base_url=llm_base_url(),
+        api_key=llm_api_key(),
+        model_id=resolve_llm_model(),
+    )
+
+
+def build_migrate_agent():
+    """Create Agno agent with ksql-to-flink skill loaded from skill/."""
+    return build_migration_agent(
+        name="KsqlToFlinkAgent",
+        skill_dir=skill_dir(),
+        instructions=[
+            "Migrate ksqlDB SQL to Confluent Cloud Flink SQL using the ksql-to-flink skill.",
+            "Call get_skill_instructions('ksql-to-flink') before translating.",
+            "Apply translation rules from skill references as needed.",
+            "Never output CREATE STREAM in DDL; use CREATE TABLE IF NOT EXISTS only.",
+            "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
+            "Do not include explanations outside the SQL blocks.",
+        ],
+        model=_make_model(),
+        tools=[]
+    )
+
+
+def build_deploy_retry_agent():
+    """Agent with confluent-sql tools for fixing failed Flink deploys."""
+    deploy_tools = FlinkStatementAgnoTools()
+    return build_migration_agent(
+        name="KsqlToFlinkDeployAgent",
+        skill_dir=skill_dir(),
+        instructions=[
+            "Fix Flink SQL deploy failures for ksql-to-flink migrations.",
+            "Read skill reference confluent-sql-deploy.md for deploy tool sequence.",
+            "Deploy source stub DDLs from tests/ddl.*.sql before target DDL and DML.",
+            "Use create_flink_statement to redeploy source DDLs, then target DDL, then DML.",
+            "Use get_flink_statement_exceptions to understand failures.",
+            "Use list_flink_statements or get_flink_statement to verify RUNNING phase.",
+            "Statement names: {table}-ddl and {table}-dml with underscores replaced by hyphens.",
+            "If DML fails because a source table is missing, regenerate stub DDL in tests/ via LLM.",
+        ],
+        model=_make_model(),
+        tools=deploy_tools.as_tools(),
+    )
+
+
+def migrate_prompt(table_name: str, ksql: str) -> str:
+    """Build a structured migration request for the agent."""
+    return (
+        f"Migrate the following ksqlDB SQL to Flink SQL for table `{table_name}`.\n\n"
+        f"Follow the ksql-to-flink skill workflow: translate the full script in one pass.\n\n"
+        f"```sql\n{ksql.strip()}\n```"
+    )
+
+
+def deploy_retry_prompt(
+    table_name: str,
+    ksql: str,
+    ddl_path: Path,
+    dml_path: Path,
+    error_message: str,
+    tests_dir: Path | None = None,
+) -> str:
+    ddl = ddl_path.read_text() if ddl_path.is_file() else ""
+    dml = dml_path.read_text() if dml_path.is_file() else ""
+    ddl_stmt = ddl_statement_name(table_name)
+    dml_stmt = dml_statement_name(table_name)
+
+    source_section = ""
+    if tests_dir and tests_dir.is_dir():
+        source_files = sorted(tests_dir.glob("ddl.*.sql"))
+        if source_files:
+            blocks = []
+            for path in source_files:
+                blocks.append(f"{path.name}:\n```sql\n{path.read_text().strip()}\n```")
+            source_section = (
+                "Source stub DDLs (tests/ — deploy these before target DDL/DML):\n"
+                + "\n\n".join(blocks)
+                + "\n\n"
+            )
+
+    return (
+        f"Flink deploy failed for table `{table_name}`.\n\n"
+        f"Error:\n{error_message}\n\n"
+        f"Target statement names: DDL `{ddl_stmt}`, DML `{dml_stmt}`.\n\n"
+        f"Original ksql:\n```sql\n{ksql.strip()}\n```\n\n"
+        f"{source_section}"
+        f"Current DDL ({ddl_path}):\n```sql\n{ddl.strip()}\n```\n\n"
+        f"Current DML ({dml_path}):\n```sql\n{dml.strip()}\n```\n\n"
+        "1. Call get_flink_statement_exceptions for the failed statement.\n"
+        "2. Fix source stub DDLs in tests/ if missing-table errors; then target DDL/DML.\n"
+        "3. Redeploy via create_flink_statement (source DDLs, target DDL, then DML).\n"
+        "4. Confirm RUNNING with get_flink_statement or list_flink_statements.\n"
+        "Return corrected source DDLs, DDL, and DML in labeled ```sql blocks."
+    )
+
+
+def run_migration(table_name: str, ksql: str) -> str:
+    """Run migration agent and return response content."""
+    agent = build_migrate_agent()
+    return run_agent_response(agent, migrate_prompt(table_name, ksql))
+
+
+def run_agent_deploy_retry(
+    table_name: str,
+    ksql: str,
+    ddl_path: Path,
+    dml_path: Path,
+    error_message: str,
+    tests_dir: Path | None = None,
+) -> str:
+    """Invoke Agno agent with confluent-sql tools to fix and redeploy failed statements."""
+    agent = build_deploy_retry_agent()
+    prompt = deploy_retry_prompt(
+        table_name, ksql, ddl_path, dml_path, error_message, tests_dir=tests_dir
+    )
+    max_retries = agent_deploy_max_retries()
+    last_content = ""
+    for attempt in range(max_retries):
+        last_content = run_agent_response(
+            agent,
+            f"{prompt}\n\nRetry attempt {attempt + 1} of {max_retries}.",
+        )
+        if "RUNNING" in last_content.upper() and "FAILED" not in last_content.upper():
+            break
+    return last_content
+
+
+def main() -> None:
+    load_env()
+    if not llm_reachable():
+        print("LLM not reachable. Start oMLX or set SL_LLM_BASE_URL.", file=sys.stderr)
+        sys.exit(1)
+    prompt = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "List the ksql-to-flink migration workflow."
+    agent = build_migrate_agent()
+    resp= run_agent_response(agent, prompt)
+    print(resp)
+
+
+if __name__ == "__main__":
+    main()

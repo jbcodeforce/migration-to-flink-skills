@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -352,6 +353,97 @@ class FlinkStatementManager:
                 )
 
         return source_statements
+
+    def _validation_issue(
+        self,
+        sql: str,
+        kind: str,
+        index: int,
+        message: str,
+    ) -> Any:
+        from flink_skill_common.sql_validate import SqlValidationIssue
+
+        preview = sql.strip().splitlines()[0][:80] if sql.strip() else ""
+        return SqlValidationIssue(
+            statement_index=index,
+            kind=kind,  # type: ignore[arg-type]
+            message=f"{message} [{preview}]",
+            severity="error",
+        )
+
+    def validate_sql(
+        self,
+        sql: str,
+        *,
+        kind: str = "ddl",
+        index: int = 0,
+        statement_name: str | None = None,
+    ) -> list[Any]:
+        """Submit SQL to CC Flink with a temporary statement name; delete after check."""
+        stripped = sql.strip()
+        if not stripped:
+            return []
+
+        name = statement_name or f"validate-{uuid.uuid4().hex[:12]}"
+        try:
+            try:
+                result = self.create_statement(name, stripped)
+            except StatementManagerError as exc:
+                return [self._validation_issue(sql, kind, index, str(exc))]
+
+            phase = str(result.get("phase", "UNKNOWN"))
+            if phase in FAILURE_PHASES:
+                exceptions = self.get_statement_exceptions(name)
+                return [
+                    self._validation_issue(
+                        sql,
+                        kind,
+                        index,
+                        f"Flink rejected statement (phase={phase}): {json.dumps(exceptions)}",
+                    )
+                ]
+
+            if phase not in SUCCESS_PHASES:
+                try:
+                    polled = self.wait_for_phase(
+                        name,
+                        SUCCESS_PHASES | FAILURE_PHASES,
+                        timeout=min(30.0, self._settings.timeout_seconds),
+                    )
+                    phase = str(polled.get("phase", phase))
+                except StatementManagerError as exc:
+                    return [self._validation_issue(sql, kind, index, str(exc))]
+
+                if phase in FAILURE_PHASES:
+                    exceptions = self.get_statement_exceptions(name)
+                    return [
+                        self._validation_issue(
+                            sql,
+                            kind,
+                            index,
+                            f"Flink rejected statement (phase={phase}): {json.dumps(exceptions)}",
+                        )
+                    ]
+        finally:
+            try:
+                self.delete_statement(name)
+            except StatementManagerError:
+                logger.warning("Failed to delete validation statement %s", name)
+
+        return []
+
+    def validate_statements(
+        self,
+        ddls: list[str],
+        dmls: list[str],
+    ) -> list[Any]:
+        """Validate DDL and DML statement lists on CC Flink."""
+        issues: list[Any] = []
+        for index, sql in enumerate(ddls):
+            issues.extend(self.validate_sql(sql, kind="ddl", index=index))
+        for index, sql in enumerate(dmls):
+            issues.extend(self.validate_sql(sql, kind="dml", index=index))
+        return issues
 
     def deploy_table(
         self,

@@ -60,6 +60,7 @@ def configure(ctx: HarnessContext) -> None:
     """Register the active harness context (call once from skill config module)."""
     global _ctx
     _ctx = ctx
+    ctx.load_env()
 
 
 def get_context() -> HarnessContext:
@@ -75,76 +76,80 @@ def load_env() -> None:
 
 
 def llm_base_url() -> str:
-    load_env()
     return os.getenv("SL_LLM_BASE_URL", "http://localhost:7999/v1")
 
 
 def llm_model() -> str:
-    load_env()
     return os.getenv("SL_LLM_MODEL", "qwen3-coder-30b-a3b-instruct-mlx-4bit")
 
 
 def llm_api_key() -> str:
-    load_env()
     return os.getenv("SL_LLM_API_KEY", "no_llm_key")
 
 
 def flink_deploy_poll_seconds() -> float:
-    load_env()
     raw = os.getenv("FLINK_DEPLOY_POLL_SECONDS") or os.getenv("MCP_DEPLOY_POLL_SECONDS", "5")
     return float(raw)
 
 
 def flink_deploy_timeout_seconds() -> float:
-    load_env()
     raw = os.getenv("FLINK_DEPLOY_TIMEOUT_SECONDS") or os.getenv("MCP_DEPLOY_TIMEOUT_SECONDS", "300")
     return float(raw)
 
 
 def flink_org_id() -> str | None:
-    load_env()
     return os.getenv("FLINK_ORG_ID") or os.getenv("ORGANIZATION_ID") or os.getenv("ORG_ID")
 
 
 def flink_env_id() -> str | None:
-    load_env()
     return os.getenv("FLINK_ENV_ID") or os.getenv("CC_ENV_ID") or os.getenv("ENVIRONMENT_ID") or os.getenv("ENV_ID")
 
 
 def flink_compute_pool_id() -> str | None:
-    load_env()
     return os.getenv("FLINK_COMPUTE_POOL_ID") or os.getenv("CPOOLID")
 
 
 def flink_catalog_name() -> str | None:
-    load_env()
     return os.getenv("FLINK_CATALOG_NAME") or os.getenv("FLINK_ENV_NAME")
 
 
 def flink_database_name() -> str | None:
-    load_env()
     return os.getenv("FLINK_DATABASE_NAME")
 
 
 def flink_api_key() -> str | None:
-    load_env()
     return os.getenv("FLINK_API_KEY") or os.getenv("CONFLUENT_CLOUD_API_KEY")
 
 
 def flink_api_secret() -> str | None:
-    load_env()
     return os.getenv("FLINK_API_SECRET") or os.getenv("CONFLUENT_CLOUD_API_SECRET")
 
 
 def flink_rest_endpoint() -> str | None:
-    load_env()
     raw = os.getenv("FLINK_REST_ENDPOINT") or os.getenv("FLINK_BASE_URL")
     return raw.rstrip("/") if raw else None
 
 
+
+def skill_dir() -> Path:
+    return get_context().skill_dir
+
+
+def skill_md_path() -> Path:
+    return get_context().skill_md_path
+
+
+def agent_deploy_on_failure() -> bool:
+    return os.getenv("KSQL_FLINK_AGENT_DEPLOY", "").lower() in ("1", "true", "yes")
+
+
+def agent_deploy_max_retries() -> int:
+    return int(os.getenv("KSQL_FLINK_AGENT_DEPLOY_MAX_RETRIES", "2"))
+
+
+
 def flink_deploy_settings() -> FlinkDeploySettings:
     """Load Flink deploy settings from environment."""
-    load_env()
     missing: list[str] = []
     api_key = flink_api_key()
     api_secret = flink_api_secret()
@@ -185,4 +190,9 @@ def flink_deploy_settings() -> FlinkDeploySettings:
         poll_seconds=flink_deploy_poll_seconds(),
         timeout_seconds=flink_deploy_timeout_seconds(),
     )
+
+
+def require_flink_deploy_ready() -> FlinkDeploySettings:
+    """Validate Flink deploy env vars and return settings."""
+    return flink_deploy_settings()
 

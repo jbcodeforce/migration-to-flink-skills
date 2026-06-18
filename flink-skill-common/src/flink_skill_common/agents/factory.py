@@ -14,16 +14,7 @@ def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAICh
     return OpenAIChat(id=model_id, base_url=base_url, api_key=api_key)
 
 
-def eager_skill_instructions(skill_dir: Path, skill_name: str) -> list[str]:
-    """Load skill body up front so CLI migrations avoid an extra tool round-trip."""
-    skills = Skills(loaders=[LocalSkills(str(skill_dir), validate=False)])
-    skill = skills.get_skill(skill_name)
-    if skill and skill.instructions.strip():
-        return [skill.instructions]
-    return []
-
-
-def build_migrate_agent(
+def build_migration_agent(
     *,
     name: str,
     skill_dir: Path,

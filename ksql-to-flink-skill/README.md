@@ -9,6 +9,7 @@ See [SPEC.md](SPEC.md).
 1. **Skill** (`skill/SKILL.md` + `skill/references/`) — agent playbook for ksqlDB → Flink translation. Can be used with Claude Code, Cursor 
 2. **Harness** (`harness/`) — Solution based on Agno agent with `LocalSkills` loading the same skill, calling oMLX via `OpenAIChat` API. Shared Python utilities live in [`../flink-skill-common/`](../flink-skill-common/) (`compare`, `output`, `llm`, `deploy`, etc.).
 3. **Text fixtures** — ksql inputs in the [./references/ksql/sources/](./references/ksql/sources), with goldens refernces in `flink_ref/` folder.
+4. a Shell script to run the migration as a front end for the cli.
 
 The Harness steps are: 
 * clean source ksql (deterministic)
@@ -20,18 +21,33 @@ The Harness steps are:
 
 Deploy requires Flink API credentials in `harness/.env`. See [docs/FLINK_DEPLOY.md](docs/FLINK_DEPLOY.md).
 
+
 ## Quick start
 
+* Prepare the python code for the ksql-to-flink cli:
 ```bash
 cd harness
 cp .env.example .env
 uv sync --extra dev
+```
 
-# No LLM required
-uv run pytest tests/ut -m "not integration"
+* Set environment variables to access LLM model in the .env
+| Variable | Default |
+|----------|---------|
+| `SL_LLM_BASE_URL` | `http://localhost:7999/v1` |
+| `SL_LLM_MODEL` | `Qwen3.6-27B-4bit` |
+| `KSQL_TUTORIAL_ROOT` | `../../../flink_project_demos/ksql_tutorial` |
+| `FLINK_DEPLOY_TIMEOUT_SECONDS` | `300` |
+| `FLINK_API_KEY` / `FLINK_API_SECRET` | (required for deploy) |
+| `KSQL_FLINK_AGENT_DEPLOY` | `0` (set `1` to enable agent retry on failure) |
 
-# Live LLM (oMLX)
+* Validate integration tests
+
+```sh
+# Need a live LLM (oMLX) - will run references
 uv run pytest tests/it
+# run one reference
+uv run pytest tests/it/test_cli_migrate.py::test_migrate_filtering -vs
 ```
 
 ### Migrate one file
@@ -104,6 +120,13 @@ See [assets/FIXTURES.md](assets/FIXTURES.md).
 
 ## Tests
 
+* Unit tests do mock the LLM backend.
+  ```sh
+  # No LLM required
+  uv run pytest tests/ut -m "not integration"
+  ```
+
+
 | File | LLM | Purpose |
 |------|-----|---------|
 | `test_pipeline_offline.py` | No | clean, split CREATE STREAM |
@@ -119,13 +142,3 @@ See [assets/FIXTURES.md](assets/FIXTURES.md).
 | `test_confluent_sql_deploy_integration.py` | Live (`integration`) | live confluent-sql deploy to CC |
 | `test_ksql_golden.py` | Live (`integration`) | live agent migration vs golden |
 
-## Environment
-
-| Variable | Default |
-|----------|---------|
-| `SL_LLM_BASE_URL` | `http://localhost:7999/v1` |
-| `SL_LLM_MODEL` | `Qwen3.6-27B-4bit` |
-| `KSQL_TUTORIAL_ROOT` | `../../../flink_project_demos/ksql_tutorial` |
-| `FLINK_DEPLOY_TIMEOUT_SECONDS` | `300` |
-| `FLINK_API_KEY` / `FLINK_API_SECRET` | (required for deploy) |
-| `KSQL_FLINK_AGENT_DEPLOY` | `0` (set `1` to enable agent retry on failure) |

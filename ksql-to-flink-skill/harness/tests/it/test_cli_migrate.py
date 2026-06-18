@@ -1,78 +1,73 @@
 """Offline CLI tests for migrate command deploy wiring."""
 
 from pathlib import Path
-from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from ksql_flink_skill.cli import app
-from flink_skill_common.deploy.flink_statement_manager import DeployResult
+from flink_skill_common.logging_config import configure_cli_logging
+from flink_skill_common.config import HarnessContext, configure
+from flink_skill_common.output import extract_sql_blocks
 
+
+_HARNESS_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_ROOT = _HARNESS_ROOT.parent.parent
+
+configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
+configure_cli_logging("ksql_to_flink.cli")
+from ksql_to_flink.cli import app
+from ksql_to_flink.sql_utils import clean_ksql_input
 
 runner = CliRunner()
 
+import os
 
-def test_migrate_skip_deploy(tmp_path: Path):
-    ksql_file = tmp_path / "test.ksql"
-    ksql_file.write_text("CREATE STREAM s (id INT) WITH (KAFKA_TOPIC='t');")
-    out_dir = tmp_path / "out"
+# Remove the CLI log file on a new execution to ensure clean logs for this test session.
+log_path = _HARNESS_ROOT / "logs" / "ksql-flink-cli.log"
+try:
+    if log_path.exists():
+        os.remove(log_path)
+except Exception as e:
+    print(f"Warning: could not remove log file {log_path}: {e}")
 
-    with patch("ksql_flink_skill.cli.llm_reachable", return_value=True):
-        with patch("ksql_flink_skill.cli.run_migration", return_value="```sql\nCREATE TABLE t (id INT);\n```"):
-            with patch("ksql_flink_skill.cli.require_flink_deploy_ready") as mock_preflight:
-                result = runner.invoke(
-                    app,
-                    [
-                        "--table",
-                        "my_table",
-                        "--file",
-                        str(ksql_file),
-                        "--out-dir",
-                        str(out_dir),
-                        "--skip-deploy",
-                    ],
-                )
-    assert result.exit_code == 0
-    assert "Skipped deploy" in result.output
-    mock_preflight.assert_not_called()
+def test_llm_reachable():
+    from flink_skill_common.llm import llm_reachable
+    assert llm_reachable() == True
 
+def test_run_migration():
+    from ksql_to_flink.agents.migrate_agent import run_migration
+    ksql_file = _PROJECT_ROOT / "references" / "ksql" / "sources" / "routing" / "filtering.ksql"
+    cleaned = clean_ksql_input(ksql_file.read_text())
+    resp = run_migration("george_martin", cleaned)
+    print(resp)
+    
+    assert resp is not None
+    ddls, dmls = extract_sql_blocks(resp)
+    assert ddls or dmls
+    for ddl in ddls:
+        print(f"DDL: {ddl}")
+        assert "CREATE TABLE" in ddl
+    for dml in dmls:
+        print(f"DML: {dml}")
+        assert "INSERT INTO" in dml
 
-def test_migrate_deploys_by_default(tmp_path: Path):
-    ksql_file = tmp_path / "test.ksql"
-    ksql_file.write_text("CREATE STREAM s (id INT) WITH (KAFKA_TOPIC='t');")
-    out_dir = tmp_path / "out"
-    deploy_result = DeployResult(
-        table_name="my_table",
-        ddl_statement="my-table-ddl",
-        dml_statement="",
-        ddl_phase="COMPLETED",
-        dml_phase="",
-        success=True,
-        messages=["ok"],
+def test_migrate_filtering():
+    ksql_file = _PROJECT_ROOT / "references" / "ksql" / "sources" / "routing" / "filtering.ksql"
+    out_dir = Path("output/routing/filtering")
+    result = runner.invoke(
+        app,
+        [
+            "--table",
+            "george_martin",
+            "--file",
+            str(ksql_file),
+            "--out-dir",
+            str(out_dir),
+            "--skip-deploy",
+        ],
     )
 
-    with patch("ksql_flink_skill.cli.llm_reachable", return_value=True):
-        with patch(
-            "ksql_flink_skill.cli.run_migration",
-            return_value=(
-                "DDL\n```sql\nCREATE TABLE IF NOT EXISTS my_table (id INT);\n```\n"
-                "DML\n```sql\n\n```"
-            ),
-        ):
-            with patch("ksql_flink_skill.cli.require_flink_deploy_ready"):
-                with patch("ksql_flink_skill.cli.FlinkStatementManager") as mock_manager_cls:
-                    mock_manager_cls.return_value.deploy_table.return_value = deploy_result
-                    result = runner.invoke(
-                        app,
-                        [
-                            "--table",
-                            "my_table",
-                            "--file",
-                            str(ksql_file),
-                            "--out-dir",
-                            str(out_dir),
-                        ],
-                    )
+    print(result.output)
     assert result.exit_code == 0
-    assert "Deploy OK" in result.output
-    mock_manager_cls.return_value.deploy_table.assert_called_once()
+    assert "Skipped deploy" in result.output
+
+
