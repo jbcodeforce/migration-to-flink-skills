@@ -1,6 +1,6 @@
 # Deploy to Confluent Cloud Flink via confluent-sql
 
-After translation, deploy source stub DDLs from `tests/`, then target DDL, then DML using the [confluent-sql](https://pypi.org/project/confluent-sql/) Python driver (REST API). See [docs/FLINK_DEPLOY.md](../../docs/FLINK_DEPLOY.md) for configuration.
+After translation, deploy source stub DDLs from `tests/`, then target DDL, then DML using the [confluent-sql](https://pypi.org/project/confluent-sql/) Python driver (REST API). See [flink-deploy-setup.md](flink-deploy-setup.md) for configuration.
 
 ## Prerequisites
 

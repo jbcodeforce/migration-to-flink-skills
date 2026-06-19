@@ -31,7 +31,7 @@ def _make_model():
     )
 
 
-def build_migrate_agent():
+def build_ksql_migrate_agent():
     """Create Agno agent with ksql-to-flink skill loaded from skill/."""
     return build_migration_agent(
         name="KsqlToFlinkAgent",
@@ -123,7 +123,7 @@ def deploy_retry_prompt(
 
 def run_migration(table_name: str, ksql: str) -> str:
     """Run migration agent and return response content."""
-    agent = build_migrate_agent()
+    agent = build_ksql_migrate_agent()
     return run_agent_response(agent, migrate_prompt(table_name, ksql))
 
 
@@ -158,7 +158,7 @@ def main() -> None:
         print("LLM not reachable. Start oMLX or set SL_LLM_BASE_URL.", file=sys.stderr)
         sys.exit(1)
     prompt = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "List the ksql-to-flink migration workflow."
-    agent = build_migrate_agent()
+    agent = build_ksql_migrate_agent()
     resp= run_agent_response(agent, prompt)
     print(resp)
 
