@@ -1,10 +1,9 @@
-CREATE TABLE IF NOT EXISTS publication_events (
+CREATE TABLE IF NOT EXISTS `publication_events` (
   `bookid` BIGINT,
   `author` STRING,
   `title` STRING,
   PRIMARY KEY (`bookid`) NOT ENFORCED
-)
-DISTRIBUTED BY HASH (`bookid`) INTO 6 BUCKETS
+) DISTRIBUTED BY HASH (`bookid`) INTO 6 BUCKETS
 WITH (
   'changelog.mode' = 'upsert',
   'key.format' = 'avro-registry',
@@ -13,4 +12,4 @@ WITH (
   'scan.bounded.mode' = 'unbounded',
   'scan.startup.mode' = 'earliest-offset',
   'value.fields-include' = 'all'
-);
+)

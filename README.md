@@ -8,7 +8,7 @@ I'm also convince that small LLM, well prompted, with efficients tool can do a l
 
 ## Repository structure
 
-* [flink-skill-commo](./flink-skill-common/) includes python code for common tools
+* [flink-skill-common](./flink-skill-common/) includes python code for common tools
 * [ksql-to-flink-skil](./ksql-to-flink-skill/) includes skills, tests and tools for KSQLDB to Flink SQL
 * [spark-to-flink-skill](./spark-to-flink-skill/.) includes skills, tests and tools for Spark SQL to Flink SQL
 * [references](./references/) includes example of sparks and ksql code to migrate to Flink SQL with matching Flink SQL.

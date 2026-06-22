@@ -1,4 +1,9 @@
-"""Unordered line comparison for DDL/DML golden tests."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Unordered line comparison for DDL/DML golden tests.
+"""
 
 from __future__ import annotations
 

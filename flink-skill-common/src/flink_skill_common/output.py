@@ -1,4 +1,9 @@
-"""Parse agent migration output and write DDL/DML files."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Parse agent migration output and write DDL/DML files.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,7 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
-from flink_skill_common.logging_config import get_logger
+from flink_skill_common.config import get_logger
 from flink_skill_common.sql_preprocess import split_create_statements
 
 _CREATE_TABLE_PATTERN = re.compile(r"\bCREATE\s+TABLE\b", re.IGNORECASE)

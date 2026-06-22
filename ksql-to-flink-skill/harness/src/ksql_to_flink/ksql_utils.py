@@ -1,4 +1,10 @@
-"""Deterministic ksqlDB preprocessing utilities."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+
+Deterministic ksqlDB preprocessing utilities.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +14,10 @@ from typing import List
 
 from flink_skill_common.sql_preprocess import split_create_statements, strip_sql_comments_and_drops
 
-_KSQL_CREATE_PATTERN = re.compile(r"\bCREATE\s+(?:STREAM|TABLE)\b", re.IGNORECASE)
+_KSQL_CREATE_PATTERN = re.compile(
+    r"\bCREATE(?:\s+OR\s+REPLACE)?\s+(?:STREAM|TABLE)\b",
+    re.IGNORECASE,
+)
 
 _SQL_KEYWORDS = frozenset(
     {
@@ -27,7 +36,7 @@ _CTE_NAME_PATTERN = re.compile(
 )
 
 _CREATE_TABLE_PATTERN = re.compile(
-    r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z_][a-zA-Z0-9_]*)`?",
+    r"CREATE(?:\s+OR\s+REPLACE)?\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z_][a-zA-Z0-9_]*)`?",
     re.IGNORECASE,
 )
 
@@ -35,6 +44,20 @@ _TABLE_REF_PATTERN = re.compile(
     r"\b(?:FROM|JOIN)\s+(?:`([^`]+)`|([a-zA-Z_][a-zA-Z0-9_]*))",
     re.IGNORECASE,
 )
+
+
+_CREATE_OBJECT_NAME_PATTERN = re.compile(
+    r"CREATE(?:\s+OR\s+REPLACE)?\s+(?:STREAM|TABLE)\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z_][a-zA-Z0-9_]*)`?",
+    re.IGNORECASE,
+)
+
+
+def extract_ksql_object_name(statement: str) -> str | None:
+    """Return the stream/table name from a CREATE STREAM/TABLE statement."""
+    if not statement or not statement.strip():
+        return None
+    match = _CREATE_OBJECT_NAME_PATTERN.search(statement)
+    return match.group(1) if match else None
 
 
 def split_ksql_create_statements(sql: str) -> List[str]:

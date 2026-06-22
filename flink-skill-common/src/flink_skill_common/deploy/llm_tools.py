@@ -1,4 +1,9 @@
-"""Agno tool wrappers for Flink statement management."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Agno tool wrappers for Flink statement management.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +17,7 @@ from flink_skill_common.deploy.flink_statement_manager import (
 )
 
 
-class FlinkStatementAgnoTools:
+class FlinkStatementLLMTools:
     """Expose FlinkStatementManager operations as Agno agent tools."""
 
     def __init__(self, manager: FlinkStatementManager | None = None) -> None:

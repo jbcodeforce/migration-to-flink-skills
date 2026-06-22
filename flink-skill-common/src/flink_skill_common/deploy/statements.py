@@ -1,4 +1,9 @@
-"""Flink statement naming and source DDL discovery."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Flink statement naming and source DDL discovery.
+"""
 
 from __future__ import annotations
 

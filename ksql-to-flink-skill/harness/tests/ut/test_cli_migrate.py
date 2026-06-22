@@ -19,22 +19,22 @@ def test_migrate_skip_deploy(tmp_path: Path):
 
     with patch("ksql_to_flink.cli.llm_reachable", return_value=True):
         with patch("ksql_to_flink.cli.run_migration", return_value="```sql\nCREATE TABLE t (id INT);\n```"):
-            with patch("ksql_to_flink.cli.require_flink_deploy_ready") as mock_preflight:
-                result = runner.invoke(
-                    app,
-                    [
-                        "--table",
-                        "my_table",
-                        "--file",
-                        str(ksql_file),
-                        "--out-dir",
-                        str(out_dir),
-                        "--skip-deploy",
-                    ],
-                )
+            result = runner.invoke(
+                app,
+                [
+                    "--table",
+                    "my_table",
+                    "--file",
+                    str(ksql_file),
+                    "--out-dir",
+                    str(out_dir),
+                    "--skip-deploy",
+                ],
+            )
     assert result.exit_code == 0
     assert "Skipped deploy" in result.output
-    mock_preflight.assert_not_called()
+    assert "Found 1 CREATE" in result.output
+
 
 
 def test_migrate_deploys_by_default(tmp_path: Path):
@@ -59,8 +59,9 @@ def test_migrate_deploys_by_default(tmp_path: Path):
                 "DML\n```sql\n\n```"
             ),
         ):
-            with patch("ksql_to_flink.cli.require_flink_deploy_ready"):
-                with patch("ksql_to_flink.cli.FlinkStatementManager") as mock_manager_cls:
+
+            with patch("ksql_to_flink.pipeline.validate_statements_remote", return_value=[]):
+                with patch("ksql_to_flink.pipeline.FlinkStatementManager") as mock_manager_cls:
                     mock_manager_cls.return_value.deploy_table.return_value = deploy_result
                     result = runner.invoke(
                         app,

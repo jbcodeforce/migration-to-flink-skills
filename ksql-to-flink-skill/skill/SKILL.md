@@ -14,24 +14,38 @@ Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` become
 
 ## Required inputs
 
-- `table_name` — target Flink table (lowercase)
-- ksqlDB source — `.ksql` file or pasted SQL
+- `table_name` — target Flink table name for output files (`ddl.{table}.sql`, `dml.{table}.sql`)
+- ksqlDB source — `.ksql` file or pasted SQL containing one or more `CREATE STREAM` / `CREATE TABLE` statements or `INSERT INTO` statement.
+
+## Multi-statement files
+
+When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statements, the harness **splits** them and migrates **one statement per agent pass**:
+
+1. Split on each `CREATE STREAM` / `CREATE TABLE` (through the terminating `;`)
+2. Clean each fragment (remove comments, `DROP`, `SET`)
+3. Call the migration agent once per statement
+4. Validate, write output, and optionally deploy after each pass
+
+Use this for large pipeline scripts (many streams/tables in one file). Each agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.
+
+`--table` / `table_name` is the Flink target table name used for output files on every pass. To migrate a subset, use a smaller `.ksql` file or a file with only the CREATEs you need.
 
 ## Workflow
 
 ```
-- [ ] 1. Clean input (remove DROP, SET, comments)
-- [ ] 2. Translate full script in one pass
-- [ ] 3. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
-- [ ] 4. Write ddl.{table}.sql and dml.{table}.sql
-- [ ] 5. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
-- [ ] 6. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
-- [ ] 7. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
-- [ ] 8. Deploy target DML after target DDL succeeds
-- [ ] 9. Verify statement health; triage on failure
+- [ ] 1. Split file into individual CREATE STREAM/TABLE statements (harness)
+- [ ] 2. For each statement: clean input (remove DROP, SET, comments)
+- [ ] 3. Translate that single CREATE in one agent pass
+- [ ] 4. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
+- [ ] 5. Write ddl.{table}.sql and dml.{table}.sql
+- [ ] 6. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
+- [ ] 7. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
+- [ ] 8. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
+- [ ] 9. Deploy target DML after target DDL succeeds
+- [ ] 10. Verify statement health; triage on failure; repeat for next CREATE if any remain
 ```
 
-Harness `ksql-flink-migrate` runs steps 5–9 by default. Use `--skip-deploy` for translate-only runs.
+Harness `ksql-flink-migrate` runs steps 6–10 by default after each statement. Use `--skip-deploy` for translate-only runs.
 
 ## Mandatory DDL replacements (apply first)
 
@@ -233,7 +247,9 @@ Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). P
 
 ```bash
 cd harness && uv sync --extra dev
+# Single or multi-statement .ksql — each CREATE is migrated separately
 uv run ksql-flink-migrate --table dim_all_songs --file <path>/merge.ksql --out-dir output/
 # translate only: add --skip-deploy
-# retry deploy via agent on failure: --agent-deploy-on-failure
 ```
+
+Progress is printed to the terminal; detailed logs go to `harness/logs/ksql-flink-cli.log`.

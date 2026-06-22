@@ -1,6 +1,10 @@
 """Offline checks that skill documents required translation patterns."""
 
-from ksql_flink_skill.config import skill_dir
+from pathlib import Path
+_HARNESS_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_ROOT = _HARNESS_ROOT.parent
+from flink_skill_common.config import HarnessContext, configure, skill_dir
+configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
 
 
 def test_skill_documents_cte_group_by_for_latest_by_offset():
@@ -15,3 +19,15 @@ def test_skill_documents_cte_group_by_for_latest_by_offset():
 
     assert "must use `WITH deduplicated AS`" in skill_md or "WITH deduplicated AS" in skill_md
     assert "kma_chat" in examples
+
+
+def test_skill_references_confluent_sql_deploy():
+    skill_md = (skill_dir() / "SKILL.md").read_text()
+    deploy_doc = (skill_dir() / "references/confluent-sql-deploy.md").read_text()
+
+    assert "confluent-sql-deploy.md" in skill_md
+    assert "create_flink_statement" in deploy_doc
+    assert "get_flink_statement_exceptions" in deploy_doc
+    assert "-ddl" in deploy_doc and "-dml" in deploy_doc
+    assert "tests/" in skill_md
+    assert "tests/ddl" in deploy_doc or "tests/" in deploy_doc

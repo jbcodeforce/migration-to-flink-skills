@@ -1,12 +1,20 @@
-"""Shared harness configuration and environment accessors."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Shared harness configuration and environment accessors.
+"""
 
 from __future__ import annotations
 
-import os
+import os, sys
 from dataclasses import dataclass
 from pathlib import Path
-
+import logging
 from dotenv import load_dotenv
+
+_LOGGER = None
+_LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(filename)s:%(lineno)d %(message)s"
 
 _ctx: HarnessContext | None = None
 
@@ -18,8 +26,9 @@ class HarnessContext:
     harness_root: Path
     project_root: Path
 
-    def load_env(self) -> None:
-        load_dotenv(self.harness_root / ".env", override=False)
+    def load_env(self) -> bool:
+        # Harness .env is the source of truth; beat stale shell/IDE exports.
+        return load_dotenv(self.harness_root / ".env", override=True)
 
     @property
     def skill_dir(self) -> Path:
@@ -71,8 +80,8 @@ def get_context() -> HarnessContext:
     return _ctx
 
 
-def load_env() -> None:
-    get_context().load_env()
+def load_env() -> bool:
+    return get_context().load_env()
 
 
 def llm_base_url() -> str:
@@ -85,6 +94,10 @@ def llm_model() -> str:
 
 def llm_api_key() -> str:
     return os.getenv("SL_LLM_API_KEY", "no_llm_key")
+
+
+def llm_timeout() -> float:
+    return float(os.getenv("SL_LLM_TIMEOUT", "10"))
 
 
 def flink_deploy_poll_seconds() -> float:
@@ -139,13 +152,12 @@ def skill_md_path() -> Path:
     return get_context().skill_md_path
 
 
-def agent_deploy_on_failure() -> bool:
-    return os.getenv("KSQL_FLINK_AGENT_DEPLOY", "").lower() in ("1", "true", "yes")
+def agent_fixer_enabled() -> bool:
+    return os.getenv("AGENT_FIXER_EXECUTION_ENABLED", "").lower() in ("1", "true", "yes")
 
 
-def agent_deploy_max_retries() -> int:
-    return int(os.getenv("KSQL_FLINK_AGENT_DEPLOY_MAX_RETRIES", "2"))
-
+def agent_fixer_max_retries() -> int:
+    return int(os.getenv("AGENT_FIXER_EXECUTION_MAX_RETRIES", "2"))
 
 
 def flink_deploy_settings() -> FlinkDeploySettings:
@@ -196,3 +208,54 @@ def require_flink_deploy_ready() -> FlinkDeploySettings:
     """Validate Flink deploy env vars and return settings."""
     return flink_deploy_settings()
 
+
+def get_logger() -> logging.Logger:
+    if _LOGGER is None:
+        configure_cli_logging("flink_migration_skill.cli")
+    return _LOGGER
+
+def configure_cli_logging(name: str) -> logging.Logger:
+    """Configure file (+ stderr) logging once and return the CLI logger."""
+
+    global _LOGGER
+    if _LOGGER:
+        return _LOGGER
+    logger = logging.getLogger(name or "flink_migration_skill.cli")
+
+
+    log_path = cli_log_file()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    level = getattr(logging, cli_log_level(), logging.DEBUG)
+
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler.setLevel(level)
+    file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.WARNING)
+    stderr_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+
+    logger.setLevel(level)
+    logger.handlers.clear()
+    logger.addHandler(file_handler)
+    logger.addHandler(stderr_handler)
+    logger.propagate = False
+
+    _LOGGER = logger
+    logger.debug("Logging to %s (level=%s)", log_path, cli_log_level())
+    return logger
+
+
+
+def cli_log_file() -> Path:
+    raw = os.getenv("FLINK_LOG_FILE")
+    from .config import get_context
+    if raw:
+        path = Path(raw)
+        return path.resolve() if path.is_absolute() else (get_context().harness_root / path).resolve()
+    return get_context().harness_root / "logs" / "ksql-flink-cli.log"
+
+
+def cli_log_level() -> str:
+    return os.getenv("FLINK_LOG_LEVEL", "DEBUG").upper()

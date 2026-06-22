@@ -1,4 +1,9 @@
-"""Flink statement lifecycle via confluent-sql REST driver."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Flink statement lifecycle via confluent-sql REST driver.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterator, Literal
 
-import confluent_sql
+from confluent_sql import connect
 from confluent_sql.exceptions import OperationalError, StatementNotFoundError
 
 from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings

@@ -1,4 +1,9 @@
-"""Shared SQL preprocessing primitives for migration harnesses."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Shared SQL preprocessing primitives for migration harnesses.
+"""
 
 from __future__ import annotations
 

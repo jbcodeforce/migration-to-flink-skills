@@ -17,21 +17,30 @@ def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAICh
 def build_migration_agent(
     *,
     name: str,
-    skill_dir: Path,
+    skill_dir: Path | None = None,
     instructions: list[str],
     model: OpenAIChat,
     tools: Sequence[Callable[..., str]] | None = None,
 ) -> Agent:
     """Create Agno agent with skill loaded from skill_dir."""
     agent_tools = list(tools) if tools else []
-    return Agent(
-        name=name,
-        model=model,
-        skills=Skills(loaders=[LocalSkills(str(skill_dir), validate=False)]),
-        tools=agent_tools,
-        instructions=instructions,
-        markdown=True,
-    )
+    if skill_dir is not None:
+        return Agent(
+            name=name,
+            model=model,
+            skills=Skills(loaders=[LocalSkills(str(skill_dir), validate=False)]),
+            tools=agent_tools,
+            instructions=instructions,
+            markdown=True,
+        )
+    else:
+        return Agent(
+            name=name,
+            model=model,
+            tools=agent_tools,
+            instructions=instructions,
+            markdown=True,
+        )
 
 
 def run_agent_response(agent: Agent, prompt: str) -> str:

@@ -4,8 +4,8 @@ from pathlib import Path
 from flink_skill_common.config import (
     skill_dir, 
     skill_md_path, 
-    agent_deploy_on_failure, 
-    agent_deploy_max_retries,
+    agent_fixer_enabled, 
+    agent_fixer_max_retries,
      HarnessContext,
      configure
 )
@@ -17,15 +17,16 @@ _HARNESS_ROOT = Path(__file__).resolve().parents[2]
 _PROJECT_ROOT = _HARNESS_ROOT.parent
 
 configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
-from flink_skill_common.logging_config import cli_log_file, cli_log_level
-from ksql_to_flink.agents.migrate_agent import build_migrate_agent, build_deploy_retry_agent
+from flink_skill_common.config import cli_log_file, cli_log_level
+from ksql_to_flink.migrate_agent import build_ksql_migrate_agent, build_deploy_retry_agent
+
 
 def test_config():
 
     assert "ksql-to-flink-skill/skill" in str(skill_dir())
     assert "ksql-to-flink-skill/skill/SKILL.md" in str(skill_md_path())
-    assert agent_deploy_on_failure() == False
-    assert agent_deploy_max_retries() == 2
+    assert agent_fixer_enabled() == False
+    assert agent_fixer_max_retries() == 2
     assert "harness/logs/ksql-flink-cli.log" in str(cli_log_file())
     assert cli_log_level() == "DEBUG"
 
@@ -44,7 +45,7 @@ def test_local_skills_loads_ksql_to_flink():
     print(skill)
 
 def test_build_migration_agent():
-    agent = build_migrate_agent()
+    agent = build_ksql_migrate_agent()
     assert agent is not None
     assert agent.name == "KsqlToFlinkAgent"
     assert agent.model is not None

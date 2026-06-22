@@ -1,4 +1,9 @@
-"""Offline and remote Flink SQL syntax validation."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+Offline and remote Flink SQL syntax validation.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +15,7 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError
 
-from flink_skill_common.logging_config import get_logger
+from flink_skill_common.config import get_logger
 from flink_skill_common.sql_preprocess import strip_sql_comments_and_drops
 
 _CREATE_TABLE_START = re.compile(r"^\s*CREATE\s+TABLE\b", re.IGNORECASE)

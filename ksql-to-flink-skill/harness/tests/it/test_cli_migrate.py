@@ -4,8 +4,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from flink_skill_common.logging_config import configure_cli_logging
-from flink_skill_common.config import HarnessContext, configure
+
+from flink_skill_common.config import HarnessContext, configure, configure_cli_logging
 from flink_skill_common.output import extract_sql_blocks
 
 
@@ -15,7 +15,7 @@ _PROJECT_ROOT = _HARNESS_ROOT.parent.parent
 configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
 configure_cli_logging("ksql_to_flink.cli")
 from ksql_to_flink.cli import app
-from ksql_to_flink.sql_utils import clean_ksql_input
+from ksql_to_flink.ksql_utils import clean_ksql_input
 
 runner = CliRunner()
 
@@ -34,7 +34,7 @@ def test_llm_reachable():
     assert llm_reachable() == True
 
 def test_run_migration():
-    from ksql_to_flink.agents.migrate_agent import run_migration
+    from ksql_to_flink.migrate_agent import run_migration
     ksql_file = _PROJECT_ROOT / "references" / "ksql" / "sources" / "routing" / "filtering.ksql"
     cleaned = clean_ksql_input(ksql_file.read_text())
     resp = run_migration("george_martin", cleaned)

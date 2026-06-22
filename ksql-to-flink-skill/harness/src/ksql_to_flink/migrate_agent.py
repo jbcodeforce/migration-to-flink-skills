@@ -1,4 +1,21 @@
-"""Agno agent with ksql-to-flink skill for ksqlDB migration."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+This module provides functionality to translate KSQL (Kafka SQL) statements to Apache Flink SQL
+using Large Language Model (LLM) agents. The translation process includes multiple validation
+steps and can handle both single and multiple table/stream definitions.
+
+This module implements a multi-step workflow for translating KSQL to Flink SQL:
+    1. Input cleaning (remove DROP statements and comments)
+    2. Table detection (identify multiple CREATE statements)
+    3. Translation using LLM agents
+    4. Mandatory validation and syntax checking
+    5. Optional semantic validation against live Flink environment
+    6. Iterative refinement based on error feedback
+
+Use Agno agent with skills to translate KSQL to Flink SQL.
+"""
 
 from __future__ import annotations
 
@@ -10,12 +27,12 @@ from flink_skill_common.agents.factory import (
     make_openai_model,
     run_agent_response,
 )
-from flink_skill_common.deploy.agno_tools import FlinkStatementAgnoTools
+from flink_skill_common.deploy.llm_tools import FlinkStatementLLMTools
 from flink_skill_common.deploy.statements import ddl_statement_name, dml_statement_name
 from flink_skill_common.llm import llm_reachable, resolve_llm_model
 
 from flink_skill_common.config import (
-    agent_deploy_max_retries,
+    agent_fixer_max_retries,
     llm_api_key,
     llm_base_url,
     load_env,
@@ -37,8 +54,9 @@ def build_ksql_migrate_agent():
         name="KsqlToFlinkAgent",
         skill_dir=skill_dir(),
         instructions=[
-            "Migrate ksqlDB SQL to Confluent Cloud Flink SQL using the ksql-to-flink skill.",
+            "Migrate one ksqlDB CREATE STREAM/TABLE statement at a time to Confluent Cloud Flink SQL.",
             "Call get_skill_instructions('ksql-to-flink') before translating.",
+            "Input is a single CREATE (with optional CSAS body), not a multi-statement script.",
             "Apply translation rules from skill references as needed.",
             "Never output CREATE STREAM in DDL; use CREATE TABLE IF NOT EXISTS only.",
             "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
@@ -51,7 +69,7 @@ def build_ksql_migrate_agent():
 
 def build_deploy_retry_agent():
     """Agent with confluent-sql tools for fixing failed Flink deploys."""
-    deploy_tools = FlinkStatementAgnoTools()
+    deploy_tools = FlinkStatementLLMTools()
     return build_migration_agent(
         name="KsqlToFlinkDeployAgent",
         skill_dir=skill_dir(),
@@ -70,11 +88,16 @@ def build_deploy_retry_agent():
     )
 
 
-def migrate_prompt(table_name: str, ksql: str) -> str:
+def migrate_prompt(table_name: str, ksql: str, *, source_name: str | None = None) -> str:
     """Build a structured migration request for the agent."""
+    source = source_name or "the ksql object in this statement"
     return (
-        f"Migrate the following ksqlDB SQL to Flink SQL for table `{table_name}`.\n\n"
-        f"Follow the ksql-to-flink skill workflow: translate the full script in one pass.\n\n"
+        f"Migrate the following single ksqlDB CREATE statement to Flink SQL.\n"
+        f"Target Flink table name: `{table_name}`.\n"
+        f"ksql object in this statement: `{source}`.\n\n"
+        f"Follow the ksql-to-flink skill workflow: translate only this one CREATE "
+        f"(stream/table definition and any CSAS query in the same statement). "
+        f"Do not assume other CREATE statements from the same file are in scope.\n\n"
         f"```sql\n{ksql.strip()}\n```"
     )
 
@@ -121,10 +144,10 @@ def deploy_retry_prompt(
     )
 
 
-def run_migration(table_name: str, ksql: str) -> str:
+def run_migration(table_name: str, ksql: str, *, source_name: str | None = None) -> str:
     """Run migration agent and return response content."""
     agent = build_ksql_migrate_agent()
-    return run_agent_response(agent, migrate_prompt(table_name, ksql))
+    return run_agent_response(agent, migrate_prompt(table_name, ksql, source_name=source_name))
 
 
 def run_agent_deploy_retry(
@@ -140,7 +163,7 @@ def run_agent_deploy_retry(
     prompt = deploy_retry_prompt(
         table_name, ksql, ddl_path, dml_path, error_message, tests_dir=tests_dir
     )
-    max_retries = agent_deploy_max_retries()
+    max_retries = agent_fixer_max_retries()
     last_content = ""
     for attempt in range(max_retries):
         last_content = run_agent_response(

@@ -1,4 +1,8 @@
-"""CLI entry point for ksqlDB → Flink migration."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+CLI entry point for ksqlDB → Flink migration.
+"""
 
 from __future__ import annotations
 
@@ -6,86 +10,34 @@ from pathlib import Path
 
 import typer
 
-from flink_skill_common.logging_config import configure_cli_logging
-logger=configure_cli_logging("ksql_to_flink.cli")
-
-from flink_skill_common.config import agent_deploy_on_failure as agent_deploy_on_failure_env
-from flink_skill_common.config import configure, HarnessContext
-from flink_skill_common.deploy.flink_statement_manager import DeployError, FlinkStatementManager
-from flink_skill_common.llm import llm_reachable
-from flink_skill_common.output import extract_sql_blocks, resolve_table_paths, write_output, write_source_ddls
-from flink_skill_common.sql_validate import (
-    SqlValidationError,
-    log_validation_issues,
-    raise_on_errors,
-    validate_statements,
-    validate_statements_remote,
+from flink_skill_common.config import (
+    configure,
+    HarnessContext,
+    cli_log_file,
+    get_logger,
+    llm_base_url,
 )
+from flink_skill_common.llm import llm_reachable
+from flink_skill_common.sql_validate import SqlValidationError
 
-from .sources import generate_source_ddls
 from .ksql_utils import (
     clean_ksql_input,
-    compute_missing_source_tables
+    extract_ksql_object_name,
+    split_ksql_create_statements,
 )
-from migrate_agent import run_agent_deploy_retry, run_migration
+from .migrate_agent import run_migration
+from .pipeline import clean_flink_sql_and_validate
 
 
 _HARNESS_ROOT = Path(__file__).resolve().parents[2]
 _PROJECT_ROOT = _HARNESS_ROOT.parent
 
-_context  = HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT)
-configure(_context)   
+_context = HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT)
+configure(_context)
+
+logger = get_logger()
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
-
-
-def _run_deploy(
-    table: str,
-    ddl_path: Path,
-    dml_path: Path,
-    ksql: str,
-    agent_on_failure: bool,
-    tests_dir: Path | None,
-) -> None:
-    logger.info("Deploying table=%s ddl=%s dml=%s", table, ddl_path, dml_path)
-    try:
-        result = FlinkStatementManager().deploy_table(table, ddl_path, dml_path, tests_dir=tests_dir)
-    except DeployError as exc:
-        logger.error("Deploy failed for table=%s: %s", table, exc, exc_info=True)
-        if agent_on_failure:
-            typer.echo(f"Deploy failed, invoking agent retry: {exc}", err=True)
-            retry_result = run_agent_deploy_retry(
-                table_name=table,
-                ksql=ksql,
-                ddl_path=ddl_path,
-                dml_path=dml_path,
-                error_message=str(exc),
-                tests_dir=tests_dir,
-            )
-            typer.echo(retry_result)
-            return
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(1) from exc
-
-    for msg in result.messages:
-        logger.info("Deploy message: %s", msg)
-        typer.echo(msg)
-    if not result.success:
-        logger.error(
-            "Deploy unhealthy for table=%s: DDL=%s DML=%s exceptions=%s",
-            table,
-            result.ddl_phase,
-            result.dml_phase,
-            result.exceptions,
-        )
-        typer.echo(f"Deploy unhealthy: DDL={result.ddl_phase} DML={result.dml_phase}", err=True)
-        raise typer.Exit(1)
-    for src_name, src_phase in result.source_statements:
-        typer.echo(f"Source DDL OK: {src_name} ({src_phase})")
-    typer.echo(
-        f"Deploy OK: {result.ddl_statement} ({result.ddl_phase}), "
-        f"{result.dml_statement or 'no DML'} ({result.dml_phase or 'skipped'})"
-    )
 
 
 @app.command()
@@ -93,10 +45,9 @@ def migrate(
     table: str = typer.Option(..., "--table", "-t"),
     file: Path = typer.Option(..., "--file", "-f"),
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o"),
-    skip_deploy: bool = typer.Option(False, "--skip-deploy", help="Translate only; do not deploy to CC Flink.")
+    skip_deploy: bool = typer.Option(False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
 ) -> None:
-    """Migrate a ksqlDB file to Flink DDL and DML, 
-    then deploy to Confluent Cloud is enabled."""
+    """Migrate ksqlDB CREATE statements to Flink DDL/DML, one statement at a time."""
     logger.info(
         "migrate start table=%s file=%s out_dir=%s skip_deploy=%s",
         table,
@@ -104,26 +55,57 @@ def migrate(
         out_dir,
         skip_deploy,
     )
+    typer.echo(f"Log file: {cli_log_file()}")
     try:
-        # 1- Verify configuration
         if not file.exists():
             logger.error("File not found: %s (cwd=%s)", file.resolve(), Path.cwd())
             typer.echo(f"File not found: {file}", err=True)
             raise typer.Exit(1)
+
+        typer.echo(f"Checking LLM at {llm_base_url()} ...")
         if not llm_reachable():
-            logger.error("LLM not reachable")
-            typer.echo("LLM not reachable. Start oMLX or set SL_LLM_BASE_URL.", err=True)
+            base = llm_base_url()
+            logger.error("LLM not reachable at %s", base)
+            typer.echo(
+                f"LLM not reachable at {base}/models. "
+                "Check SL_LLM_BASE_URL, VPN, and that the server is running.",
+                err=True,
+            )
+            raise typer.Exit(1)
+        typer.echo("LLM reachable.")
+
+        ksql_statements = split_ksql_create_statements(file.read_text())
+        if not ksql_statements:
+            typer.echo("No CREATE STREAM/TABLE statements found in file.", err=True)
             raise typer.Exit(1)
 
-        # 2- Clean ksql input
-        ksql_cleaned = clean_ksql_input(file.read_text())
-        logger.debug("Cleaned ksql length=%d chars", len(ksql_cleaned))
+        total = len(ksql_statements)
+        typer.echo(f"Found {total} CREATE statement(s); migrating one at a time.")
 
-        # 3- Run migration agent to get first level of Flink DDLs and DMLs
-        response = run_migration(table, ksql_cleaned)
-        
-        # 4 - clean Flink SQLs
-        _clean_flink_sql(response, table, ksql_cleaned, skip_deploy, out_dir)
+        for index, ksql_statement in enumerate(ksql_statements, start=1):
+            ksql_cleaned = clean_ksql_input(ksql_statement)
+            if not ksql_cleaned.strip():
+                logger.warning("Skipping empty statement index=%d", index)
+                continue
+
+            source_name = extract_ksql_object_name(ksql_cleaned) or f"statement_{index}"
+            typer.echo(
+                f"[{index}/{total}] Migrating ksql {source_name!r} "
+                f"-> Flink target {table!r} ({len(ksql_cleaned)} chars) ..."
+            )
+            logger.info(
+                "Migrating statement %d/%d source=%s target=%s",
+                index,
+                total,
+                source_name,
+                table,
+            )
+
+            response = run_migration(table, ksql_cleaned, source_name=source_name)
+            clean_flink_sql_and_validate(response, table, ksql_cleaned, skip_deploy, out_dir)
+            typer.echo(f"[{index}/{total}] Finished {source_name!r}.")
+
+        typer.echo(f"Done. Processed {total} statement(s). Output: {out_dir.resolve()}")
 
     except typer.Exit:
         raise
@@ -137,58 +119,9 @@ def migrate(
         raise typer.Exit(1) from exc
 
 
+def main():
+    app()
 
-def _clean_flink_sql(response: str, table: str, src_ksql: str, skip_deploy: bool, out_dir: Path) -> str:
-    ddls, dmls = extract_sql_blocks(response)
-    logger.info(
-        "Extracted ddl=%d statements dml=%d statements",
-        len(ddls),
-        len(dmls),
-    )
-
-    offline_issues = validate_statements(ddls, dmls)
-    log_validation_issues(offline_issues)
-    raise_on_errors(offline_issues)
-
-    ddl_paths, dml_paths = write_output(table, ddls, dmls, out_dir)
-    for path in ddl_paths + dml_paths:
-        logger.info("Wrote %s", path)
-        typer.echo(f"Wrote {path}")
-
-    ddl_path, dml_path = resolve_table_paths(ddl_paths, dml_paths, table)
-    if dml_path is None:
-        dml_path = out_dir / f"dml.{table}.sql"
-
-    tests_dir: Path | None = None
-    if dmls:
-        dml_sql = "\n\n".join(dmls)
-        ddl_sql = "\n\n".join(ddls)
-        missing = compute_missing_source_tables(dml_sql, table, ddl_sql)
-        if missing:
-            typer.echo(f"Generating source DDL stubs for: {', '.join(missing)}")
-            source_ddls = generate_source_ddls(table, src_ksql, dml_sql, missing)
-            source_paths = write_source_ddls(out_dir, source_ddls)
-            for path in source_paths:
-                typer.echo(f"Wrote {path}")
-            tests_dir = out_dir / "tests"
-
-    if skip_deploy:
-        logger.info("Skipped deploy (--skip-deploy)")
-        typer.echo("Skipped deploy (--skip-deploy).")
-        return
-
-    if ddl_path is None:
-        typer.echo(f"No DDL file found for table {table!r}", err=True)
-        raise typer.Exit(1)
-
-    remote_issues = validate_statements_remote(ddls, dmls)
-    log_validation_issues(remote_issues)
-    raise_on_errors(remote_issues)
-
-    agent_deploy_on_failure = agent_deploy_on_failure or agent_deploy_on_failure_env()
-    if tests_dir is None and (out_dir / "tests").is_dir():
-        tests_dir = out_dir / "tests"
-    _run_deploy(table, ddl_path, dml_path, src_ksql, agent_deploy_on_failure, tests_dir)
 
 if __name__ == "__main__":
-    app()
+    main()

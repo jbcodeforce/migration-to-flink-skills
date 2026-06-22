@@ -11,3 +11,4 @@
 **/.env
 **/site/
 **/__pycache__/
+**/output/

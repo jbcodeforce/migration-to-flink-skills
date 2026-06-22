@@ -1,4 +1,10 @@
-"""Generate stub DDL for DML source tables via LLM."""
+"""
+Copyright 2024-2026 Confluent, Inc.
+KSQL to Flink SQL Translation Agent
+
+
+Generate stub DDL for DML source tables via LLM.
+"""
 
 from __future__ import annotations
 
