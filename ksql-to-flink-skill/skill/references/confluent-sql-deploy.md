@@ -5,7 +5,7 @@ After translation, deploy source stub DDLs from `tests/`, then target DDL, then 
 ## Prerequisites
 
 - Confluent Cloud account with Flink compute pool
-- Flink regional API key and secret in `harness/.env`
+- Flink regional API key and secret in the repo-root `.env` (or `DOTENV_FILE`)
 - Python harness with `flink-skill-common` (includes `confluent-sql`)
 
 ## Output layout

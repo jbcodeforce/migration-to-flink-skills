@@ -19,19 +19,19 @@ The Harness steps are:
 * generate source stub DDLs in `tests/` when DML references missing tables
 * deploy source DDLs, target DDL, then DML to Confluent Cloud Flink via [confluent-sql](https://pypi.org/project/confluent-sql/).
 
-Deploy requires Flink API credentials in `harness/.env`. See [docs/FLINK_DEPLOY.md](docs/FLINK_DEPLOY.md).
+Deploy requires Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`). See [docs/FLINK_DEPLOY.md](docs/FLINK_DEPLOY.md).
 
 
 ## Quick start
 
 * Prepare the python code for the ksql-to-flink cli:
 ```bash
-cd harness
-cp .env.example .env
+cp .env.example .env   # at repo root
+cd ksql-to-flink-skill/harness
 uv sync --extra dev
 ```
 
-* Set environment variables to access LLM model in the .env
+* Set environment variables to access LLM model in the repo-root `.env`
 | Variable | Default |
 |----------|---------|
 | `SL_LLM_BASE_URL` | `http://localhost:7999/v1` |

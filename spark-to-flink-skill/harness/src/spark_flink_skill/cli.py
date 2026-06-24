@@ -38,7 +38,7 @@ def migrate(
         raise typer.Exit(1)
     if not llm_reachable():
         typer.echo(
-            "LLM not reachable. Start oMLX or set SL_LLM_BASE_URL in harness/.env",
+            "LLM not reachable. Start oMLX or set SL_LLM_BASE_URL in the repo-root .env (or DOTENV_FILE)",
             err=True,
         )
         raise typer.Exit(1)

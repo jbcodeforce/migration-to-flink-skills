@@ -1,0 +1,120 @@
+
+## EXAMPLE (STREAM to TABLE):
+
+Input (ksqlDB):
+CREATE STREAM acting_events (name VARCHAR, title VARCHAR) WITH (KAFKA_TOPIC='acting-events', VALUE_FORMAT='AVRO');
+
+Output (Flink DDL):
+CREATE TABLE IF NOT EXISTS acting_events (
+    name STRING,
+    title STRING,
+    PRIMARY KEY (name) NOT ENFORCED
+) DISTRIBUTED BY HASH(name) INTO 1 BUCKETS WITH (
+    'value.format' = 'avro-registry',
+    'value.avro-registry.schema-context' = '.flink-dev',
+    'key.avro-registry.schema-context' = '.flink-dev',
+    'scan.startup.mode' = 'earliest-offset',
+    'value.fields-include' = 'all',
+    'kafka.retention.time' = '0',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+Output (Flink DML): Empty for a source-only table; otherwise INSERT INTO target SELECT ... FROM source.
+
+
+
+## CORE TRANSLATION PRINCIPLES:
+
+* PRESERVE the column name casing (camelCase for kpiName etc, or snake_case, etc.).
+* Consider the full statement ending by ';' as string to translate.
+
+
+### DML Transformations:
+* `EMIT CHANGES` → `INSERT INTO` statement for continuous processing
+* `CREATE ... AS SELECT ...` → Separate DDL and DML statements
+* Maintain streaming semantics with appropriate INSERT INTO operations
+
+### Advanced Pattern Handling:
+* **Deduplication Pattern (GROUP BY + LATEST_BY_OFFSET)**:
+  When ksql has `GROUP BY` together with `LATEST_BY_OFFSET(...)`, including `CREATE TABLE ... AS SELECT ... GROUP BY ... EMIT CHANGES`:
+  - `PARTITION BY` in `ROW_NUMBER()` must match ksql `GROUP BY` columns exactly.
+  - Use a CTE named `deduplicated` wrapping the `ROW_NUMBER()` subquery filtered with `WHERE rn = 1`.
+  - Outer query must repeat ksql `GROUP BY` columns: `SELECT ... FROM deduplicated GROUP BY <ksql group by columns>`.
+  - Do not omit the outer `GROUP BY` when ksql has one.
+  - Columns in ksql `GROUP BY` pass through bare; `LATEST_BY_OFFSET(col)` becomes bare `col` inside the CTE.
+
+  ```sql
+  -- ksqlDB: LATEST_BY_OFFSET with GROUP BY
+  SELECT
+    LATEST_BY_OFFSET(`msg_type`) `msg_type`,
+    `msg_epoch`,
+    `msg_from_id`,
+    `msg_incoming`,
+    LATEST_BY_OFFSET(`msg_body`) `msg_body`
+  FROM kes_ice_chat_deal_st
+  GROUP BY `msg_from_id`, `msg_incoming`, `msg_epoch`
+  EMIT CHANGES;
+
+  -- Flink: CTE + ROW_NUMBER + outer GROUP BY
+  INSERT INTO kes_ice_chat_deal
+  WITH deduplicated AS (
+      SELECT
+          `msg_type`,
+          `msg_epoch`,
+          `msg_from_id`,
+          `msg_incoming`,
+          `msg_body`
+      FROM (
+          SELECT
+              `msg_type`,
+              `msg_epoch`,
+              `msg_from_id`,
+              `msg_incoming`,
+              `msg_body`,
+              ROW_NUMBER() OVER (
+                  PARTITION BY `msg_from_id`, `msg_incoming`, `msg_epoch`
+                  ORDER BY $rowtime DESC
+              ) AS rn
+          FROM kes_ice_chat_deal_st
+      )
+      WHERE rn = 1
+  )
+  SELECT * FROM deduplicated
+  GROUP BY `msg_from_id`, `msg_incoming`, `msg_epoch`;
+  ```
+
+* **Join Pattern**:
+  ```sql
+  -- ksqlDB: Stream-Table Join
+  SELECT * FROM stream s JOIN table t ON s.id = t.id
+  -- Flink: Same syntax with proper temporal semantics
+  SELECT * FROM stream s JOIN table t FOR SYSTEM_TIME AS OF s.$rowtime ON s.id = t.id
+  ```
+
+* **Windowing**:
+When the ksql source has a WINDOW TUMBLING statement, it is mandatory to add the following two columns in the DDL:
+```sql
+    window_start TIMESTAMP(3),
+    window_end TIMESTAMP(3),
+```
+
+and add those column to the GROUP BY statement when needed.
+```sql
+GROUP BY window_start, window_end
+```
+
+### Reserved Keywords:
+* Use backticks around SQL keywords as column names: `name`, `order`, `group`, etc.
+* Preserve original column naming conventions and casing.
+
+## QUALITY VALIDATION:
+* flink_ddl_output must not contain the string CREATE STREAM.
+* Ensure streaming semantics are preserved
+* Replace '\\n' with empty space
+* Verify connector properties are complete and valid
+* Confirm primary key constraints when appropriate
+* Validate that window operations use proper time attributes
+* Check that deduplication logic maintains correctness
+* When ksql DML has `GROUP BY` with `LATEST_BY_OFFSET`, `flink_dml_output` must contain `WITH deduplicated AS` and an outer `GROUP BY` with the same columns as ksql
+* Do not put explanations in the response

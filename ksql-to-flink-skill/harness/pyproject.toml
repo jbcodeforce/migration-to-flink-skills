@@ -24,7 +24,7 @@ dev = [
 
 [project.scripts]
 ksql-flink-migrate = "ksql_to_flink.cli:main"
-ksql-flink-agent = "ksql_to_flink.agents.migrate_agent:main"
+ksql-flink-agent = "ksql_to_flink.migrate_agent:main"
 
 [build-system]
 requires = ["hatchling"]

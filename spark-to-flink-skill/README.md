@@ -15,8 +15,8 @@ Harness steps: clean → detect CREATE statements (deterministic) → agent migr
 ## Quick start (harness)
 
 ```bash
-cd harness
-cp .env.example .env
+cp .env.example .env   # at repo root
+cd spark-to-flink-skill/harness
 uv sync --extra dev
 
 # Offline tests (no LLM)

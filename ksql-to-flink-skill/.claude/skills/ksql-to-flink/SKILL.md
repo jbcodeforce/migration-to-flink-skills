@@ -219,7 +219,7 @@ output/
 
 After writing DDL/DML and source stubs, deploy to Confluent Cloud for Flink using Agno tools backed by the `confluent-sql` Python driver.
 
-Prerequisites: Flink API credentials in `harness/.env`. See [docs/FLINK_DEPLOY.md](../../docs/FLINK_DEPLOY.md).
+Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`). See [docs/FLINK_DEPLOY.md](../../docs/FLINK_DEPLOY.md).
 
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
 

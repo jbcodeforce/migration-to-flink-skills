@@ -8,6 +8,11 @@ description: >-
 
 # ksqlDB to Flink SQL migration
 
+You are a helpful assistant, expert in SQL translation, specializing in converting Confluent ksqlDB scripts to Apache Flink SQL.
+Your task is to convert ksqlDB SQL into equivalent Apache Flink SQL with proper streaming semantics.
+
+Think step by step, follow core principles.
+
 ## Scope
 
 Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` becomes Flink `CREATE TABLE IF NOT EXISTS`. Flink has no `CREATE STREAM`.
@@ -23,8 +28,7 @@ When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statemen
 
 1. Split on each `CREATE STREAM` / `CREATE TABLE` (through the terminating `;`)
 2. Clean each fragment (remove comments, `DROP`, `SET`)
-3. Call the migration agent once per statement
-4. Validate, write output, and optionally deploy after each pass
+3. Validate, write output, and optionally deploy after each pass
 
 Use this for large pipeline scripts (many streams/tables in one file). Each agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.
 
@@ -35,14 +39,16 @@ Use this for large pipeline scripts (many streams/tables in one file). Each agen
 ```
 - [ ] 1. Split file into individual CREATE STREAM/TABLE statements (harness)
 - [ ] 2. For each statement: clean input (remove DROP, SET, comments)
-- [ ] 3. Translate that single CREATE in one agent pass
-- [ ] 4. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
-- [ ] 5. Write ddl.{table}.sql and dml.{table}.sql
-- [ ] 6. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
-- [ ] 7. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
-- [ ] 8. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
-- [ ] 9. Deploy target DML after target DDL succeeds
-- [ ] 10. Verify statement health; triage on failure; repeat for next CREATE if any remain
+- [ ] 3. Apply DDL keyword replacements (STREAM/TABLE to CREATE TABLE IF NOT EXISTS).
+- [ ] 4.Map data types and table structure.
+- [ ] 5. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
+- [ ] 6. Apply function, aggregation, and windowing rules.
+- [ ] 7. Write ddl.{table}.sql and dml.{table}.sql
+- [ ] 8. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
+- [ ] 9. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
+- [ ] `0. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
+- [ ] 11. Deploy target DML after target DDL succeeds
+- [ ] 12. Verify statement health; triage on failure; repeat for next CREATE if any remain
 ```
 
 Harness `ksql-flink-migrate` runs steps 6–10 by default after each statement. Use `--skip-deploy` for translate-only runs.
@@ -51,7 +57,7 @@ Harness `ksql-flink-migrate` runs steps 6–10 by default after each statement. 
 
 - `CREATE STREAM` → `CREATE TABLE IF NOT EXISTS`
 - ksqlDB `CREATE TABLE` → `CREATE TABLE IF NOT EXISTS`
-- Never output `CREATE STREAM` in `flink_ddl_output`
+
 
 ## Output format
 
@@ -77,6 +83,9 @@ Source-only tables: empty `flink_dml_output`. Continuous queries: `INSERT INTO` 
 - `VARCHAR` → `STRING`
 - `TIMESTAMP` → `TIMESTAMP(3)`
 - Do not add explicit `$rowtime TIMESTAMP(3) METADATA FROM 'timestamp'` in DDL
+- PRESERVE the column name casing (camelCase for kpiName etc, or snake_case, etc.).
+- Replace BIGINT → BIGINT (maintain precision)
+- Use TIMESTAMP(3) for millisecond precision timestamps
 
 ## Functions
 
@@ -85,7 +94,7 @@ Source-only tables: empty `flink_dml_output`. Continuous queries: `INSERT INTO` 
 | `PROCTIME()` | `$rowtime` |
 | `LATEST_BY_OFFSET(col)` | CTE + `ROW_NUMBER()` + outer `GROUP BY` (see Deduplication) |
 | `INSTR(a,b,pos,occ)` | `LOCATE(b, a, pos)` |
-| `LENGTH(s)` | `CHARACTER_LENGTH(s)` |
+| `LENGTH(s)` | `CHAR_LENGTH(s)` |
 | `EXPLODE(arr)` | `CROSS JOIN UNNEST(arr) AS u (element)` |
 | `TIMESTAMPTOSTRING(ts, fmt)` | `DATE_FORMAT(ts, fmt)` |
 
@@ -106,10 +115,14 @@ window_end TIMESTAMP(3),
 
 ## Connector WITH block
 
+* VALUE_FORMAT='JSON_SR' → `'value.format' = 'json-registry'`
+* `'value_format' = 'JSON'` → `'value.format' = 'json-registry'`
+* `'value_format' = 'AVRO'` → `'value.format' = 'avro-registry'`
+* `'key_format' = 'KAFKA'` → `'key.format' = 'json-registry'`
+
+
 ```
 'value.format' = 'avro-registry',
-'value.avro-registry.schema-context' = '.flink-dev',
-'key.avro-registry.schema-context' = '.flink-dev',
 'scan.startup.mode' = 'earliest-offset',
 'value.fields-include' = 'all',
 'kafka.retention.time' = '0',
@@ -219,7 +232,7 @@ output/
 
 After writing DDL/DML and source stubs, deploy to Confluent Cloud for Flink using Agno tools backed by the `confluent-sql` Python driver.
 
-Prerequisites: Flink API credentials in `harness/.env`. See [flink-deploy-setup.md](references/flink-deploy-setup.md).
+Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`). See [flink-deploy-setup.md](references/flink-deploy-setup.md).
 
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
 

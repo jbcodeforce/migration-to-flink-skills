@@ -31,6 +31,17 @@ dependencies = ["flink-skill-common"]
 flink-skill-common = { path = "../../flink-skill-common", editable = true }
 ```
 
+## Environment
+
+All harnesses load a shared `.env` from the monorepo root (`migration-to-flink-skills/.env`). Override the location with the `DOTENV_FILE` environment variable (absolute path, or relative to the repo root):
+
+```bash
+cp .env.example .env
+export DOTENV_FILE=/path/to/reusable.env  # optional
+```
+
+Copy [../.env.example](../.env.example) to the repo root and fill in LLM and Flink credentials.
+
 ## Commands
 
 ```bash

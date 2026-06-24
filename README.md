@@ -15,3 +15,20 @@ I'm also convince that small LLM, well prompted, with efficients tool can do a l
 
 ## Documentation
 
+## Environment setup
+
+All harnesses share one environment file at the repo root:
+
+```bash
+cp .env.example .env
+# edit .env with LLM and Flink credentials
+```
+
+To reuse an external env file across projects:
+
+```bash
+export DOTENV_FILE=/path/to/my-reusable.env
+```
+
+See [flink-skill-common/README.md](./flink-skill-common/README.md) for details.
+

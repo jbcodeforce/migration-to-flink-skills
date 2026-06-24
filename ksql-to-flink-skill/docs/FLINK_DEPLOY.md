@@ -9,15 +9,16 @@ The harness deploys translated Flink SQL to Confluent Cloud using the [confluent
 
 ## Configuration
 
-1. Copy environment template:
+1. Copy environment template at the repo root:
 
 ```bash
-cd harness
 cp .env.example .env
 # edit .env with your CC credentials
 ```
 
-2. Required variables in `harness/.env`:
+Alternatively, point at an external env file: `export DOTENV_FILE=/path/to/reusable.env`
+
+2. Required variables in the shared `.env`:
 
 | Variable | Description |
 |----------|-------------|

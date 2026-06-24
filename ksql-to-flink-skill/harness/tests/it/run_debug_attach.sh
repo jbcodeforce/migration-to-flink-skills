@@ -8,10 +8,15 @@ cd "$HARNESS_ROOT"
 
 export PYTHONPATH="${HARNESS_ROOT}/src:${HARNESS_ROOT}/../../flink-skill-common/src"
 
-if [[ -f "${HARNESS_ROOT}/.env" ]]; then
+if [[ -n "${DOTENV_FILE:-}" && -f "${DOTENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${DOTENV_FILE}"
+  set +a
+elif [[ -f "${HARNESS_ROOT}/../../.env" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source "${HARNESS_ROOT}/.env"
+  source "${HARNESS_ROOT}/../../.env"
   set +a
 fi
 

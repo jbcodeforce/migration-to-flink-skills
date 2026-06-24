@@ -1,0 +1,7 @@
+2026-06-23 19:24:18,951 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:24:32,615 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:25:14,036 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:25:40,523 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:25:57,731 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:26:57,882 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:32:19,423 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/tests/logs/ksql-flink-cli.log (level=DEBUG)

@@ -1,0 +1,193 @@
+2026-06-23 19:33:02,673 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:41:20,380 DEBUG [flink_migration_skill.cli] config.py:246 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:52:49,599 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:53:04,295 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:56:55,381 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:59:28,505 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 19:59:28,505 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 19:59:28,505 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 19:59:28,505 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-06-23 19:59:28,505 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-06-23 20:03:59,640 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 20:03:59,640 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 20:03:59,640 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 20:03:59,640 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-06-23 20:03:59,640 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-06-23 20:05:36,170 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 20:07:27,576 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 21:52:04,235 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:91 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-06-23 21:52:04,268 INFO [flink_migration_skill.cli] output.py:92 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:52:04,270 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-06-23 21:52:04,273 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:52:04,273 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:52:04,273 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-06-23 21:52:04,273 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-06-23 21:54:36,830 DEBUG [flink_migration_skill.cli] config.py:268 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-06-23 21:54:36,850 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-06-23 21:54:36,850 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:54:36,850 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:54:36,850 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:91 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-06-23 21:54:36,851 INFO [flink_migration_skill.cli] output.py:92 DML: INSERT INTO t SELECT id FROM src;
+2026-06-23 21:54:36,852 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-06-23 21:54:36,855 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-06-23 21:54:36,860 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-06-23 21:54:36,860 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-06-23 21:54:36,861 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
