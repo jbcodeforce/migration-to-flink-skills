@@ -6,7 +6,7 @@ set -euo pipefail
 HARNESS_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$HARNESS_ROOT"
 
-export PYTHONPATH="${HARNESS_ROOT}/src:${HARNESS_ROOT}/../../flink-skill-common/src"
+export PYTHONPATH="${HARNESS_ROOT}/src:${HARNESS_ROOT}/../../flink-skill-common/harness/src"
 
 if [[ -n "${DOTENV_FILE:-}" && -f "${DOTENV_FILE}" ]]; then
   set -a

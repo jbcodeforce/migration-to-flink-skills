@@ -137,7 +137,7 @@ def converge_flink_sql(
     skip_deploy: bool = False,
     agent_on_failure: bool | None = None,
 ) -> ConvergenceResult:
-    """Loop validation, deploy, and agent fix until SQL converges or retries exhaust."""
+    """Loop validation, deploy, and agent fix until SQL converge to successful deployments or retries exhaust."""
     use_agent = agent_fixer_enabled() if agent_on_failure is None else agent_on_failure
     max_attempts = agent_fixer_max_retries() if use_agent else 1
 

@@ -103,6 +103,7 @@ def _validate_parseable(sql: str, kind: SqlKind, index: int) -> list[SqlValidati
 
 def _validate_one(sql: str, kind: SqlKind, index: int) -> list[SqlValidationIssue]:
     stripped = strip_sql_comments_and_drops(sql).strip()
+    print(f"Stripped: {stripped[:60]}...")
     if not stripped:
         return []
 
@@ -151,7 +152,7 @@ def validate_statements(ddls: list[str], dmls: list[str]) -> list[SqlValidationI
 
 
 def log_validation_issues(issues: list[SqlValidationIssue]) -> None:
-    """Log warnings; errors are raised by raise_on_errors."""
+    """Log warnings"""
     logger = get_logger()
     for issue in issues:
         if issue.severity == "warning":
@@ -161,15 +162,20 @@ def log_validation_issues(issues: list[SqlValidationIssue]) -> None:
                 issue.statement_index,
                 issue.message,
             )
-
+        else:
+            logger.error(
+                "SQL validation error [%s#%d]: %s",
+                issue.kind,
+                issue.statement_index,
+                issue.message,
+            )
 
 def raise_on_errors(issues: list[SqlValidationIssue]) -> None:
     """Raise SqlValidationError when any error-severity issue is present."""
     errors = [issue for issue in issues if issue.severity == "error"]
     if errors:
         raise SqlValidationError(errors)
-
-
+        
 def validate_statements_remote(ddls: list[str], dmls: list[str]) -> list[SqlValidationIssue]:
     """Tier 2: authoritative validation via Confluent Cloud Flink parser."""
     from flink_skill_common.config import flink_deploy_settings

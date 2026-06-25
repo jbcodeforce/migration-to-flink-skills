@@ -41,9 +41,25 @@ export DOTENV_FILE=/path/to/reusable.env  # optional
 
 Copy [../.env.example](../.env.example) to the repo root and fill in LLM and Flink credentials.
 
+## Layout
+
+All Python source, tests, and package metadata live under [`harness/`](harness/):
+
+```
+flink-skill-common/
+├── harness/          # canonical package (pyproject.toml, src/, tests/)
+│   ├── src/flink_skill_common/
+│   └── tests/
+├── skill/            # Agno skill for validate-flink-sql
+└── README.md
+```
+
 ## Commands
 
+From `flink-skill-common/harness`:
+
 ```bash
+cd harness
 uv sync --extra dev
 uv run pytest
 ```

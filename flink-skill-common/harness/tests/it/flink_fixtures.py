@@ -7,14 +7,12 @@ from typing import Literal
 
 import pytest
 
+from flink_ref_fixtures import FLINK_REF, REPO_ROOT
 from flink_skill_common.sql_validate import (
     SqlValidationIssue,
     validate_statements,
     validate_statements_remote,
 )
-
-REPO_ROOT = Path(__file__).resolve().parents[4]
-FLINK_REF = REPO_ROOT / "references/flink"
 
 SqlKind = Literal["ddl", "dml"]
 

@@ -5,7 +5,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql
+from flink_skill_common.config import HarnessContext, configure
+
+__COMMON_ROOT = Path(__file__).resolve().parents[2]
+__PROJECT_ROOT = __COMMON_ROOT.parent
+_HARNESS = HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT)
+configure(_HARNESS)
+
+from flink_skill_common.convergence import(
+    _apply_agent_fix,
+    _deploy_messages,
+    ConvergenceContext,
+    converge_flink_sql,
+)
 from flink_skill_common.deploy.flink_statement_manager import DeployError, DeployResult
 from flink_skill_common.sql_validate import SqlValidationError, SqlValidationIssue
 
@@ -32,6 +44,7 @@ def test_converge_skip_deploy_success(ctx: ConvergenceContext):
     assert result.success is True
     assert result.ddl_path is not None
     assert "Skipped deploy" in result.messages[-1]
+    print(result)
 
 
 def test_converge_offline_validation_raises_without_agent(ctx: ConvergenceContext):

@@ -32,7 +32,6 @@ from flink_skill_common.config import (
     llm_model,
     llm_timeout,
     load_env,
-    require_flink_deploy_ready,
     resolve_dotenv_path,
     skill_dir,
     skill_md_path,
@@ -296,12 +295,6 @@ def test_flink_deploy_settings_missing_raises(monkeypatch):
 
     with pytest.raises(FlinkDeployNotReadyError, match="FLINK_API_KEY"):
         flink_deploy_settings()
-
-
-def test_require_flink_deploy_ready(monkeypatch):
-    _set_complete_flink_deploy_env(monkeypatch)
-    assert require_flink_deploy_ready() == flink_deploy_settings()
-
 
 def test_agent_settings_from_shared_dotenv():
     if dotenv_path() is None:
