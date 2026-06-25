@@ -60,8 +60,8 @@ def test_migrate_deploys_by_default(tmp_path: Path):
             ),
         ):
 
-            with patch("ksql_to_flink.pipeline.validate_statements_remote", return_value=[]):
-                with patch("ksql_to_flink.pipeline.FlinkStatementManager") as mock_manager_cls:
+            with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
+                with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_manager_cls:
                     mock_manager_cls.return_value.deploy_table.return_value = deploy_result
                     result = runner.invoke(
                         app,

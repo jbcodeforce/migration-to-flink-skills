@@ -133,10 +133,11 @@ wheels = [
 [[package]]
 name = "flink-skill-common"
 version = "0.1.0"
-source = { editable = "../../flink-skill-common" }
+source = { editable = "../../flink-skill-common/harness" }
 dependencies = [
     { name = "agno" },
     { name = "confluent-sql" },
+    { name = "openai" },
     { name = "python-dotenv" },
     { name = "sqlglot" },
 ]
@@ -145,6 +146,7 @@ dependencies = [
 requires-dist = [
     { name = "agno", specifier = ">=2.0.0" },
     { name = "confluent-sql", specifier = ">=0.3.1" },
+    { name = "openai", specifier = ">=1.40.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -380,7 +382,7 @@ dev = [
 requires-dist = [
     { name = "agno", specifier = ">=2.0.0" },
     { name = "debugpy", specifier = ">=1.8.0" },
-    { name = "flink-skill-common", editable = "../../flink-skill-common" },
+    { name = "flink-skill-common", editable = "../../flink-skill-common/harness" },
     { name = "openai", specifier = ">=1.40.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0" },

@@ -13,6 +13,9 @@ from flink_skill_common.sql_validate import (
     raise_on_errors,
     validate_statements,
     validate_statements_remote,
+    _extract_ddl_header,
+    _validate_one,
+    _validate_parseable
 )
 
 VALID_DDL = """CREATE TABLE IF NOT EXISTS publication_events (
@@ -21,8 +24,13 @@ VALID_DDL = """CREATE TABLE IF NOT EXISTS publication_events (
     title STRING
 ) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
 WITH (
-    'connector' = 'kafka',
-    'topic' = 'publication_events'
+    'changelog.mode' = 'append',
+    'kafka.retention.time' = '0',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded',
+    'scan.startup.mode' = 'earliest-offset',
+    'value.fields-include' = 'all',
+    'value.format' = 'avro-registry'
 );"""
 
 VALID_DML = """INSERT INTO george_martin_books
@@ -30,6 +38,89 @@ SELECT bookid, author, title
 FROM publication_events
 WHERE author = 'George R. R. Martin';"""
 
+def test_extract_ddl_header():
+    sql_out = _extract_ddl_header(VALID_DDL)
+    assert "DISTRIBUTED" not in sql_out
+    assert "WITH" not in sql_out
+    assert "changelog.mode" not in sql_out
+    assert "kafka.retention.time" not in sql_out
+    assert "kafka.producer.compression.type" not  in sql_out
+    assert "scan.bounded.mode" not in sql_out
+    assert "scan.startup.mode" not in sql_out
+    assert "value.fields-include" not in sql_out
+    assert "value.format" not in sql_out
+    VALID_DDL_2 = """CREATE TABLE IF NOT EXISTS publication_events (
+        bookid BIGINT,
+        author STRING,
+        title STRING
+    )
+    WITH (
+        'changelog.mode' = 'append',
+        'kafka.retention.time' = '0',
+        'kafka.producer.compression.type' = 'snappy',
+        'scan.bounded.mode' = 'unbounded',
+        'scan.startup.mode' = 'earliest-offset',
+        'value.fields-include' = 'all',
+        'value.format' = 'avro-registry'
+    );"""
+    sql_out = _extract_ddl_header(VALID_DDL_2)
+    print(sql_out)
+    assert "WITH" not in sql_out
+
+
+def test_validate_watermark_parseable():
+    issues = _validate_parseable(VALID_DDL, "ddl", 0)
+    assert not issues
+    flink_ddl = """CREATE TABLE IF NOT EXISTS publication_events (
+        bookid BIGINT,
+        author STRING,
+        title STRING,
+        ts TIMESTAMP_LTZ(3),
+        PRIMARY KEY (bookid) NOT ENFORCED,
+         WATERMARK FOR ts AS ts - INTERVAL '5' SECOND
+    )
+    DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+    WITH (
+        'changelog.mode' = 'append',
+        'kafka.retention.time' = '0',
+        'kafka.producer.compression.type' = 'snappy',
+        'scan.bounded.mode' = 'unbounded',
+        'scan.startup.mode' = 'earliest-offset',
+        'value.fields-include' = 'all',
+        'value.format' = 'avro-registry'
+    )
+    """
+    issues = _validate_parseable(flink_ddl, "ddl", 0)
+    assert not issues
+
+def test_validate_virtual_metadata_parseable():
+    doc_ex="""
+    CREATE TABLE t (
+        `user_id` BIGINT,
+        `item_id` BIGINT,
+        `behavior` STRING,
+        `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+        `partition` BIGINT METADATA VIRTUAL,
+        `offset` BIGINT METADATA VIRTUAL
+    );
+    """
+    issues = _validate_parseable(doc_ex, "ddl", 0)
+    assert not issues
+
+def test_validate_dml_parseable():
+    dml_ex = """
+    INSERT INTO publication_events
+    SELECT 
+      bookid, 
+      author, 
+      title, 
+      ts,
+      JSON_VALUE(value, '$.patate') AS patate
+    FROM publication_events
+    WHERE author = 'George R. R. Martin';
+    """
+    issues = _validate_parseable(dml_ex, "dml", 0)
+    assert not issues
 
 def test_validate_statements_accepts_valid_fixture():
     issues = validate_statements([VALID_DDL], [VALID_DML])

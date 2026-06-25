@@ -87,7 +87,7 @@ cp -r skill/* ~/.cursor/skills/ksql-to-flink/
 In Cursor IDE use `/ksql_to_flink`. Example of direct prompt:
 
 ```
-using /ksql_to_flink translate this @KES-CHAT.sql to the same table name in the flink folder under @demo/flink
+using /ksql_to_flink translate this @KMA-CHAT.sql to the same table name in the flink folder under @demo/flink
 ```
 
 

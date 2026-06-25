@@ -45,7 +45,7 @@ You receive:
 
 ## EXAMPLE
 
-missing_sources: ["kes_ice_chat_deal_st"]
-Output includes CREATE TABLE IF NOT EXISTS kes_ice_chat_deal_st with columns used in DML GROUP BY / SELECT list.
+missing_sources: ["kma_chat_st"]
+Output includes CREATE TABLE IF NOT EXISTS kma_chat_st with columns used in DML GROUP BY / SELECT list.
 
 Respond with only the JSON object, nothing else.

@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "agno>=2.0.0",
     "confluent-sql>=0.3.1",
+    "openai>=1.40.0",
     "python-dotenv>=1.0.0",
     "sqlglot>=26.0.0",
 ]
@@ -29,4 +30,5 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 markers = [
     "integration: tests requiring live Confluent Cloud Flink credentials",
+    "integration_agent: integration tests requiring reachable LLM for deploy-fixer agent",
 ]

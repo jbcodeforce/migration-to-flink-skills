@@ -190,7 +190,7 @@ SELECT * FROM deduplicated
 GROUP BY `msg_from_id`, `msg_incoming`, `msg_epoch`;
 ```
 
-See [examples.md](references/examples.md) for `KES-CHAT.sql` → `kes_ice_chat_deal`.
+See [examples.md](references/examples.md) for `KMA-CHAT.sql` → `kma_chat`.
 
 ## DDL template
 
@@ -222,10 +222,10 @@ Example layout:
 
 ```
 output/
-  ddl.kes_ice_chat_deal.sql
-  dml.kes_ice_chat_deal.sql
+  ddl.kma_chat.sql
+  dml.kma_chat.sql
   tests/
-    ddl.kes_ice_chat_deal_st.sql
+    ddl.kma_chat_st.sql
 ```
 
 ## Deploy phase (confluent-sql)

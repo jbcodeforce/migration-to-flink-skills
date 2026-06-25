@@ -1,6 +1,6 @@
 # flink-skill-common
 
-Shared Python library for the ksql-to-flink and spark-to-flink migration.
+Shared Python library for the ksql-to-flink and spark-to-flink migration. This component addresses the Flink SQL validation with agent and tools to validate SQL syntax and deployment to Confluent Cloud.
 
 ## Modules
 
@@ -14,11 +14,10 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration.
 | `sql_validate` | Offline (sqlglot) and remote (confluent-sql) SQL syntax validation |
 | `fixtures` | `GoldenPair` dataclass and fixture existence checks |
 | `agents.factory` | Agno agent construction helpers |
+| `agents.deploy_fixer` | Agno agent with confluent-sql tools for validation/deploy fixes |
+| `convergence` | sqlglot → remote validate → deploy → agent fix loop |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
 
-## Core principles
-
-Agno Agent can load skills from folder and use them as part of the system prompt. 
 
 ## Usage
 
@@ -28,7 +27,7 @@ Each skill harness calls `configure()` once at import time in its thin `config.p
 dependencies = ["flink-skill-common"]
 
 [tool.uv.sources]
-flink-skill-common = { path = "../../flink-skill-common", editable = true }
+flink-skill-common = { path = "../../flink-skill-common/harness", editable = true }
 ```
 
 ## Environment

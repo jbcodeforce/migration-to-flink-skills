@@ -119,7 +119,7 @@ class FlinkStatementManager:
             connect_kwargs["cloud_provider"] = self._settings.cloud_provider
             connect_kwargs["cloud_region"] = self._settings.cloud_region
 
-        conn = confluent_sql.connect(**connect_kwargs)
+        conn = connect(**connect_kwargs)
         try:
             yield conn
         finally:
@@ -384,7 +384,10 @@ class FlinkStatementManager:
         index: int = 0,
         statement_name: str | None = None,
     ) -> list[Any]:
-        """Submit SQL to CC Flink with a temporary statement name; delete after check."""
+        """
+        Submit SQL to CC Flink with a temporary statement name;
+        delete after check.
+        """
         stripped = sql.strip()
         if not stripped:
             return []
@@ -457,7 +460,10 @@ class FlinkStatementManager:
         dml_path: Path,
         tests_dir: Path | None = None,
     ) -> DeployResult:
-        """Deploy source DDLs (tests/), target DDL, then DML to Confluent Cloud Flink."""
+        """
+        Deploy source DDLs (tests/), target DDL, 
+        then DML to Confluent Cloud Flink.
+        """
         ddl_sql = ddl_path.read_text().strip()
         dml_sql = dml_path.read_text().strip() if dml_path.is_file() else ""
 

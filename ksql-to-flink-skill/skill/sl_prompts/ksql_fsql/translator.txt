@@ -52,12 +52,12 @@ Output (Flink DML): Empty for a source-only table; otherwise INSERT INTO target 
     `msg_from_id`,
     `msg_incoming`,
     LATEST_BY_OFFSET(`msg_body`) `msg_body`
-  FROM kes_ice_chat_deal_st
+  FROM kma_chat_st
   GROUP BY `msg_from_id`, `msg_incoming`, `msg_epoch`
   EMIT CHANGES;
 
   -- Flink: CTE + ROW_NUMBER + outer GROUP BY
-  INSERT INTO kes_ice_chat_deal
+  INSERT INTO kma_chat
   WITH deduplicated AS (
       SELECT
           `msg_type`,
@@ -76,7 +76,7 @@ Output (Flink DML): Empty for a source-only table; otherwise INSERT INTO target 
                   PARTITION BY `msg_from_id`, `msg_incoming`, `msg_epoch`
                   ORDER BY $rowtime DESC
               ) AS rn
-          FROM kes_ice_chat_deal_st
+          FROM kma_chat_st
       )
       WHERE rn = 1
   )

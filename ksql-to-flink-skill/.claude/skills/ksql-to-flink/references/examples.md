@@ -44,14 +44,14 @@ These ksql tutorial files have no matching `flink_ref` output yet:
 
 Use for manual migration experiments only.
 
-## KES-CHAT.sql → kes_ice_chat_deal (GROUP BY + LATEST_BY_OFFSET)
+## KMA-CHAT.sql → kma_chat (GROUP BY + LATEST_BY_OFFSET)
 
 KSQL: `CREATE TABLE KES_ICE_CHAT_DEAL_TB ... AS SELECT` with mixed bare columns and `LATEST_BY_OFFSET(...)` aggregates, grouped by `msg_from_id`, `msg_to_id`, `msg_epoch`, `msg_incoming`.
 
 Flink DML pattern (mandatory when ksql has `GROUP BY` + `LATEST_BY_OFFSET`):
 
 ```sql
-INSERT INTO kes_ice_chat_deal
+INSERT INTO kma_chat
 WITH deduplicated AS (
     SELECT
         `msg_type`,
@@ -82,7 +82,7 @@ WITH deduplicated AS (
                 PARTITION BY `msg_from_id`, `msg_to_id`, `msg_epoch`, `msg_incoming`
                 ORDER BY $rowtime DESC
             ) AS rn
-        FROM kes_ice_chat_deal_st
+        FROM kma_chat_st
     )
     WHERE rn = 1
 )

@@ -30,7 +30,7 @@ Flink statement names must match `[a-z0-9]([-a-z0-9]*[a-z0-9])?`. Normalize tabl
 | Target DDL | `{target-normalized}-ddl` |
 | Target DML | `{target-normalized}-dml` |
 
-Example: source `kes_ice_chat_deal_st` → `kes-ice-chat-deal-st-ddl`; target `kes_ice_chat_deal` → `kes-ice-chat-deal-ddl`, `kes-ice-chat-deal-dml`.
+Example: source `kma_chat_st` → `kma-chat-st-ddl`; target `kma_chat` → `kma-chat-ddl`, `kma-chat-dml`.
 
 ## Agno tool sequence
 
@@ -61,7 +61,7 @@ Credentials and pool settings come from environment variables (see FLINK_DEPLOY.
 
 ```bash
 cd harness && uv sync --extra dev
-uv run ksql-flink-migrate --table kes_ice_chat_deal --file path/to.ksql --out-dir output/
+uv run ksql-flink-migrate --table kma_chat --file path/to.ksql --out-dir output/
 ```
 
 Deploy runs by default after writing SQL files (including `tests/` stubs when DML has missing sources). Use `--skip-deploy` for translate-only runs.

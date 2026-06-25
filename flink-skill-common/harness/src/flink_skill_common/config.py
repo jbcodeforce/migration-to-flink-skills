@@ -174,6 +174,12 @@ def skill_md_path() -> Path:
     return get_context().skill_md_path
 
 
+def flink_skill_common_skill_dir() -> Path:
+    """Return flink-skill-common/skill regardless of which harness called configure()."""
+    # harness/src/flink_skill_common/config.py → parents[3] is flink-skill-common/
+    return Path(__file__).resolve().parents[3] / "skill"
+
+
 def agent_fixer_enabled() -> bool:
     return os.getenv("AGENT_FIXER_EXECUTION_ENABLED", "").lower() in ("1", "true", "yes")
 
@@ -224,11 +230,6 @@ def flink_deploy_settings() -> FlinkDeploySettings:
         poll_seconds=flink_deploy_poll_seconds(),
         timeout_seconds=flink_deploy_timeout_seconds(),
     )
-
-
-def require_flink_deploy_ready() -> FlinkDeploySettings:
-    """Validate Flink deploy env vars and return settings."""
-    return flink_deploy_settings()
 
 
 def get_logger() -> logging.Logger:

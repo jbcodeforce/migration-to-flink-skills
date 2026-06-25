@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-flink-skill-common = { path = "../../flink-skill-common", editable = true }
+flink-skill-common = { path = "../../flink-skill-common/harness", editable = true }
 
 [project.optional-dependencies]
 dev = [
