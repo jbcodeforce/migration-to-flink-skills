@@ -7,10 +7,14 @@ requires-python = ">=3.11"
 dependencies = [
     "agno>=2.0.0",
     "confluent-sql>=0.3.1",
+    "mcp>=1.6.0",
     "openai>=1.40.0",
     "python-dotenv>=1.0.0",
     "sqlglot>=26.0.0",
 ]
+
+[project.scripts]
+flink-skill-mcp = "flink_skill_common.mcp.server:main"
 
 [project.optional-dependencies]
 dev = [
@@ -31,4 +35,9 @@ testpaths = ["tests"]
 markers = [
     "integration: tests requiring live Confluent Cloud Flink credentials",
     "integration_agent: integration tests requiring reachable LLM for deploy-fixer agent",
+]
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.21",
 ]

@@ -10,7 +10,7 @@ import pytest
 from flink_ref_fixtures import FLINK_REF, REPO_ROOT
 from flink_skill_common.sql_validate import (
     SqlValidationIssue,
-    validate_statements,
+    validate_syntax_for_statements,
     validate_statements_remote,
 )
 
@@ -23,13 +23,13 @@ def _read_sql_files(directory: Path) -> tuple[list[str], list[str]]:
     return ddls, dmls
 
 
-def load_pair(case: str, *, valid: bool = True) -> tuple[list[str], list[str]]:
+def load_flink_pair(case: str, *, valid: bool = True) -> tuple[list[str], list[str], Path]:
     """Load DDL/DML lists from references/flink/valid/{case} or invalid/{case}."""
     tier = "valid" if valid else "invalid"
     directory = FLINK_REF / tier / case
     if not directory.is_dir():
         raise FileNotFoundError(f"Fixture case not found: {directory}")
-    return _read_sql_files(directory)
+    return _read_sql_files(directory), directory
 
 
 def load_source_sql(case: str) -> str:
@@ -46,7 +46,7 @@ def validation_issues(
 ) -> list[SqlValidationIssue]:
     if remote:
         return validate_statements_remote(ddls, dmls)
-    return validate_statements(ddls, dmls)
+    return validate_syntax_for_statements(ddls, dmls)
 
 
 def assert_no_errors(issues: list[SqlValidationIssue]) -> None:
@@ -66,3 +66,17 @@ def assert_has_errors(
         errors = [issue for issue in errors if issue.kind == kind]
     if not errors:
         pytest.fail(f"Expected validation errors (kind={kind!r}), got: {issues}")
+
+
+def assert_convergence_stages(
+    messages: list[str],
+    *,
+    expect_offline: bool = True,
+    expect_remote: bool = False,
+) -> None:
+    """Assert converge_flink_sql message trail includes expected validation tiers."""
+    joined = "\n".join(messages)
+    if expect_offline and "Offline validation failed" not in joined:
+        pytest.fail(f"Expected offline validation stage in messages:\n{joined}")
+    if expect_remote and "Remote validation failed" not in joined:
+        pytest.fail(f"Expected remote validation stage in messages:\n{joined}")

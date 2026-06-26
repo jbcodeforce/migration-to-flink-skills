@@ -18,6 +18,37 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration. This c
 | `convergence` | sqlglot → remote validate → deploy → agent fix loop |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
 
+## Convergence loop
+
+`converge_flink_sql()` retries validation, deploy, and agent fix until SQL converges or max retries exhaust. See [references/flink/README.md](../references/flink/README.md) for staged multi-error fixtures and the full IT flow diagram.
+
+```mermaid
+flowchart TD
+    start[converge_flink_sql loop] --> offline[validate_statements]
+    offline -->|errors + no agent| raiseOff[raise SqlValidationError]
+    offline -->|errors + agent| agentOff[_apply_agent_fix]
+    agentOff -->|ddl_path None| failAgent[return No DDL for agent fix]
+    offline -->|pass| resolve[_resolve_paths]
+    resolve --> skip{skip_deploy?}
+    skip -->|yes| okSkip[return success]
+    skip -->|no| noDdl{ddl_path None?}
+    noDdl -->|yes| failTable[return No DDL for table]
+    noDdl -->|no| remote[validate_statements_remote]
+    remote -->|errors + no agent| raiseRem[raise SqlValidationError]
+    remote -->|errors + agent| agentRem[_apply_agent_fix]
+    remote -->|pass| deploy[FlinkStatementManager.deploy_table]
+    deploy -->|DeployError + no agent| failDeploy[return failure]
+    deploy -->|DeployError + agent| agentDep[_apply_agent_fix]
+    deploy -->|result| deployMsg[_deploy_messages]
+    deployMsg -->|success| okDeploy[return success]
+    deployMsg -->|unhealthy + no agent| failUnhealthy[return failure]
+    deployMsg -->|unhealthy + agent| agentUnh[_apply_agent_fix]
+    agentOff --> loopContinue[continue loop]
+    agentRem --> loopContinue
+    agentDep --> loopContinue
+    agentUnh --> loopContinue
+    loopContinue --> exhaust[return failure after max_attempts]
+```
 
 ## Usage
 
@@ -41,6 +72,34 @@ export DOTENV_FILE=/path/to/reusable.env  # optional
 
 Copy [../.env.example](../.env.example) to the repo root and fill in LLM and Flink credentials.
 
+## MCP server (Cursor IDE)
+
+Validate and deploy Flink SQL from Cursor using the `flink-skill-common` MCP server. The repo includes [`.cursor/mcp.json`](../.cursor/mcp.json); enable it in **Cursor Settings → MCP**.
+
+Prerequisites:
+
+```bash
+cp .env.example .env   # repo root — Flink credentials + optional LLM settings
+cd flink-skill-common/harness && uv sync --extra dev
+```
+
+The server loads credentials from the repo-root `.env` via `DOTENV_FILE=.env` (relative to the monorepo root).
+
+| MCP tool | Purpose |
+|----------|---------|
+| `validate_flink_sql_offline` | sqlglot syntax check (no CC credentials) |
+| `validate_flink_sql_remote` | Confluent Cloud Flink parser |
+| `create_flink_statement` | Submit DDL or DML |
+| `wait_flink_statement_phase` | Poll until RUNNING/COMPLETED/APPLIED |
+| `get_flink_statement_exceptions` | Triage failed statements |
+| `check_flink_statement_health` | Verify DML health |
+
+Run manually:
+
+```bash
+cd flink-skill-common/harness && uv run flink-skill-mcp
+```
+
 ## Layout
 
 All Python source, tests, and package metadata live under [`harness/`](harness/):
@@ -61,5 +120,14 @@ From `flink-skill-common/harness`:
 ```bash
 cd harness
 uv sync --extra dev
-uv run pytest
+uv run pytest -vs tests/ut
+uv run flink-skill-mcp   # MCP server for Cursor (stdio)
 ```
+
+For integration tests, it requires a reachable LLM and CC Flink deploy credentials in .env.
+
+```sh
+AGENT_FIXER_EXECUTION_ENABLED=true \
+uv run pytest tests/it/test_convergence_it.py -vs -m integration_agent
+```
+

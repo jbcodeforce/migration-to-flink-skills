@@ -228,24 +228,30 @@ output/
     ddl.kma_chat_st.sql
 ```
 
-## Deploy phase (confluent-sql)
+## Deploy phase (Cursor MCP + validate-flink-sql)
 
-After writing DDL/DML and source stubs, deploy to Confluent Cloud for Flink using Agno tools backed by the `confluent-sql` Python driver.
+After writing DDL/DML and source stubs:
+
+1. Call MCP `validate_flink_sql_offline` on extracted DDL/DML.
+2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
+3. Optionally call MCP `validate_flink_sql_remote` when Flink credentials are in repo `.env`.
+4. Deploy via the **`flink-skill-common` MCP server** (enable [`.cursor/mcp.json`](../../../.cursor/mcp.json) in Cursor Settings → MCP).
 
 Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`). See [flink-deploy-setup.md](references/flink-deploy-setup.md).
 
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
 
-Tool sequence:
+MCP tool sequence:
 
-1. `create_flink_statement` — submit each `tests/ddl.*.sql` source stub
-2. `wait_flink_statement_phase` or `get_flink_statement` — poll each source DDL until RUNNING/COMPLETED/APPLIED
-3. `create_flink_statement` — submit target DDL SQL
-4. `wait_flink_statement_phase` — poll until target DDL phase is RUNNING/COMPLETED/APPLIED
-5. `create_flink_statement` — submit target DML SQL
-6. `wait_flink_statement_phase` — poll DML until RUNNING or FAILED
-7. `check_flink_statement_health` — verify DML when available
-8. On failure: `get_flink_statement_exceptions` then fix and redeploy
+1. `validate_flink_sql_offline` — sqlglot check before deploy
+2. `create_flink_statement` — submit each `tests/ddl.*.sql` source stub
+3. `wait_flink_statement_phase` — poll each source DDL until RUNNING/COMPLETED/APPLIED
+4. `create_flink_statement` — submit target DDL SQL
+5. `wait_flink_statement_phase` — poll until target DDL phase is RUNNING/COMPLETED/APPLIED
+6. `create_flink_statement` — submit target DML SQL
+7. `wait_flink_statement_phase` — poll DML until RUNNING or FAILED
+8. `check_flink_statement_health` — verify DML when available
+9. On failure: `get_flink_statement_exceptions` → apply `validate-flink-sql` → redeploy
 
 Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). Post-deploy triage: `flink-statement-troubleshooting` skill.
 
@@ -256,7 +262,9 @@ Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). P
 - [confluent-sql-deploy.md](references/confluent-sql-deploy.md)
 - [flink-deploy-setup.md](references/flink-deploy-setup.md)
 
-## Harness
+## Harness (golden tests / CI only)
+
+Use the CLI for regression and integration tests — not the primary Cursor workflow:
 
 ```bash
 cd harness && uv sync --extra dev

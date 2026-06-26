@@ -16,7 +16,7 @@ def _configure_harness_context():
     configure(HarnessContext(harness_root=HARNESS_ROOT, project_root=HARNESS_ROOT.parent))
 
 @pytest.fixture(autouse=True)
-def _clear_logs_file():
+def _clear_logs_file(_configure_harness_context):
     log_file = cli_log_file()
     try:
         if log_file.exists():

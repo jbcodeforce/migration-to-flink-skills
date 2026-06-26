@@ -8,6 +8,7 @@ nav:
     - Introduction: tutorial/index.md
     - Setup Lab: tutorial/setup_lab.md
     - Migration AI Lab: tutorial/migration_ai_lab.md
+  - Developer Guide: dev_guide/index.md
 theme:
   name: material
   logo: assets/batchy.png

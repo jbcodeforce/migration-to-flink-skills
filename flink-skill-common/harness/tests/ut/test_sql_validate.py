@@ -14,7 +14,7 @@ from flink_skill_common.sql_validate import (
     _extract_ddl_header,
     _validate_parseable,
     raise_on_errors,
-    validate_statements,
+    validate_syntax_for_statements,
     validate_statements_remote,
 )
 
@@ -146,24 +146,24 @@ def test_validate_dml_parseable():
 
 
 def test_validate_statements_accepts_valid_fixture():
-    issues = validate_statements([VALID_DDL], [VALID_DML])
+    issues = validate_syntax_for_statements([VALID_DDL], [VALID_DML])
     errors = [i for i in issues if i.severity == "error"]
     assert not errors
 
 
 def test_validate_statements_empty_lists():
-    assert validate_statements([], []) == []
+    assert validate_syntax_for_statements([], []) == []
 
 
 def test_validate_statements_missing_parenthesis():
-    issues = validate_statements(["CREATE TABLE t (id STRING"], [])
+    issues = validate_syntax_for_statements(["CREATE TABLE t (id STRING"], [])
     errors = [i for i in issues if i.severity == "error"]
     assert errors
     assert errors[0].kind == "ddl"
 
 
 def test_validate_statements_insert_typo():
-    issues = validate_statements([], ["INSRT INTO t SELECT 1"])
+    issues = validate_syntax_for_statements([], ["INSRT INTO t SELECT 1"])
     errors = [i for i in issues if i.severity == "error"]
     assert errors
     assert errors[0].kind == "dml"
@@ -171,13 +171,13 @@ def test_validate_statements_insert_typo():
 
 
 def test_validate_statements_select_typo_in_dml():
-    issues = validate_statements([], ["INSERT INTO t SELECT * FORM src"])
+    issues = validate_syntax_for_statements([], ["INSERT INTO t SELECT * FORM src"])
     errors = [i for i in issues if i.severity == "error"]
     assert errors
 
 
 def test_raise_on_errors_raises():
-    issues = validate_statements(["CREATE TABLE t (id STRING"], [])
+    issues = validate_syntax_for_statements(["CREATE TABLE t (id STRING"], [])
     with pytest.raises(SqlValidationError):
         raise_on_errors(issues)
 
@@ -187,7 +187,7 @@ def test_validate_all_flink_references():
     assert len(ddls) >= 3
     assert len(dmls) >= 2
 
-    issues = validate_statements(ddls, dmls)
+    issues = validate_syntax_for_statements(ddls, dmls)
     errors = [issue for issue in issues if issue.severity == "error"]
     assert not errors, "\n".join(
         f"[{issue.kind}#{issue.statement_index}] {issue.message}" for issue in errors

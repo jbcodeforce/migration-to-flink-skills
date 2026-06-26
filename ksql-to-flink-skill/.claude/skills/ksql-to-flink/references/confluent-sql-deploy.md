@@ -1,6 +1,6 @@
 # Deploy to Confluent Cloud Flink via confluent-sql
 
-After translation, deploy source stub DDLs from `tests/`, then target DDL, then DML using the [confluent-sql](https://pypi.org/project/confluent-sql/) Python driver (REST API). See [docs/FLINK_DEPLOY.md](../../docs/FLINK_DEPLOY.md) for configuration.
+After translation, deploy source stub DDLs from `tests/`, then target DDL, then DML using the [confluent-sql](https://pypi.org/project/confluent-sql/) Python driver (REST API). See [flink-deploy-setup.md](flink-deploy-setup.md) for configuration.
 
 ## Prerequisites
 
@@ -32,13 +32,37 @@ Flink statement names must match `[a-z0-9]([-a-z0-9]*[a-z0-9])?`. Normalize tabl
 
 Example: source `kma_chat_st` → `kma-chat-st-ddl`; target `kma_chat` → `kma-chat-ddl`, `kma-chat-dml`.
 
-## Agno tool sequence
+## Agno / MCP tool sequence (Cursor IDE)
+
+In Cursor, call the **`flink-skill-common` MCP server** tools (same names as the Agno deploy fixer). Preflight: repo-root `.env` with Flink credentials (`DOTENV_FILE=.env` in [`.cursor/mcp.json`](../../../.cursor/mcp.json)).
+
+Before deploy, run `validate_flink_sql_offline` on extracted DDL/DML; optionally `validate_flink_sql_remote` when credentials are configured.
+
+| Step | MCP tool | Notes |
+|------|----------|-------|
+| Preflight | (env) | `FLINK_API_KEY`, `FLINK_API_SECRET`, pool IDs in repo `.env` |
+| Offline validate | `validate_flink_sql_offline` | sqlglot; fix with `validate-flink-sql` skill |
+| Remote validate | `validate_flink_sql_remote` | CC Flink parser (optional before deploy) |
+| Deploy source DDL | `create_flink_statement` | For each `tests/ddl.*.sql`, sorted by table name |
+| Poll source DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
+| Deploy target DDL | `create_flink_statement` | After all source DDLs succeed |
+| Poll target DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
+| Deploy target DML | `create_flink_statement` | After target DDL succeeds |
+| Poll target DML | `wait_flink_statement_phase` | Until RUNNING or FAILED |
+| Verify | `check_flink_statement_health` | On DML statement when available |
+| On failure | `get_flink_statement_exceptions` | Apply `validate-flink-sql` skill, then redeploy |
+
+Deploy order is strict: source DDLs → target DDL → target DML.
+
+## Agno harness tool sequence
+
+When using the Python harness Agno deploy fixer (not Cursor MCP), the same tool names apply via `FlinkStatementLLMTools`:
 
 | Step | Tool | Notes |
 |------|------|-------|
 | Preflight | (harness) `require_flink_deploy_ready()` | Validates env credentials |
 | Deploy source DDL | `create_flink_statement` | For each `tests/ddl.*.sql`, sorted by table name |
-| Poll source DDL | `wait_flink_statement_phase` or `get_flink_statement` | Until RUNNING, COMPLETED, or APPLIED |
+| Poll source DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
 | Deploy target DDL | `create_flink_statement` | After all source DDLs succeed |
 | Poll target DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
 | Deploy target DML | `create_flink_statement` | After target DDL succeeds |
@@ -57,7 +81,9 @@ Deploy order is strict: source DDLs → target DDL → target DML.
 
 Credentials and pool settings come from environment variables (see FLINK_DEPLOY.md).
 
-## Harness CLI
+## Harness CLI (golden tests / CI)
+
+The Python CLI is for **regression and integration tests**, not the primary Cursor workflow:
 
 ```bash
 cd harness && uv sync --extra dev

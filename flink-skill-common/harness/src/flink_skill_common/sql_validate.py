@@ -141,7 +141,7 @@ def _validate_one(sql: str, kind: SqlKind, index: int) -> list[SqlValidationIssu
     return issues
 
 
-def validate_statements(ddls: list[str], dmls: list[str]) -> list[SqlValidationIssue]:
+def validate_syntax_for_statements(ddls: list[str], dmls: list[str]) -> list[SqlValidationIssue]:
     """Tier 1: offline syntax validation via sqlglot (Flink dialect)."""
     issues: list[SqlValidationIssue] = []
     for index, sql in enumerate(ddls):

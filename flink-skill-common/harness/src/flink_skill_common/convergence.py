@@ -24,7 +24,7 @@ from flink_skill_common.sql_validate import (
     SqlValidationError,
     SqlValidationIssue,
     log_validation_issues,
-    validate_statements,
+    validate_syntax_for_statements,
     validate_statements_remote,
 )
 
@@ -151,13 +151,13 @@ def converge_flink_sql(
     for attempt in range(max_attempts):
         _logger().info("Convergence attempt %d of %d for table=%s", attempt + 1, max_attempts, ctx.table_name)
 
-        offline_issues = validate_statements(current_ddls, current_dmls)
+        offline_issues = validate_syntax_for_statements(current_ddls, current_dmls)
         log_validation_issues(offline_issues)
         offline_errors = [i for i in offline_issues if i.severity == "error"]
+        ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
         if offline_errors:
             if not use_agent:
                 raise SqlValidationError(offline_errors)
-            ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
             if ddl_path is None:
                 return ConvergenceResult(
                     success=False,
@@ -177,8 +177,6 @@ def converge_flink_sql(
                 current_dmls,
             )
             continue
-
-        ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
 
         if skip_deploy:
             messages.append("Skipped deploy (--skip-deploy).")

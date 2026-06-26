@@ -31,7 +31,7 @@ logger = getLogger(__name__)
 
 SqlKind = Literal["snapshot_ddl", "streaming_dml", "batch_dml", "streaming_ddl"]
 
-SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "APPLIED", "STOPPED", "DELETED"})
+SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "STOPPED", "DELETED"})
 FAILURE_PHASES = frozenset({"FAILED", "FAILING"})
 
 
