@@ -9,15 +9,23 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Literal
+from pathlib import Path
+from typing import Callable, Literal
 
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import ParseError
 
 from flink_skill_common.config import get_logger
-from flink_skill_common.sql_preprocess import strip_sql_comments_and_drops
+from flink_skill_common.sql_preprocess import strip_sql_comments_and_drops, compute_missing_source_tables
 from flink_skill_common.sqlglot_flink import Flink  # noqa: F401 — registers read="flink"
+from flink_skill_common.output import (
+    extract_sql_blocks,
+    write_output,
+    write_source_ddls,
+)
+from flink_skill_common.agents.sources import generate_source_ddls
+from flink_skill_common.config import agent_fixer_enabled
 
 _CREATE_TABLE_START = re.compile(r"^\s*CREATE\s+TABLE\b", re.IGNORECASE)
 _INSERT_INTO_START = re.compile(r"^\s*INSERT\s+INTO\b", re.IGNORECASE)
@@ -183,3 +191,62 @@ def validate_statements_remote(ddls: list[str], dmls: list[str]) -> list[SqlVali
 
     flk_settings= flink_deploy_settings()
     return FlinkStatementManager(flk_settings).validate_statements(ddls, dmls)
+
+
+
+def clean_flink_sql_and_validate(
+    response: str,
+    table: str,
+    src_ksql: str,
+    skip_deploy: bool,
+    out_dir: Path,
+    *,
+    on_progress: Callable[[str], None] | None = None,
+):
+    """
+    From the LLM response, extract DDL/DML, write output, and run convergence.
+    Returns ConvergenceResult when DML is present, otherwise None.
+    """
+    from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql
+
+    def _emit(message: str) -> None:
+        if on_progress is not None:
+            on_progress(message)
+
+    ddls, dmls = extract_sql_blocks(response)
+    _emit(f"Extracted {len(ddls)} DDL, {len(dmls)} DML")
+    table_dir = out_dir / table
+    table_dir.mkdir(parents=True, exist_ok=True)
+    tests_dir = table_dir / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    _emit(f"Writing output files to {table_dir}")
+    write_output(table, ddls, dmls, table_dir)
+
+    if not dmls:
+        _emit("No DML in response; skipped validation and deploy")
+        return None
+
+    dml_sql = "\n\n".join(dmls)
+    ddl_sql = "\n\n".join(ddls)
+    missing = compute_missing_source_tables(dml_sql, table, ddl_sql)
+    if missing:
+        _emit(f"Missing source tables: {', '.join(missing)}")
+        _emit("Generating source DDL stubs...")
+        source_ddls = generate_source_ddls(table, src_ksql, dml_sql, missing)
+        write_source_ddls(table_dir, source_ddls)
+        _emit(f"Wrote {len(source_ddls)} source DDL stub(s)")
+
+    return converge_flink_sql(
+        ddls,
+        dmls,
+        ConvergenceContext(
+            table_name=table,
+            source_sql=src_ksql,
+            source_label="ksql",
+            out_dir=table_dir,
+            tests_dir=tests_dir,
+        ),
+        skip_deploy=skip_deploy,
+        agent_on_failure=agent_fixer_enabled(),
+        on_progress=on_progress,
+    )

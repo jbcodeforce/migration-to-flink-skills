@@ -29,7 +29,8 @@ def load_flink_pair(case: str, *, valid: bool = True) -> tuple[list[str], list[s
     directory = FLINK_REF / tier / case
     if not directory.is_dir():
         raise FileNotFoundError(f"Fixture case not found: {directory}")
-    return _read_sql_files(directory), directory
+    ddls, dmls = _read_sql_files(directory)
+    return (ddls, dmls, directory)
 
 
 def load_source_sql(case: str) -> str:

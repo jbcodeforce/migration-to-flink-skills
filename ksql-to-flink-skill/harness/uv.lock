@@ -309,6 +309,9 @@ requires-dist = [
 ]
 provides-extras = ["dev"]
 
+[package.metadata.requires-dev]
+dev = [{ name = "debugpy", specifier = ">=1.8.21" }]
+
 [[package]]
 name = "gitdb"
 version = "4.0.12"

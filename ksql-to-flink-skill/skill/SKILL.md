@@ -6,10 +6,10 @@ description: >-
   or when the user asks to migrate ksql to Flink SQL.
 ---
 
-# ksqlDB to Flink SQL migration
+# ksqlDB to Confluent Flink SQL migration
 
-You are a helpful assistant, expert in SQL translation, specializing in converting Confluent ksqlDB scripts to Apache Flink SQL.
-Your task is to convert ksqlDB SQL into equivalent Apache Flink SQL with proper streaming semantics.
+You are a helpful assistant, expert in SQL translation, specializing in converting Confluent ksqlDB scripts to confluent Cloud for Flink SQL.
+Your task is to convert ksqlDB SQL into equivalent Flink SQL with proper streaming semantics.
 
 Think step by step, follow core principles.
 
@@ -40,7 +40,7 @@ Use this for large pipeline scripts (many streams/tables in one file). Each agen
 - [ ] 1. Split file into individual CREATE STREAM/TABLE statements (harness)
 - [ ] 2. For each statement: clean input (remove DROP, SET, comments)
 - [ ] 3. Apply DDL keyword replacements (STREAM/TABLE to CREATE TABLE IF NOT EXISTS).
-- [ ] 4.Map data types and table structure.
+- [ ] 4. Map data types and table structure.
 - [ ] 5. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
 - [ ] 6. Apply function, aggregation, and windowing rules.
 - [ ] 7. Write ddl.{table}.sql and dml.{table}.sql
@@ -115,11 +115,15 @@ window_end TIMESTAMP(3),
 
 ## Connector WITH block
 
+* With Confluent cloud the connector is kafka implicitly. 
 * VALUE_FORMAT='JSON_SR' → `'value.format' = 'json-registry'`
 * `'value_format' = 'JSON'` → `'value.format' = 'json-registry'`
 * `'value_format' = 'AVRO'` → `'value.format' = 'avro-registry'`
 * `'key_format' = 'KAFKA'` → `'key.format' = 'json-registry'`
-
+* do not use `'connector' = 'kafka'`
+* do not use `'topic' =` 
+* do not use `'properties.bootstrap.servers' = '...', `
+* CTAS may use WITH properties.
 
 ```
 'value.format' = 'avro-registry',
@@ -136,6 +140,7 @@ JSON sources: use `json-registry` instead of `avro-registry`.
 
 - `CREATE STREAM x AS SELECT ...` → separate DDL + `INSERT INTO x SELECT ...`
 - `INSERT INTO target SELECT ...` → keep as Flink `INSERT INTO`
+- for CTAS a `SELECT * FROM ` the columns of the source will define the columns for the sink DDL table. 
 - Stream-table join: add `FOR SYSTEM_TIME AS OF s.$rowtime` on table side
 
 ## Deduplication (GROUP BY + LATEST_BY_OFFSET)
@@ -205,7 +210,6 @@ WITH ( ... );
 ## Quality checks
 
 - `flink_ddl_output` must not contain `CREATE STREAM`
-- Connector properties complete
 - Window columns in DDL when tumbling windows used
 - When ksql DML has `GROUP BY` with `LATEST_BY_OFFSET`, `flink_dml_output` must use `WITH deduplicated AS` and an outer `GROUP BY` matching ksql
 - No explanations in output
@@ -228,7 +232,7 @@ output/
     ddl.kma_chat_st.sql
 ```
 
-## Deploy phase (Cursor MCP + validate-flink-sql)
+## Deploy phase (validate-flink-sql)
 
 After writing DDL/DML and source stubs:
 
@@ -257,7 +261,6 @@ Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). P
 
 ## References
 
-- [translation-rules.md](references/translation-rules.md)
 - [examples.md](references/examples.md)
 - [confluent-sql-deploy.md](references/confluent-sql-deploy.md)
 - [flink-deploy-setup.md](references/flink-deploy-setup.md)

@@ -40,11 +40,6 @@ _CREATE_TABLE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_TABLE_REF_PATTERN = re.compile(
-    r"\b(?:FROM|JOIN)\s+(?:`([^`]+)`|([a-zA-Z_][a-zA-Z0-9_]*))",
-    re.IGNORECASE,
-)
-
 
 _CREATE_OBJECT_NAME_PATTERN = re.compile(
     r"CREATE(?:\s+OR\s+REPLACE)?\s+(?:STREAM|TABLE)\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z_][a-zA-Z0-9_]*)`?",
@@ -84,41 +79,7 @@ def extract_created_table_names(ddl_sql: str) -> List[str]:
     return list(dict.fromkeys(m.group(1) for m in _CREATE_TABLE_PATTERN.finditer(ddl_sql)))
 
 
-def extract_dml_source_tables(dml_sql: str, target_table: str) -> List[str]:
-    """Return sorted unique table names referenced via FROM or JOIN in DML."""
-    if not dml_sql or not dml_sql.strip():
-        return []
-    cte_names = {n.lower() for n in extract_cte_names(dml_sql)}
-    target_lower = target_table.lower()
-    seen: dict[str, str] = {}
-
-    for match in _TABLE_REF_PATTERN.finditer(dml_sql):
-        name = match.group(1) or match.group(2)
-        if not name:
-            continue
-        lower = name.lower()
-        if lower in _SQL_KEYWORDS or lower in cte_names or lower == target_lower:
-            continue
-        if lower not in seen:
-            seen[lower] = name
-
-    return sorted(seen.values(), key=str.lower)
 
 
-def compute_missing_source_tables(
-    dml_sql: str,
-    target_table: str,
-    ddl_sql: str,
-) -> List[str]:
-    """Tables referenced in DML that are not the target and not defined in target DDL."""
-    refs = extract_dml_source_tables(dml_sql, target_table)
-    created = {n.lower() for n in extract_created_table_names(ddl_sql)}
-    target_lower = target_table.lower()
-    missing = [
-        name
-        for name in refs
-        if name.lower() not in created and name.lower() != target_lower
-    ]
-    return missing
 
 

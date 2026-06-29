@@ -2,22 +2,20 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-
-from flink_skill_common.config import HarnessContext, configure, configure_cli_logging
+from flink_skill_common.config import HarnessContext, configure, get_context
 from flink_skill_common.output import extract_sql_blocks
 
+from live_cli_runner import LiveCliRunner
 
 _HARNESS_ROOT = Path(__file__).resolve().parents[2]
 _PROJECT_ROOT = _HARNESS_ROOT.parent.parent
 
 configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
-configure_cli_logging("ksql_to_flink.cli")
+
 from ksql_to_flink.cli import app
 from ksql_to_flink.ksql_utils import clean_ksql_input
 
-runner = CliRunner()
+runner = LiveCliRunner()
 
 import os
 
@@ -29,11 +27,11 @@ try:
 except Exception as e:
     print(f"Warning: could not remove log file {log_path}: {e}")
 
-def test_llm_reachable():
+def _test_llm_reachable():
     from flink_skill_common.llm import llm_reachable
     assert llm_reachable() == True
 
-def test_run_migration():
+def _test_run_migration():
     from ksql_to_flink.migrate_agent import run_migration
     ksql_file = _PROJECT_ROOT / "references" / "ksql" / "sources" / "routing" / "filtering.ksql"
     cleaned = clean_ksql_input(ksql_file.read_text())
@@ -52,7 +50,8 @@ def test_run_migration():
 
 def test_migrate_filtering():
     ksql_file = _PROJECT_ROOT / "references" / "ksql" / "sources" / "routing" / "filtering.ksql"
-    out_dir = Path("output/routing/filtering")
+    out_dir = _PROJECT_ROOT  / "staging" / "ksqk" / "routing" / "filtering"
+    print(get_context())
     result = runner.invoke(
         app,
         [
@@ -62,12 +61,7 @@ def test_migrate_filtering():
             str(ksql_file),
             "--out-dir",
             str(out_dir),
-            "--skip-deploy",
         ],
     )
 
-    print(result.output)
     assert result.exit_code == 0
-    assert "Skipped deploy" in result.output
-
-

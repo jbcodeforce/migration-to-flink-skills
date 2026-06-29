@@ -20,6 +20,7 @@ Use Agno agent with skills to translate KSQL to Flink SQL.
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 
 from flink_skill_common.agents.factory import (
     build_migration_agent,
@@ -52,12 +53,8 @@ def build_ksql_migrate_agent():
         instructions=[
             "Migrate one ksqlDB CREATE STREAM/TABLE statement at a time to Confluent Cloud Flink SQL.",
             "Call get_skill_instructions('ksql-to-flink') before translating.",
-            "Input is a single CREATE (with optional CSAS body), not a multi-statement script.",
             "Apply translation rules from skill references as needed.",
-            "Never output CREATE STREAM in DDL; use CREATE TABLE IF NOT EXISTS only.",
-            "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
-            "Do not include explanations outside the SQL blocks.",
-        ],
+         ],
         model=_make_model(),
         tools=[]
     )
@@ -77,10 +74,20 @@ def migrate_prompt(table_name: str, ksql: str, *, source_name: str | None = None
     )
 
 
-def run_migration(table_name: str, ksql: str, *, source_name: str | None = None) -> str:
+def run_migration(
+    table_name: str,
+    ksql: str,
+    *,
+    source_name: str | None = None,
+    on_event: Callable[[str], None] | None = None,
+) -> str:
     """Run migration agent and return response content."""
     agent = build_ksql_migrate_agent()
-    return run_agent_response(agent, migrate_prompt(table_name, ksql, source_name=source_name))
+    return run_agent_response(
+        agent,
+        migrate_prompt(table_name, ksql, source_name=source_name),
+        on_event=on_event,
+    )
 
 
 def main() -> None:

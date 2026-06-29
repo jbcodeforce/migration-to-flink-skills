@@ -1,6 +1,10 @@
 # Developer Guide
 
+## Principles
 
+* prepare KSQL or Spark sources with multiple statements in them, as separate DDLs or/and DMLs
+* Still keep the source as part of the context.
+* Assign different rules for different scope
 
 ## Processing Flow for Flink SQL validation
 

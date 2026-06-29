@@ -1,13 +1,15 @@
 CREATE TABLE IF NOT EXISTS george_martin (
-    bookid BIGINT,
+    id STRING,
     author STRING,
-    title STRING
-) WITH (
-    'connector' = 'kafka',
+    title STRING,
+    published_date STRING,
+    publisher STRING,
+    genre STRING,
+    language STRING
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH (
     'topic' = 'george_martin_books',
     'value.format' = 'json-registry',
-    'value.json-registry.schema-context' = '.flink-dev',
-    'key.json-registry.schema-context' = '.flink-dev',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
     'kafka.retention.time' = '0',

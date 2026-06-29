@@ -34,7 +34,7 @@ build-backend = "hatchling.build"
 packages = ["src/ksql_to_flink"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "tests/it"]
 testpaths = ["tests"]
 markers = [
     "integration: tests requiring a live OpenAI-compatible LLM",

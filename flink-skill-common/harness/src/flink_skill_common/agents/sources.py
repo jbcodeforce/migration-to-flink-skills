@@ -13,7 +13,12 @@ from agno.agent import Agent
 from flink_skill_common.agents.factory import make_openai_model
 from flink_skill_common.llm import resolve_llm_model
 
-from flink_skill_common.config import llm_api_key, llm_base_url, load_env, skill_dir
+from flink_skill_common.config import (
+    flink_skill_common_skill_dir,
+    llm_api_key,
+    llm_base_url,
+    load_env,
+)
 from flink_skill_common.output import parse_source_ddls_from_response
 
 
@@ -27,7 +32,7 @@ def _make_model():
 
 
 def _source_ddl_prompt_template() -> str:
-    path = skill_dir() / "prompts/ksql_fsql/source_ddl.txt"
+    path = flink_skill_common_skill_dir() / "prompts/source_ddl.txt"
     return path.read_text()
 
 

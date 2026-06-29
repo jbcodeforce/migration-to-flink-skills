@@ -58,12 +58,26 @@ def ctx(tmp_path: Path) -> ConvergenceContext:
     )
 
 
+@pytest.fixture
+def ctx_with_tests(ctx: ConvergenceContext, tmp_path: Path) -> ConvergenceContext:
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    return ConvergenceContext(
+        table_name=ctx.table_name,
+        source_sql=ctx.source_sql,
+        source_label=ctx.source_label,
+        out_dir=ctx.out_dir,
+        tests_dir=tests_dir,
+    )
+
+
 def test_converge_skip_deploy_success(ctx: ConvergenceContext):
     result = converge_flink_sql(
         [VALID_DDL], [VALID_DML], ctx, skip_deploy=True, agent_on_failure=False
     )
     assert result.success is True
     assert result.ddl_path is not None
+    assert "Offline validation passed." in result.messages
     assert "Skipped deploy" in result.messages[-1]
 
 
@@ -72,41 +86,35 @@ def test_converge_offline_validation_raises_without_agent(ctx: ConvergenceContex
         converge_flink_sql(["CREATE TABLE t (id INT"], [], ctx, skip_deploy=True, agent_on_failure=False)
 
 
-def test_converge_deploy_success(ctx: ConvergenceContext, tmp_path: Path):
-    tests_dir = tmp_path / "custom_tests"
-    tests_dir.mkdir()
-    ctx_with_tests = ConvergenceContext(
-        table_name=ctx.table_name,
-        source_sql=ctx.source_sql,
-        source_label=ctx.source_label,
-        out_dir=ctx.out_dir,
-        tests_dir=tests_dir,
-    )
-    with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-        with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-            mock_cls.return_value.deploy_table.return_value = DEPLOY_OK
-            result = converge_flink_sql(
-                [VALID_DDL], [VALID_DML], ctx_with_tests, agent_on_failure=False
-            )
+def test_converge_deploy_success(ctx_with_tests: ConvergenceContext):
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        mock_cls.return_value.deploy_table.return_value = DEPLOY_OK
+        result = converge_flink_sql(
+            [VALID_DDL], [VALID_DML], ctx_with_tests, agent_on_failure=False
+        )
 
     assert result.success is True
     assert any("Deploy OK" in msg for msg in result.messages)
     mock_cls.return_value.deploy_table.assert_called_once_with(
-        "my_table", result.ddl_path, result.dml_path, tests_dir=tests_dir
+        "my_table",
+        result.ddl_path,
+        result.dml_path,
+        tests_dir=ctx_with_tests.tests_dir,
     )
 
 
-def test_converge_deploy_error_without_agent(ctx: ConvergenceContext):
-    with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-        with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-            mock_cls.return_value.deploy_table.side_effect = DeployError("DDL failed")
-            result = converge_flink_sql([VALID_DDL], [VALID_DML], ctx, agent_on_failure=False)
+def test_converge_deploy_error_without_agent(ctx_with_tests: ConvergenceContext):
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        mock_cls.return_value.deploy_table.side_effect = DeployError("DDL failed")
+        result = converge_flink_sql(
+            [VALID_DDL], [VALID_DML], ctx_with_tests, agent_on_failure=False
+        )
 
     assert result.success is False
     assert any("DDL failed" in msg for msg in result.messages)
 
 
-def test_converge_agent_fix_on_offline_error(ctx: ConvergenceContext):
+def test_converge_agent_fix_on_offline_error(ctx_with_tests: ConvergenceContext):
     bad_issue = SqlValidationIssue(
         statement_index=0, kind="ddl", message="syntax error", severity="error"
     )
@@ -120,49 +128,6 @@ def test_converge_agent_fix_on_offline_error(ctx: ConvergenceContext):
             "flink_skill_common.convergence.run_agent_deploy_fixer",
             return_value=FIXED_RESPONSE,
         ):
-            with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-                with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-                    mock_cls.return_value.deploy_table.return_value = DEPLOY_OK
-                    with patch(
-                        "flink_skill_common.convergence.agent_fixer_max_retries",
-                        return_value=2,
-                    ):
-                        result = converge_flink_sql(
-                            ["CREATE TABLE bad"],
-                            [],
-                            ctx,
-                            agent_on_failure=True,
-                        )
-
-    assert result.success is True
-    assert result.last_agent_response == FIXED_RESPONSE
-
-
-def test_converge_remote_validation_raises_without_agent(ctx: ConvergenceContext):
-    remote_issue = SqlValidationIssue(
-        statement_index=0, kind="ddl", message="missing pk", severity="error"
-    )
-    with patch(
-        "flink_skill_common.convergence.validate_statements_remote",
-        return_value=[remote_issue],
-    ):
-        with pytest.raises(SqlValidationError):
-            converge_flink_sql([VALID_DDL], [VALID_DML], ctx, agent_on_failure=False)
-
-
-def test_converge_agent_fix_on_remote_error(ctx: ConvergenceContext):
-    remote_issue = SqlValidationIssue(
-        statement_index=0, kind="ddl", message="missing pk", severity="error"
-    )
-
-    with patch(
-        "flink_skill_common.convergence.validate_statements_remote",
-        side_effect=[[remote_issue], []],
-    ):
-        with patch(
-            "flink_skill_common.convergence.run_agent_deploy_fixer",
-            return_value=FIXED_RESPONSE,
-        ):
             with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
                 mock_cls.return_value.deploy_table.return_value = DEPLOY_OK
                 with patch(
@@ -170,44 +135,42 @@ def test_converge_agent_fix_on_remote_error(ctx: ConvergenceContext):
                     return_value=2,
                 ):
                     result = converge_flink_sql(
-                        [VALID_DDL],
-                        [VALID_DML],
-                        ctx,
+                        ["CREATE TABLE bad"],
+                        [],
+                        ctx_with_tests,
                         agent_on_failure=True,
                     )
 
     assert result.success is True
-    assert any("Remote validation failed" in msg for msg in result.messages)
     assert result.last_agent_response == FIXED_RESPONSE
 
 
-def test_converge_agent_fix_on_deploy_error(ctx: ConvergenceContext):
-    with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-        with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-            mock_cls.return_value.deploy_table.side_effect = [
-                DeployError("DDL failed"),
-                DEPLOY_OK,
-            ]
+def test_converge_agent_fix_on_deploy_error(ctx_with_tests: ConvergenceContext):
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        mock_cls.return_value.deploy_table.side_effect = [
+            DeployError("DDL failed"),
+            DEPLOY_OK,
+        ]
+        with patch(
+            "flink_skill_common.convergence.run_agent_deploy_fixer",
+            return_value=FIXED_RESPONSE,
+        ):
             with patch(
-                "flink_skill_common.convergence.run_agent_deploy_fixer",
-                return_value=FIXED_RESPONSE,
+                "flink_skill_common.convergence.agent_fixer_max_retries",
+                return_value=2,
             ):
-                with patch(
-                    "flink_skill_common.convergence.agent_fixer_max_retries",
-                    return_value=2,
-                ):
-                    result = converge_flink_sql(
-                        [VALID_DDL],
-                        [VALID_DML],
-                        ctx,
-                        agent_on_failure=True,
-                    )
+                result = converge_flink_sql(
+                    [VALID_DDL],
+                    [VALID_DML],
+                    ctx_with_tests,
+                    agent_on_failure=True,
+                )
 
     assert result.success is True
     assert any("Deploy failed, invoking agent fix" in msg for msg in result.messages)
 
 
-def test_converge_deploy_unhealthy_without_agent(ctx: ConvergenceContext):
+def test_converge_deploy_unhealthy_without_agent(ctx_with_tests: ConvergenceContext):
     unhealthy = DeployResult(
         table_name="my_table",
         ddl_statement="my-table-ddl",
@@ -217,16 +180,17 @@ def test_converge_deploy_unhealthy_without_agent(ctx: ConvergenceContext):
         success=False,
         messages=["deploy failed"],
     )
-    with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-        with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-            mock_cls.return_value.deploy_table.return_value = unhealthy
-            result = converge_flink_sql([VALID_DDL], [VALID_DML], ctx, agent_on_failure=False)
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        mock_cls.return_value.deploy_table.return_value = unhealthy
+        result = converge_flink_sql(
+            [VALID_DDL], [VALID_DML], ctx_with_tests, agent_on_failure=False
+        )
 
     assert result.success is False
     assert any("Deploy unhealthy" in msg for msg in result.messages)
 
 
-def test_converge_agent_fix_on_unhealthy_deploy(ctx: ConvergenceContext):
+def test_converge_agent_fix_on_unhealthy_deploy(ctx_with_tests: ConvergenceContext):
     unhealthy = DeployResult(
         table_name="my_table",
         ddl_statement="my-table-ddl",
@@ -238,23 +202,23 @@ def test_converge_agent_fix_on_unhealthy_deploy(ctx: ConvergenceContext):
         messages=[],
     )
 
-    with patch("flink_skill_common.convergence.validate_statements_remote", return_value=[]):
-        with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
-            mock_cls.return_value.deploy_table.side_effect = [unhealthy, DEPLOY_OK]
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        mock_cls.return_value.deploy_table.side_effect = [unhealthy, DEPLOY_OK]
+        with patch(
+            "flink_skill_common.convergence.run_agent_deploy_fixer",
+            return_value=FIXED_RESPONSE,
+        ) as mock_fixer:
             with patch(
-                "flink_skill_common.convergence.run_agent_deploy_fixer",
-                return_value=FIXED_RESPONSE,
-            ) as mock_fixer:
-                with patch(
-                    "flink_skill_common.convergence.agent_fixer_max_retries",
-                    return_value=2,
-                ):
-                    result = converge_flink_sql(
-                        [VALID_DDL],
-                        [VALID_DML],
-                        ctx,
-                        agent_on_failure=True,
-                    )
+                "flink_skill_common.convergence.agent_fixer_max_retries",
+                return_value=2,
+            ):
+                result = converge_flink_sql(
+                    [VALID_DDL],
+                    [VALID_DML],
+                    ctx_with_tests,
+                    agent_on_failure=True,
+                )
+
 
     assert result.success is True
     assert any("exceptions=timeout" in msg for msg in result.messages)
@@ -302,7 +266,10 @@ def test_converge_no_ddl_for_deploy(ctx: ConvergenceContext, tmp_path: Path):
             )
 
     assert result.success is False
-    assert result.messages == ["No DDL file found for table"]
+    assert result.messages == [
+        "Offline validation passed.",
+        "No tests directory found, skipping deploy",
+    ]
     assert result.ddl_path is None
     assert result.dml_path == dml_path
 

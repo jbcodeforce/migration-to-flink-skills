@@ -2,6 +2,12 @@
 
 from pathlib import Path
 
+from flink_skill_common.config import HarnessContext, configure, flink_skill_common_skill_dir, skill_dir
+__COMMON_ROOT = Path(__file__).resolve().parents[2]
+__PROJECT_ROOT = __COMMON_ROOT.parent
+configure(HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT))
+
+
 from flink_skill_common.output import (
     extract_sql_blocks,
     parse_source_ddls_from_response,
@@ -24,9 +30,31 @@ INSERT INTO t SELECT id FROM src;
 ```
 """
     ddls, dmls = extract_sql_blocks(response)
+    print(f"DDLs: {ddls}")
+    print(f"DMLs: {dmls}")
     assert ddls and "CREATE TABLE" in ddls[0]
     assert dmls and "INSERT INTO" in dmls[0]
 
+def test_extract_labeled_sql_blocks_without_columns():
+    response = """
+    ```sql
+DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+```
+
+```sql
+DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+```
+"""
+    ddls, dmls = extract_sql_blocks(response)
+    print(f"DDLs: {ddls}")
+    print(f"DMLs: {dmls}")
+    assert ddls and "CREATE TABLE" in ddls[0]
+    assert dmls and "INSERT INTO" in dmls[0]
 
 def test_extract_json_migration():
     response = """```json

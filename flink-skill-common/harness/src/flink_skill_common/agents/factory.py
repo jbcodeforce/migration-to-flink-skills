@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from agno.agent import Agent
+from agno.agent import Agent, RunEvent
 from agno.models.openai import OpenAIChat
 from agno.skills import LocalSkills, Skills
 
@@ -33,17 +33,55 @@ def build_migration_agent(
             instructions=instructions,
             markdown=True,
         )
-    else:
-        return Agent(
-            name=name,
-            model=model,
-            tools=agent_tools,
-            instructions=instructions,
-            markdown=True,
-        )
+    return Agent(
+        name=name,
+        model=model,
+        tools=agent_tools,
+        instructions=instructions,
+        markdown=True,
+    )
 
 
-def run_agent_response(agent: Agent, prompt: str) -> str:
+def _tool_name(chunk) -> str:
+    tool = getattr(chunk, "tool", None)
+    if tool is None:
+        return "unknown"
+    return getattr(tool, "tool_name", None) or str(tool)
+
+
+def run_agent_response(
+    agent: Agent,
+    prompt: str,
+    *,
+    on_event: Callable[[str], None] | None = None,
+) -> str:
     """Run agent and return response content as string."""
-    response = agent.run(prompt)
-    return str(response.content) if hasattr(response, "content") else str(response)
+    if on_event is None:
+        response = agent.run(prompt)
+        return str(response.content) if hasattr(response, "content") else str(response)
+
+    stream = agent.run(prompt, stream=True, stream_events=True)
+    content_parts: list[str] = []
+    final_content: str | None = None
+
+    for chunk in stream:
+        event = getattr(chunk, "event", None)
+        if event == RunEvent.run_started:
+            on_event("Agent run started")
+        elif event == RunEvent.tool_call_started:
+            on_event(f"Tool: {_tool_name(chunk)}")
+        elif event == RunEvent.tool_call_completed:
+            on_event(f"Tool completed: {_tool_name(chunk)}")
+        elif event == RunEvent.run_completed:
+            on_event("Agent run completed")
+            content = getattr(chunk, "content", None)
+            if isinstance(content, str) and content:
+                final_content = content
+        elif event == RunEvent.run_content:
+            content = getattr(chunk, "content", None)
+            if isinstance(content, str) and content:
+                content_parts.append(content)
+
+    if final_content:
+        return final_content
+    return "".join(content_parts)

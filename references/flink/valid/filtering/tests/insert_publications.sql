@@ -3,7 +3,8 @@ create table all_publications (
     author STRING,
     title STRING,
     PRIMARY KEY (book_id) NOT ENFORCED
-) DISTRIBUTED BY HASH(book_id) INTO 1 BUCKETS WITH (
+) DISTRIBUTED BY HASH(book_id) INTO 1 BUCKETS
+WITH (
     'changelog.mode' = 'append',
     'kafka.retention.time' = '0',
     'kafka.producer.compression.type' = 'snappy',
@@ -14,7 +15,7 @@ create table all_publications (
     book_id,
     author,
     title
-from VALUES(
+from (VALUES
     (1, 'C.S. Lewis', 'The Silver Chair'),
     (2, 'George R. R. Martin', 'A Song of Ice and Fire'),
     (3, 'C.S. Lewis', 'Perelandra'),

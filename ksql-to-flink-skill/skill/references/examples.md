@@ -7,7 +7,7 @@ KSQL: `references/ksql/sources/routing/merge.ksql`
 - Defines `rock_songs`, `classical_songs`, `all_songs` streams
 - Merges with `INSERT INTO all_songs`
 
-Flink golden: `flink_ref/dimensions/songs/all_song/sql-scripts/`
+Flink golden: `references/flink/valid/dimensions/songs/all_song/sql-scripts/`
 
 - DDL: `dim_all_songs` with PK on `artist`
 - DML: `UNION ALL` from `src_classical_songs` and `src_rock_songs`
@@ -18,7 +18,7 @@ KSQL: `references/ksql/sources/joins/stream_stream.ksql`
 
 - `orders` and `shipments` streams with interval join `WITHIN 7 DAYS`
 
-Flink golden: `flink_ref/joins/shipped_orders/sql-scripts/`
+Flink golden: `references/flink/valid/joins/shipped_orders/sql-scripts/`
 
 - DDL: `shipped_orders` keyed on `order_id`
 - DML: interval join using Flink streaming join semantics
@@ -29,16 +29,15 @@ KSQL: `references/ksql/sources/routing/splitting.ksql`
 
 - Splits `acting_events` by genre into drama, fantasy, other streams
 
-Flink golden (drama branch): `flink_ref/dimensions/acting_events/acting_events_drama/sql-scripts/`
+Flink golden (drama branch): `references/flink/valid/dimensions/acting_events/acting_events_drama/sql-scripts/`
 
 - DDL: `dim_acting_events_drama` with PK on `name`
 - DML: `INSERT INTO` filtered `WHERE genre = 'drama'`
 
-## Sources without flink_ref goldens
+## Sources without references goldens
 
-These ksql tutorial files have no matching `flink_ref` output yet:
+These ksql tutorial files have no matching `references` output yet:
 
-- `sources/routing/filtering.ksql`
 - `sources/routing/deduplicate.ksql`
 - `sources/aggregations/count_pageviews.ksql`
 

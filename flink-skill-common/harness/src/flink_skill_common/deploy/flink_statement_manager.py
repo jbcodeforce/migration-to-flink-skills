@@ -97,6 +97,13 @@ class FlinkStatementManager:
     def __init__(self, settings: FlinkDeploySettings | None = None) -> None:
         self._settings = settings or flink_deploy_settings()
 
+    def drop_table(self, table_name: str) -> None:
+        """Drop a table."""
+        tname =table_name.lower().replace("_", "-")
+        sql = f"DROP TABLE IF EXISTS `{table_name}`;"
+        self.create_statement("drop-"+tname, sql)
+        self.delete_statement("drop-"+tname)
+        
     @property
     def settings(self) -> FlinkDeploySettings:
         return self._settings
