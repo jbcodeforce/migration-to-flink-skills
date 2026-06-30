@@ -12,7 +12,7 @@ from flink_skill_common.sql_validate import (
     SqlValidationError,
     log_validation_issues,
     raise_on_errors,
-    validate_statements,
+    validate_syntax_for_statements,
 )
 from spark_flink_skill.sql_utils import (
     LlmConfigError,
@@ -75,7 +75,7 @@ def migrate(
         raise typer.Exit(1)
 
     try:
-        offline_issues = validate_statements(ddls, dmls)
+        offline_issues = validate_syntax_for_statements(ddls, dmls)
         log_validation_issues(offline_issues)
         raise_on_errors(offline_issues)
     except SqlValidationError as exc:

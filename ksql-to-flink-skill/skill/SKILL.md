@@ -234,16 +234,27 @@ output/
 
 ## Deploy phase (validate-flink-sql)
 
-After writing DDL/DML and source stubs:
-
-1. Call MCP `validate_flink_sql_offline` on extracted DDL/DML.
-2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
-3. Optionally call MCP `validate_flink_sql_remote` when Flink credentials are in repo `.env`.
-4. Deploy via the **`flink-skill-common` MCP server** (enable [`.cursor/mcp.json`](../../../.cursor/mcp.json) in Cursor Settings → MCP).
+After writing DDL/DML and source stubs, validate and deploy.
 
 Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`). See [flink-deploy-setup.md](references/flink-deploy-setup.md).
 
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
+
+<!-- runtime:agno -->
+1. Validate offline: `uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl output/ddl.{table}.sql --dml output/dml.{table}.sql`
+2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
+3. Optional remote validate: `flink-skill-validate remote` (requires Flink credentials).
+4. Deploy via harness convergence (`ksql-flink-migrate` runs validate → deploy → agent fix loop by default).
+5. On deploy failure with `AGENT_FIXER_EXECUTION_ENABLED=1`, the deploy fixer agent uses `create_flink_statement` and related tools.
+
+Full deploy sequence: [confluent-sql-deploy.md](references/confluent-sql-deploy.md).
+<!-- /runtime:agno -->
+
+<!-- runtime:cursor,claude -->
+1. Call MCP `validate_flink_sql_offline` on extracted DDL/DML.
+2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
+3. Optionally call MCP `validate_flink_sql_remote` when Flink credentials are in repo `.env`.
+4. Deploy via the **`flink-skill-common` MCP server** (enable [`.cursor/mcp.json`](../../../.cursor/mcp.json) in Cursor Settings → MCP).
 
 MCP tool sequence:
 
@@ -258,6 +269,7 @@ MCP tool sequence:
 9. On failure: `get_flink_statement_exceptions` → apply `validate-flink-sql` → redeploy
 
 Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). Post-deploy triage: `flink-statement-troubleshooting` skill.
+<!-- /runtime:cursor,claude -->
 
 ## References
 

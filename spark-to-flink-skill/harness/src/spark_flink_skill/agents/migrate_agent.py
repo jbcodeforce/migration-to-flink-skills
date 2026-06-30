@@ -5,8 +5,7 @@ from __future__ import annotations
 import sys
 
 from flink_skill_common.agents.factory import (
-    build_migrate_agent as _build_migrate_agent,
-    eager_skill_instructions,
+    build_migration_agent,
     make_openai_model,
     run_agent_response,
 )
@@ -28,12 +27,12 @@ def build_migrate_agent():
     """Create Agno agent with spark-to-flink skill loaded from skill/."""
     instructions = [
         "Migrate Spark SQL to Confluent Cloud Flink SQL using the spark-to-flink skill.",
+        "Call get_skill_instructions('spark-to-flink') before translating.",
         "Apply translation and validation rules before returning output.",
         "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
         "Do not include explanations outside the SQL blocks.",
-        *eager_skill_instructions(skill_dir(), "spark-to-flink"),
     ]
-    return _build_migrate_agent(
+    return build_migration_agent(
         name="SparkToFlinkAgent",
         skill_dir=skill_dir(),
         instructions=instructions,

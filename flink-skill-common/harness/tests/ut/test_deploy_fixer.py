@@ -30,6 +30,8 @@ def test_local_skills_loads_validate_flink_sql():
     assert skill is not None
     assert "Flink" in skill.description or "Flink" in skill.instructions
     assert "confluent-sql-deploy.md" in skill.references
+    assert "validate_offline.py" in skill.scripts
+    assert "validate_remote.py" in skill.scripts
 
 
 def test_build_deploy_fixer_agent():

@@ -34,6 +34,14 @@ The current intentional split the code into:
 
 ## Environment setup
 
+Run the setup script to install all harness dependencies and verify local Agno + LLM configuration:
+
+```bash
+./scripts/setup.sh
+```
+
+See [docs/tutorial/setup_lab.md](./docs/tutorial/setup_lab.md) for details.
+
 All harnesses share one environment file at the repo root:
 
 ```bash

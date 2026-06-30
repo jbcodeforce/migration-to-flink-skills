@@ -162,7 +162,6 @@ def converge_flink_sql(
         if max_attempts > 1:
             _emit_progress(on_progress, f"Convergence attempt {attempt + 1} of {max_attempts}")
 
-        _emit_progress(on_progress, "Running offline validation...")
         offline_issues = validate_syntax_for_statements(current_ddls, current_dmls)
         log_validation_issues(offline_issues)
         offline_errors = [i for i in offline_issues if i.severity == "error"]

@@ -49,42 +49,40 @@ Deploy requires Flink API credentials in the repo-root `.env`. See [docs/FLINK_D
 
 ## Deploy skill — Claude Code
 
+From repo root (generates MCP-oriented SKILL.md from canonical `skill/`):
+
 ```bash
-mkdir -p ~/.claude/skills/ksql-to-flink ~/.claude/skills/validate-flink-sql
-cp -r skill/* ~/.claude/skills/ksql-to-flink/
-cp -r ../flink-skill-common/skill/* ~/.claude/skills/validate-flink-sql/
+./scripts/adapt-skills.sh --target claude
+./scripts/adapt-skills.sh --target claude --install   # ~/.claude/skills/
 ```
 
-Project copy: `.claude/skills/ksql-to-flink/SKILL.md`
+Generated project copies: `ksql-to-flink-skill/.claude/skills/ksql-to-flink/` and `flink-skill-common/.claude/skills/validate-flink-sql/`. Do not edit generated files; change `skill/SKILL.md` and re-run adapt-skills.
 
 ## Cursor quick start (primary workflow)
-
-TBC
-
 
 ### 1. Environment
 
 ```bash
 cp .env.example .env   # repo root — LLM + Flink credentials
-cd flink-skill-common/harness && uv sync --extra dev
+./scripts/setup.sh     # uv sync + generate .cursor/skills/
 ```
 
 Enable **Cursor Settings → MCP** for the `flink-skill-common` server (configured in [`.cursor/mcp.json`](../.cursor/mcp.json)). Credentials load from repo-root `.env` via `DOTENV_FILE=.env`.
 
-### 2. Install skills
+### 2. Skills
 
-Copy **both** skills into your Cursor skills directory:
+Setup generates project skills under [`.cursor/skills/`](../.cursor/skills/) (MCP-oriented variants). To install under your user home:
 
 ```bash
-mkdir -p ~/.cursor/skills/ksql-to-flink ~/.cursor/skills/validate-flink-sql
-cp -r skill/* ~/.cursor/skills/ksql-to-flink/
-cp -r ../flink-skill-common/skill/* ~/.cursor/skills/validate-flink-sql/
+./scripts/adapt-skills.sh --target cursor --install
 ```
 
 | Skill | Role |
 |-------|------|
 | `ksql-to-flink` | Translate ksqlDB → Flink DDL/DML |
 | `validate-flink-sql` | Fix connector properties, PRIMARY KEY, DISTRIBUTED BY after translation |
+
+Canonical Agno source is `skill/SKILL.md`. Edit that file, then re-run `./scripts/adapt-skills.sh --target cursor`.
 
 ### 3. Migrate in the IDE
 

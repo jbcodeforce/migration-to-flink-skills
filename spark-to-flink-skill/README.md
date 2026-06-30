@@ -45,39 +45,23 @@ uv run spark-flink-agent "Migrate src_customers.sql to Flink SQL for table src_c
 
 ## Deploy skill — Cursor
 
-**Personal (all projects):**
+From repo root (generates skills under `.cursor/skills/`):
 
 ```bash
-mkdir -p ~/.cursor/skills/spark-to-flink
-cp -r skill/* ~/.cursor/skills/spark-to-flink/
+./scripts/adapt-skills.sh --target cursor
+./scripts/adapt-skills.sh --target cursor --install   # ~/.cursor/skills/
 ```
 
-**Project-local:**
-
-```bash
-mkdir -p .cursor/skills/spark-to-flink
-cp -r skill/* .cursor/skills/spark-to-flink/
-```
-
-The skill auto-invokes when you ask to "migrate Spark SQL to Flink SQL" (trigger terms in frontmatter `description`).
+Canonical source is `skill/SKILL.md`. Re-run adapt-skills after edits.
 
 ## Deploy skill — Claude Code
 
-**Personal:**
-
 ```bash
-mkdir -p ~/.claude/skills/spark-to-flink
-cp -r skill/* ~/.claude/skills/spark-to-flink/
+./scripts/adapt-skills.sh --target claude
+./scripts/adapt-skills.sh --target claude --install   # ~/.claude/skills/
 ```
 
-**Project:**
-
-```bash
-mkdir -p .claude/skills/spark-to-flink
-cp -r skill/* .claude/skills/spark-to-flink/
-```
-
-Reference the skill in prompts: "Use the spark-to-flink skill to migrate this Spark SQL."
+Generated project copy: `spark-to-flink-skill/.claude/skills/spark-to-flink/`.
 
 ## When to use skill vs shift_left CLI
 

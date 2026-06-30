@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 flink-skill-mcp = "flink_skill_common.mcp.server:main"
+flink-skill-validate = "flink_skill_common.cli_validate:main"
 
 [project.optional-dependencies]
 dev = [

@@ -98,7 +98,25 @@ Run manually:
 
 ```bash
 cd flink-skill-common/harness && uv run flink-skill-mcp
+uv run flink-skill-validate offline --ddl path/to/ddl.sql --dml path/to/dml.sql
 ```
+
+## Skill layout (Agno-first)
+
+Canonical skill content lives in [`skill/`](skill/) for Agno harnesses (`LocalSkills`). Cursor and Claude variants are **generated** — do not edit `.cursor/skills/` or `.claude/skills/` directly.
+
+```bash
+# From repo root after editing skill/SKILL.md
+./scripts/adapt-skills.sh --target cursor
+./scripts/adapt-skills.sh --target claude
+# Install to user home (optional)
+./scripts/adapt-skills.sh --target cursor --install
+```
+
+| Runtime | Skill source | Validation execution |
+|---------|--------------|----------------------|
+| Agno harness | `skill/` in place | `scripts/validate_offline.py` or `flink-skill-validate` CLI |
+| Cursor / Claude | `.cursor/skills/` or `~/.cursor/skills/` | MCP `validate_flink_sql_offline` / `validate_flink_sql_remote` |
 
 ## Layout
 
@@ -109,7 +127,9 @@ flink-skill-common/
 ├── harness/          # canonical package (pyproject.toml, src/, tests/)
 │   ├── src/flink_skill_common/
 │   └── tests/
-├── skill/            # Agno skill for validate-flink-sql
+├── skill/            # Agno canonical skill for validate-flink-sql
+│   ├── scripts/      # validate_offline.py, validate_remote.py
+│   └── references/
 └── README.md
 ```
 
@@ -122,6 +142,7 @@ cd harness
 uv sync --extra dev
 uv run pytest -vs tests/ut
 uv run flink-skill-mcp   # MCP server for Cursor (stdio)
+uv run flink-skill-validate offline --ddl ddl.sql --dml dml.sql
 ```
 
 For integration tests, it requires a reachable LLM and CC Flink deploy credentials in .env.
