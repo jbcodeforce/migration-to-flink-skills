@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import Callable
 
 from flink_skill_common.agents.deploy_fixer import run_agent_deploy_fixer
+from flink_skill_common.agents.sources import generate_source_ddls
 from flink_skill_common.config import agent_fixer_enabled, agent_fixer_max_retries, get_logger
 from flink_skill_common.deploy.flink_statement_manager import DeployError, FlinkStatementManager
-from flink_skill_common.output import (
+from flink_skill_common.response_io import (
     extract_sql_blocks,
     parse_source_ddls_from_response,
     resolve_table_paths,
@@ -27,6 +28,7 @@ from flink_skill_common.sql_validate import (
     log_validation_issues,
     validate_syntax_for_statements
 )
+from flink_skill_common.sql_parse import compute_missing_source_tables
 
 
 def _logger():
@@ -300,4 +302,56 @@ def converge_flink_sql(
         dml_path=dml_path,
         messages=messages,
         last_agent_response=last_agent_response,
+    )
+
+
+def clean_flink_sql_and_validate(
+    response: str,
+    table: str,
+    src_sql: str,
+    skip_deploy: bool,
+    out_dir: Path,
+    *,
+    on_progress: Callable[[str], None] | None = None,
+) -> ConvergenceResult | None:
+    """
+    From the LLM response, extract DDL/DML, write output, and run convergence.
+    Returns ConvergenceResult when DML is present, otherwise None.
+    """
+    ddls, dmls = extract_sql_blocks(response)
+    _emit_progress(on_progress, f"Extracted {len(ddls)} DDL, {len(dmls)} DML")
+    table_dir = out_dir / table
+    table_dir.mkdir(parents=True, exist_ok=True)
+    tests_dir = table_dir / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    _emit_progress(on_progress, f"Writing output files to {table_dir}")
+    write_output(table, ddls, dmls, table_dir)
+
+    if not dmls:
+        _emit_progress(on_progress, "No DML in response; skipped validation and deploy")
+        return None
+
+    dml_sql = "\n\n".join(dmls)
+    ddl_sql = "\n\n".join(ddls)
+    missing = compute_missing_source_tables(dml_sql, table, ddl_sql)
+    if missing:
+        _emit_progress(on_progress, f"Missing source tables: {', '.join(missing)}")
+        _emit_progress(on_progress, "Generating source DDL stubs...")
+        source_ddls = generate_source_ddls(table, src_sql, dml_sql, missing)
+        write_source_ddls(table_dir, source_ddls)
+        _emit_progress(on_progress, f"Wrote {len(source_ddls)} source DDL stub(s)")
+
+    return converge_flink_sql(
+        ddls,
+        dmls,
+        ConvergenceContext(
+            table_name=table,
+            source_sql=src_sql,
+            source_label="source_sql",
+            out_dir=table_dir,
+            tests_dir=tests_dir,
+        ),
+        skip_deploy=skip_deploy,
+        agent_on_failure=agent_fixer_enabled(),
+        on_progress=on_progress,
     )

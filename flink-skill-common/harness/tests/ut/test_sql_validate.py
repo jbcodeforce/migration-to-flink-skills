@@ -1,22 +1,29 @@
 """Unit tests for Flink SQL validation."""
 
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
+from sqlglot.errors import ParseError
 
 from flink_ref_fixtures import load_all_valid_flink_reference_sql
-from flink_skill_common.deploy.flink_statement_manager import (
-    FlinkStatementManager,
-    StatementManagerError,
-)
+from flink_skill_common.config import HarnessContext, configure
 from flink_skill_common.sql_validate import (
     SqlValidationError,
+    SqlValidationIssue,
     _extract_ddl_header,
+    _parse_error_message,
+    _validate_one,
     _validate_parseable,
+    log_validation_issues,
     raise_on_errors,
     validate_syntax_for_statements,
     validate_statements_remote,
 )
+
+__COMMON_ROOT = Path(__file__).resolve().parents[2]
+__PROJECT_ROOT = __COMMON_ROOT.parent
+configure(HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT))
 
 
 @pytest.fixture
@@ -144,6 +151,99 @@ def test_validate_dml_parseable():
     issues = _validate_parseable(dml_ex, "dml", 0)
     assert not issues
 
+
+def test_parse_error_message():
+    exc = ParseError("parse failed", errors=[{"description": "Expected )", "line": 3}])
+    message, line = _parse_error_message(exc)
+    assert message == "Expected )"
+    assert line == 3
+
+    fallback_message, fallback_line = _parse_error_message(ParseError("plain failure"))
+    assert fallback_message == "plain failure"
+    assert fallback_line is None
+
+
+def test_validate_one_rejects_non_create_ddl():
+    issues = _validate_one("SELECT 1;", "ddl", 0)
+    errors = [i for i in issues if i.severity == "error"]
+    assert len(errors) == 1
+    assert errors[0].message == "DDL must start with CREATE TABLE"
+
+
+def test_validate_one_rejects_non_insert_dml():
+    issues = _validate_one("SELECT 1 FROM t;", "dml", 0)
+    errors = [i for i in issues if i.severity == "error"]
+    assert len(errors) == 1
+    assert errors[0].message == "DML must start with INSERT INTO"
+
+
+def test_validate_one_empty_after_strip():
+    assert _validate_one("-- only a comment", "ddl", 0) == []
+    assert _validate_one("DROP TABLE foo;", "ddl", 0) == []
+
+
+def test_validate_one_changelog_mode_warning():
+    ddl = "CREATE TABLE t (id INT) WITH ('connector' = 'kafka');"
+    issues = _validate_one(ddl, "ddl", 0)
+    warnings = [i for i in issues if i.severity == "warning"]
+    assert any("changelog.mode" in i.message for i in warnings)
+
+
+@patch("flink_skill_common.sql_validate.get_logger")
+def test_log_validation_issues(mock_get_logger):
+    logger = MagicMock()
+    mock_get_logger.return_value = logger
+    issues = [
+        SqlValidationIssue(0, "ddl", "bad ddl", severity="error"),
+        SqlValidationIssue(1, "dml", "missing property", severity="warning"),
+    ]
+    log_validation_issues(issues)
+    logger.error.assert_called_once_with(
+        "SQL validation error [%s#%d]: %s",
+        "ddl",
+        0,
+        "bad ddl",
+    )
+    logger.warning.assert_called_once_with(
+        "SQL validation warning [%s#%d]: %s",
+        "dml",
+        1,
+        "missing property",
+    )
+
+
+def test_raise_on_errors_ignores_warnings():
+    issues = [
+        SqlValidationIssue(0, "ddl", "missing changelog.mode", severity="warning"),
+    ]
+    raise_on_errors(issues)
+
+
+def test_sql_validation_error_message():
+    issues = [
+        SqlValidationIssue(0, "ddl", "syntax error", line=4, severity="error"),
+    ]
+    err = SqlValidationError(issues)
+    assert "syntax error" in str(err)
+    assert "line 4" in str(err)
+    assert err.issues == issues
+
+
+@patch("flink_skill_common.deploy.flink_statement_manager.FlinkStatementManager")
+@patch("flink_skill_common.config.flink_deploy_settings")
+def test_validate_statements_remote(mock_settings, mock_manager_cls, settings):
+    mock_settings.return_value = settings
+    expected = [SqlValidationIssue(0, "ddl", "remote error")]
+    mock_manager_cls.return_value.validate_statements.return_value = expected
+
+    issues = validate_statements_remote([VALID_DDL], [VALID_DML])
+
+    mock_manager_cls.assert_called_once_with(settings)
+    mock_manager_cls.return_value.validate_statements.assert_called_once_with(
+        [VALID_DDL],
+        [VALID_DML],
+    )
+    assert issues == expected
 
 def test_validate_statements_accepts_valid_fixture():
     issues = validate_syntax_for_statements([VALID_DDL], [VALID_DML])

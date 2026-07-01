@@ -23,7 +23,6 @@ dev = [
 
 [project.scripts]
 spark-flink-migrate = "spark_flink_skill.cli:main"
-spark-flink-agent = "spark_flink_skill.agents.migrate_agent:main"
 
 [build-system]
 requires = ["hatchling"]

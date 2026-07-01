@@ -94,14 +94,12 @@ Setup complete. Migration CLIs ready:
   flink-skill-mcp          (flink-skill-common/harness)
   flink-skill-validate     (flink-skill-common/harness)
   ksql-flink-migrate       (ksql-to-flink-skill/harness)
-  ksql-flink-agent         (ksql-to-flink-skill/harness)
   spark-flink-migrate      (spark-to-flink-skill/harness)
-  spark-flink-agent        (spark-to-flink-skill/harness)
 
 Examples:
 
   cd ksql-to-flink-skill/harness
-  uv run ksql-flink-agent "List the ksql-to-flink migration workflow."
+  uv run ksql-flink-migrate --table my_table --file path/to.ksql --out-dir output/ --skip-deploy
 
   cd spark-to-flink-skill/harness
   uv run spark-flink-migrate --table my_table --file path/to.sql --out-dir output/ --skip-deploy

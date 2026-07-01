@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import sys
-
 from flink_skill_common.agents.factory import (
     build_migration_agent,
     make_openai_model,
     run_agent_response,
 )
-from flink_skill_common.llm import is_agent_error_response, llm_reachable, resolve_llm_model
+from flink_skill_common.llm import is_agent_error_response, resolve_llm_model
 
 from spark_flink_skill.config import llm_api_key, llm_base_url, load_env, skill_dir
 
@@ -60,22 +58,3 @@ def run_migration(table_name: str, spark_sql: str) -> str:
     if is_agent_error_response(content):
         raise MigrationError(content.strip() or "Agent returned no migration output.")
     return content
-
-
-def run_agent(prompt: str) -> str:
-    """Run the migrate agent with a free-form user prompt."""
-    agent = build_migrate_agent()
-    return run_agent_response(agent, prompt)
-
-
-def main() -> None:
-    load_env()
-    if not llm_reachable():
-        print("LLM not reachable. Start oMLX or set SL_LLM_BASE_URL.", file=sys.stderr)
-        sys.exit(1)
-    prompt = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "List the spark-to-flink migration workflow."
-    print(run_agent(prompt))
-
-
-if __name__ == "__main__":
-    main()

@@ -700,3 +700,1553 @@ SELECT
     title
 FROM publication_events
 WHERE author = 'George R. R. Martin';
+2026-07-01 09:22:07,897 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:27:03,474 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:27:03,474 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:27:03,474 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:27:03,474 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 09:27:03,474 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 09:33:34,839 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:33:34,840 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:33:34,840 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:33:34,840 INFO [flink_migration_skill.cli] output.py:91 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 09:33:34,840 INFO [flink_migration_skill.cli] output.py:92 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 09:48:59,665 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:48:59,665 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:48:59,665 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 09:48:59,666 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:91 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:92 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:48:59,667 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:48:59,668 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:48:59,668 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:48:59,668 INFO [flink_migration_skill.cli] output.py:91 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:48:59,668 INFO [flink_migration_skill.cli] output.py:92 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:48:59,672 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 09:48:59,675 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:48:59,675 WARNING [flink_migration_skill.cli] output.py:202 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:49:07,652 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 09:49:07,653 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:49:07,654 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:49:07,654 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:49:07,654 INFO [flink_migration_skill.cli] output.py:91 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 09:49:07,654 INFO [flink_migration_skill.cli] output.py:92 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:91 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:49:07,655 INFO [flink_migration_skill.cli] output.py:92 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:49:07,659 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 09:49:07,662 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:49:07,663 WARNING [flink_migration_skill.cli] output.py:202 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:55:46,052 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 09:55:46,052 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:91 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:92 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:81 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:82 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:63 DDL: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:91 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 09:55:46,053 INFO [flink_migration_skill.cli] output.py:92 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 09:55:46,056 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 09:55:46,058 WARNING [flink_migration_skill.cli] output.py:202 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:55:46,059 WARNING [flink_migration_skill.cli] output.py:202 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 09:58:44,380 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:58:44,380 ERROR [flink_migration_skill.cli] sql_validate.py:178 SQL validation error [ddl#0]: bad ddl
+2026-07-01 09:58:44,380 WARNING [flink_migration_skill.cli] sql_validate.py:171 SQL validation warning [dml#1]: missing property
+2026-07-01 09:58:44,434 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 09:58:44,434 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:58:44,435 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 09:58:44,435 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 09:58:46,003 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 09:58:46,003 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 09:59:04,863 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:59:04,863 ERROR [flink_migration_skill.cli] sql_validate.py:178 SQL validation error [ddl#0]: bad ddl
+2026-07-01 09:59:04,863 WARNING [flink_migration_skill.cli] sql_validate.py:171 SQL validation warning [dml#1]: missing property
+2026-07-01 09:59:12,307 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 09:59:12,307 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 09:59:12,307 INFO [flink_migration_skill.cli] output.py:64 DML: 
+2026-07-01 09:59:12,308 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 09:59:12,308 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 09:59:12,309 INFO [flink_migration_skill.cli] output.py:63 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 09:59:12,309 INFO [flink_migration_skill.cli] output.py:64 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:05:03,625 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:82 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:83 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:05:03,626 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:05:03,627 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:05:03,627 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:03,628 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:03,628 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,628 INFO [flink_migration_skill.cli] response_io.py:92 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:05:03,628 INFO [flink_migration_skill.cli] response_io.py:93 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:05:03,629 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:03,629 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,629 INFO [flink_migration_skill.cli] response_io.py:82 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:03,629 INFO [flink_migration_skill.cli] response_io.py:83 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:03,629 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:03,630 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,630 INFO [flink_migration_skill.cli] response_io.py:92 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:03,630 INFO [flink_migration_skill.cli] response_io.py:93 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:03,635 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:05:03,640 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:05:03,645 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:05:03,668 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:03,668 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,668 INFO [flink_migration_skill.cli] response_io.py:92 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:05:03,669 INFO [flink_migration_skill.cli] response_io.py:93 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:05:03,706 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:05:03,706 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:03,709 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:05:03,709 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:05:03,713 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:05:03,713 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:05:08,030 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:05:08,053 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,055 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,055 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:05:08,056 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,057 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:05:08,058 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,058 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:05:08,058 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:05:08,061 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:05:08,061 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:05:08,062 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:05:08,063 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:05:08,063 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:05:08,063 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:05:08,063 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:05:08,063 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:05:08,064 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:05:08,065 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,066 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:05:08,067 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:05:08,068 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:05:08,068 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:05:08,069 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:05:08,069 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:05:08,069 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-163/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:05:08,070 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:05:08,070 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:05:08,071 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,072 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:05:08,072 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:05:08,073 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:05:08,234 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:05:08,234 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,236 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:05:08,236 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:05:08,238 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:05:08,238 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:05:08,243 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:08,243 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,243 INFO [flink_migration_skill.cli] response_io.py:82 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:08,243 INFO [flink_migration_skill.cli] response_io.py:83 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:05:08,244 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:05:08,244 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:05:08,244 INFO [flink_migration_skill.cli] response_io.py:64 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:05:08,245 INFO [flink_migration_skill.cli] response_io.py:65 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:08,245 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:08,245 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,245 INFO [flink_migration_skill.cli] response_io.py:92 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:05:08,245 INFO [flink_migration_skill.cli] response_io.py:93 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:82 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:83 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:92 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:05:08,246 INFO [flink_migration_skill.cli] response_io.py:93 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:05:08,251 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:05:08,256 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:05:08,256 WARNING [flink_migration_skill.cli] response_io.py:203 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:05:08,264 INFO [flink_migration_skill.cli] response_io.py:64 DDL: 
+2026-07-01 10:05:08,264 INFO [flink_migration_skill.cli] response_io.py:65 DML: 
+2026-07-01 10:05:08,264 INFO [flink_migration_skill.cli] response_io.py:92 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:05:08,264 INFO [flink_migration_skill.cli] response_io.py:93 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:07:13,077 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:07:13,094 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,095 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,095 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:07:13,096 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,096 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:07:13,097 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,098 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:07:13,098 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:07:13,099 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:13,099 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:13,099 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:07:13,099 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:13,099 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:13,099 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:13,100 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:07:13,101 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:13,101 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:07:13,101 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:07:13,101 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:13,101 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:13,101 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:13,102 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:07:13,103 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,103 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:07:13,104 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:13,105 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:07:13,105 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:13,105 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:13,105 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:13,105 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-164/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:07:13,106 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:13,106 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:13,107 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,108 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:13,108 ERROR [flink_migration_skill.cli] sql_validate.py:169 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:13,108 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:07:13,383 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:07:13,384 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,385 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:07:13,385 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:07:13,387 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:07:13,387 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:07:13,455 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:13,455 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:07:13,456 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:13,457 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:13,457 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,457 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:07:13,457 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:07:13,457 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:13,463 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,463 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:13,463 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:13,464 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:13,464 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,464 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:13,464 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:13,467 WARNING [flink_migration_skill.cli] response_io.py:194 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:07:13,479 WARNING [flink_migration_skill.cli] response_io.py:194 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:07:13,479 WARNING [flink_migration_skill.cli] response_io.py:194 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:07:13,485 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:13,485 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:13,485 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:07:13,485 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:07:55,012 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:07:55,033 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,035 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,035 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:07:55,036 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,037 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:07:55,038 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,038 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:07:55,039 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:07:55,040 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:55,040 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:55,040 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:07:55,040 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:55,040 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:55,041 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:55,041 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:07:55,042 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:55,042 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:07:55,042 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:07:55,042 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:55,043 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:55,043 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:55,043 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:07:55,044 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,045 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:07:55,046 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:55,047 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:07:55,047 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:07:55,047 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:07:55,047 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:07:55,047 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-165/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:07:55,048 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:07:55,048 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:55,049 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,049 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:07:55,049 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:07:55,050 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:07:55,188 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:07:55,188 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,189 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:07:55,189 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:07:55,190 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:07:55,190 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:07:55,193 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:07:55,194 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:55,194 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:55,194 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,194 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:07:55,194 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:07:55,195 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:07:55,198 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:07:55,200 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:07:55,201 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:07:55,206 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:07:55,206 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:07:55,206 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:07:55,206 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:09:05,641 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:09:05,658 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,659 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,659 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:09:05,660 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,661 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:09:05,661 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,662 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:09:05,662 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:09:05,663 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:09:05,664 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:09:05,664 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:09:05,664 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:09:05,664 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:09:05,664 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:09:05,664 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:09:05,665 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:09:05,666 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:09:05,666 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:09:05,666 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:09:05,666 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:09:05,666 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:09:05,666 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:09:05,668 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,668 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:09:05,669 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:09:05,670 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:09:05,670 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:09:05,670 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:09:05,670 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:09:05,670 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-166/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:09:05,671 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:09:05,671 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:09:05,671 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,672 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:09:05,672 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:09:05,672 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:09:05,937 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:09:05,937 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,938 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:09:05,938 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:09:05,940 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:09:05,940 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:09:05,943 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:09:05,944 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:09:05,945 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:09:05,945 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,945 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:09:05,945 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:09:05,947 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:09:05,950 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:09:05,951 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:09:05,955 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:09:05,955 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:09:05,955 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:09:05,955 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:20:42,707 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:20:42,728 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,729 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,730 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:20:42,731 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,731 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:20:42,733 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,733 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:20:42,733 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:20:42,735 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:20:42,735 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:20:42,737 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:20:42,737 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:20:42,737 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:20:42,738 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:20:42,738 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:20:42,738 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:20:42,738 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:20:42,739 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,739 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:20:42,741 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:20:42,741 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:20:42,741 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:20:42,741 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:20:42,741 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:20:42,742 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-167/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:20:42,743 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:20:42,743 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:20:42,743 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,744 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:20:42,744 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:20:42,744 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:20:42,897 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:20:42,897 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,899 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:20:42,899 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:20:42,900 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:20:42,900 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:20:42,903 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:20:42,904 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:20:42,905 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:20:42,905 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,905 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:20:42,905 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:20:42,907 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:20:42,910 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:20:42,910 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:20:42,915 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:20:42,915 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:20:42,915 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:20:42,916 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:26:29,242 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:26:29,263 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,264 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,264 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:26:29,265 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,266 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:26:29,267 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,267 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:26:29,267 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:26:29,269 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:26:29,269 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:26:29,269 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:26:29,269 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:26:29,269 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:26:29,269 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:26:29,270 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:26:29,271 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:26:29,272 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:26:29,272 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:26:29,272 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:26:29,272 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:26:29,272 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:26:29,272 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:26:29,273 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,274 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:26:29,275 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:26:29,275 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:26:29,275 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:26:29,275 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:26:29,275 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:26:29,276 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-169/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:26:29,276 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:26:29,276 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:26:29,277 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,278 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:26:29,278 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:26:29,278 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:26:29,427 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:26:29,427 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,428 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:26:29,429 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:26:29,430 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:26:29,430 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:26:29,432 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:26:29,432 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,432 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:26:29,432 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:26:29,433 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:26:29,434 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:26:29,437 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:26:29,439 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:26:29,440 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:26:29,445 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:26:29,445 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:26:29,445 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:26:29,445 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:32:50,570 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:32:50,570 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,571 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,571 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:32:50,573 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,574 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:32:50,575 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,576 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:32:50,576 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:32:50,577 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:32:50,578 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:32:50,578 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:32:50,578 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:32:50,578 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:32:50,578 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:32:50,578 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:32:50,579 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:32:50,580 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:32:50,580 ERROR [flink_migration_skill.cli] convergence.py:230 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 226, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:32:50,580 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:32:50,580 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:32:50,580 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:32:50,580 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:32:50,581 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,582 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:32:50,583 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:32:50,584 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:32:50,584 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:32:50,584 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:32:50,584 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:32:50,584 INFO [flink_migration_skill.cli] convergence.py:223 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-172/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:32:50,585 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:32:50,585 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:32:50,586 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,587 INFO [flink_migration_skill.cli] convergence.py:161 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:32:50,587 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:32:50,587 INFO [flink_migration_skill.cli] convergence.py:183 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:38:35,068 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:38:35,089 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,090 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,090 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:38:35,092 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,092 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:38:35,094 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,094 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:38:35,094 ERROR [flink_migration_skill.cli] convergence.py:232 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 228, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:38:35,096 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:38:35,096 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:38:35,096 INFO [flink_migration_skill.cli] convergence.py:185 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:38:35,096 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:38:35,096 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:38:35,096 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:38:35,097 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:38:35,098 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:38:35,098 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:38:35,098 ERROR [flink_migration_skill.cli] convergence.py:232 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 228, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:38:35,099 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:38:35,099 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:38:35,099 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:38:35,099 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:38:35,100 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,101 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:38:35,102 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:38:35,103 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:38:35,103 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:38:35,103 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:38:35,103 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:38:35,104 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-173/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:38:35,104 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:38:35,104 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:38:35,105 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,106 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:38:35,106 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:38:35,106 INFO [flink_migration_skill.cli] convergence.py:185 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:38:35,114 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:38:35,114 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,115 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:38:35,115 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:38:35,117 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:38:35,117 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:38:35,310 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:38:35,310 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,310 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:38:35,310 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:38:35,311 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:38:35,311 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:38:35,311 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:38:35,311 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:38:35,312 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,313 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:38:35,313 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:38:35,315 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:38:35,318 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:38:35,319 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:38:35,323 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:38:35,323 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:38:35,323 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:38:35,323 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';
+2026-07-01 10:56:38,492 DEBUG [flink_migration_skill.cli] config.py:269 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-01 10:56:38,508 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,510 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,510 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: Expecting )
+2026-07-01 10:56:38,511 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,511 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_success0/dml.my_table.sql
+2026-07-01 10:56:38,512 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,512 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-01 10:56:38,512 ERROR [flink_migration_skill.cli] convergence.py:232 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 228, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:56:38,514 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:56:38,514 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:56:38,514 INFO [flink_migration_skill.cli] convergence.py:185 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:56:38,514 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:56:38,515 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:56:38,515 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:56:38,515 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-01 10:56:38,516 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:56:38,517 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:56:38,517 ERROR [flink_migration_skill.cli] convergence.py:232 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 228, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-01 10:56:38,517 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:56:38,517 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:56:38,517 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:56:38,517 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-01 10:56:38,518 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,519 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-01 10:56:38,520 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:56:38,520 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:56:38,520 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-01 10:56:38,520 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-01 10:56:38,520 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 2 of 2 for table=my_table
+2026-07-01 10:56:38,521 INFO [flink_migration_skill.cli] convergence.py:225 Deploying table=my_table ddl=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-175/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-01 10:56:38,521 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 2 for table=my_table
+2026-07-01 10:56:38,521 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:56:38,522 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,523 INFO [flink_migration_skill.cli] convergence.py:163 Convergence attempt 1 of 1 for table=my_table
+2026-07-01 10:56:38,523 ERROR [flink_migration_skill.cli] sql_validate.py:171 SQL validation error [ddl#0]: syntax error
+2026-07-01 10:56:38,523 INFO [flink_migration_skill.cli] convergence.py:185 Offline validation failed, invoking agent fix (attempt 1)
+2026-07-01 10:56:38,527 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-01 10:56:38,527 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,528 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-01 10:56:38,528 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-01 10:56:38,529 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-01 10:56:38,529 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t
+SELECT id FROM src;
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS a (id INT);
+CREATE TABLE IF NOT EXISTS b (id INT);
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO a SELECT 1;
+INSERT INTO b SELECT 2;
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id STRING, PRIMARY KEY (id) NOT ENFORCED);
+2026-07-01 10:56:38,937 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:85 DDL: DDL:
+CREATE TABLE IF NOT EXISTS george_martin (
+    -- columns inferred from SELECT * on all_publications
+    -- define explicit column types once all_publications schema is available
+);
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:86 DML: DML:
+INSERT INTO george_martin SELECT * FROM all_publications WHERE author = 'George R. R. Martin';
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:75 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:56:38,938 INFO [flink_migration_skill.cli] response_io.py:76 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:56:38,939 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:56:38,939 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,939 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS t (id STRING);
+2026-07-01 10:56:38,939 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO t SELECT id FROM src;
+2026-07-01 10:56:38,941 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'foo' (2 statements): writing files with _N suffix
+2026-07-01 10:56:38,944 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate ddl table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:56:38,944 WARNING [flink_migration_skill.cli] response_io.py:182 Duplicate dml table 'target' (2 statements): writing files with _N suffix
+2026-07-01 10:56:38,949 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-01 10:56:38,949 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-01 10:56:38,949 INFO [flink_migration_skill.cli] response_io.py:85 DDL: -- DDL for george_martin
+CREATE TABLE IF NOT EXISTS publication_events (
+    bookid BIGINT,
+    author STRING,
+    title STRING
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'publication_events',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'scan.bounded.mode' = 'unbounded'
+);
+
+CREATE TABLE IF NOT EXISTS george_martin_books (
+    bookid BIGINT,
+    author STRING,
+    title STRING,
+    PRIMARY KEY (bookid) NOT ENFORCED
+) DISTRIBUTED BY HASH(bookid) INTO 1 BUCKETS
+WITH (
+    'connector' = 'kafka',
+    'topic' = 'george_martin_books',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json-registry',
+    'json-registry.schema-context' = '.flink-dev',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded'
+);
+2026-07-01 10:56:38,949 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML for george_martin
+INSERT INTO george_martin_books
+SELECT
+    bookid,
+    author,
+    title
+FROM publication_events
+WHERE author = 'George R. R. Martin';

@@ -2,23 +2,21 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+
+from flink_skill_common.sql_parse import is_create_table_statement, is_insert_into_statement
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FLINK_REF = REPO_ROOT / "references" / "flink"
 FLINK_VALID_REF = FLINK_REF / "valid"
 
-_CREATE_TABLE = re.compile(r"^\s*CREATE\s+TABLE\b", re.IGNORECASE)
-_INSERT_INTO = re.compile(r"^\s*INSERT\s+INTO\b", re.IGNORECASE)
-
 
 def _classify_fixture(path: Path, sql: str) -> str:
     """Classify fixture SQL as ddl or dml; content wins over filename prefix."""
     stripped = sql.strip()
-    if _CREATE_TABLE.match(stripped):
+    if is_create_table_statement(stripped):
         return "ddl"
-    if _INSERT_INTO.match(stripped):
+    if is_insert_into_statement(stripped):
         return "dml"
 
     name = path.name

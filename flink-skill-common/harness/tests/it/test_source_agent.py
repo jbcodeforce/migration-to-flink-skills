@@ -4,8 +4,8 @@ import pytest
 
 from flink_skill_common.agents.sources import build_source_ddl_agent, generate_source_ddls
 from flink_skill_common.config import HarnessContext, configure
-from flink_skill_common.sql_validate import clean_flink_sql_and_validate
-from flink_skill_common.output import extract_sql_blocks
+from flink_skill_common.convergence import clean_flink_sql_and_validate
+from flink_skill_common.response_io import extract_sql_blocks
 
 __COMMON_ROOT = Path(__file__).resolve().parents[2]
 __PROJECT_ROOT = __COMMON_ROOT.parent

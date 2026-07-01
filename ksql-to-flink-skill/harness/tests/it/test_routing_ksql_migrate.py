@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from flink_skill_common.config import HarnessContext, configure, get_context
-from flink_skill_common.output import extract_sql_blocks
+from flink_skill_common.response_io import extract_sql_blocks
 
 from live_cli_runner import LiveCliRunner
 

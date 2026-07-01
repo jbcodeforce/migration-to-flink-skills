@@ -16,7 +16,7 @@ from flink_skill_common.config import (
     llm_base_url,
 )
 from flink_skill_common.deploy.llm_tools import FlinkStatementLLMTools
-from flink_skill_common.deploy.statements import (
+from flink_skill_common.deploy.flink_statement_manager import (
     ddl_statement_name,
     discover_source_ddl_files,
     dml_statement_name,

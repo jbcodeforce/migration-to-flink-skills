@@ -17,11 +17,10 @@ sequenceDiagram
     participant Factory as agents.factory
     participant KsqlAgent as KsqlToFlinkAgent<br/>(Agno + ksql-to-flink skill)
     participant LLM as LLM server
-    participant Pipeline as pipeline<br/>clean_flink_sql_and_validate
-    participant Output as flink_skill_common.output
+    participant Convergence as flink_skill_common.convergence
+    participant ResponseIO as flink_skill_common.response_io
     participant Sources as sources
     participant SourceAgent as SourceDdlAgent
-    participant Convergence as convergence<br/>converge_flink_sql
     participant SqlValidate as sql_validate
     participant DeployFixer as deploy_fixer
     participant FixerAgent as FlinkSqlDeployFixerAgent<br/>(Agno + validate-flink-sql skill)
@@ -87,37 +86,37 @@ sequenceDiagram
         rect rgb(255, 250, 240)
             Note over CLI,CC: Phase 2 — extract, write, validate, deploy
             CLI->>Progress: step(3, "Extracting SQL blocks and writing output...")
-            CLI->>Pipeline: clean_flink_sql_and_validate(response, table, ksql_cleaned, skip_deploy, out_dir)
+            CLI->>Convergence: clean_flink_sql_and_validate(response, table, ksql_cleaned, skip_deploy, out_dir)
 
-            Pipeline->>Output: extract_sql_blocks(response)
-            Output-->>Pipeline: ddls[], dmls[]
-            Pipeline->>Output: write_output(table, ddls, dmls, out_dir)
-            Output-->>Pipeline: ddl_paths[], dml_paths[]
+            Convergence->>ResponseIO: extract_sql_blocks(response)
+            ResponseIO-->>Convergence: ddls[], dmls[]
+            Convergence->>ResponseIO: write_output(table, ddls, dmls, out_dir)
+            ResponseIO-->>Convergence: ddl_paths[], dml_paths[]
 
             alt DML present
-                Pipeline->>KsqlUtils: compute_missing_source_tables(dml, table, ddl)
-                KsqlUtils-->>Pipeline: missing[]
+                Convergence->>KsqlUtils: compute_missing_source_tables(dml, table, ddl)
+                KsqlUtils-->>Convergence: missing[]
                 opt missing source tables
-                    Pipeline->>Sources: generate_source_ddls(table, src_ksql, dml, missing)
+                    Convergence->>Sources: generate_source_ddls(table, src_ksql, dml, missing)
                     Sources->>SourceAgent: agent.run(source_ddl_prompt)
                     SourceAgent->>LLM: generate stub CREATE TABLE DDL (JSON)
                     LLM-->>SourceAgent: source DDL stubs
                     SourceAgent-->>Sources: parsed source_ddls
-                    Sources-->>Pipeline: source_ddls dict
-                    Pipeline->>Output: write_source_ddls(out_dir, source_ddls)
-                    Output-->>Pipeline: tests/ddl.*.sql paths
+                    Sources-->>Convergence: source_ddls dict
+                    Convergence->>ResponseIO: write_source_ddls(out_dir, source_ddls)
+                    ResponseIO-->>Convergence: tests/ddl.*.sql paths
                 end
             end
 
-            Pipeline->>Convergence: converge_flink_sql(ddls, dmls, ConvergenceContext, skip_deploy)
+            Note over Convergence: converge_flink_sql(ddls, dmls, ConvergenceContext, skip_deploy)
 
             loop convergence attempt (1..agent_fixer_max_retries)
                 Convergence->>SqlValidate: validate_syntax_for_statements(ddls, dmls)
                 Note over SqlValidate: sqlglot parse (read="flink")
                 SqlValidate-->>Convergence: offline_issues[]
 
-                Convergence->>Output: write_output + resolve_table_paths
-                Output-->>Convergence: ddl_path, dml_path
+                Convergence->>ResponseIO: write_output + resolve_table_paths
+                ResponseIO-->>Convergence: ddl_path, dml_path
 
                 alt offline validation errors
                     opt agent_fixer enabled
@@ -134,14 +133,14 @@ sequenceDiagram
                         Convergence->>Output: extract_sql_blocks + write_source_ddls
                         Note over Convergence: continue loop with updated ddls/dmls
                     else agent_fixer disabled
-                        Convergence-->>Pipeline: raise SqlValidationError
+                        Convergence-->>Convergence: raise SqlValidationError
                     end
                 else offline validation passed
                     alt skip_deploy
-                        Convergence-->>Pipeline: ConvergenceResult(success=True)
+                        Convergence-->>Convergence: ConvergenceResult(success=True)
                     else deploy enabled
                         alt no tests/ directory
-                            Convergence-->>Pipeline: ConvergenceResult(success=False)
+                            Convergence-->>Convergence: ConvergenceResult(success=False)
                         else
                             Convergence->>FSM: deploy_table(table, ddl_path, dml_path, tests_dir)
                             FSM->>FSM: _deploy_source_ddls(tests/ddl.*.sql)
@@ -160,13 +159,13 @@ sequenceDiagram
                             FSM-->>Convergence: DeployResult
 
                             alt deploy success
-                                Convergence-->>Pipeline: ConvergenceResult(success=True)
+                                Convergence-->>Convergence: ConvergenceResult(success=True)
                             else deploy failed / unhealthy
                                 opt agent_fixer enabled
                                     Convergence->>Convergence: _apply_agent_fix(ctx, error_message)
                                     Note over Convergence,FixerAgent: same agent fix loop as offline errors
                                 else agent_fixer disabled
-                                    Convergence-->>Pipeline: ConvergenceResult(success=False)
+                                    Convergence-->>Convergence: ConvergenceResult(success=False)
                                 end
                             end
                         end
@@ -174,11 +173,11 @@ sequenceDiagram
                 end
             end
 
-            Convergence-->>Pipeline: ConvergenceResult
+            Convergence-->>Convergence: ConvergenceResult
             alt convergence failed
-                Pipeline-->>CLI: raise typer.Exit(1)
+                Convergence-->>CLI: raise typer.Exit(1)
             end
-            Pipeline-->>CLI: (ddl_path, dml_path) or None if skip_deploy
+            Convergence-->>CLI: (ddl_path, dml_path) or None if skip_deploy
             CLI->>Progress: done(3..5, validation/deploy status)
         end
     end
@@ -195,7 +194,8 @@ sequenceDiagram
 | `ksql_utils` | `ksql_to_flink/ksql_utils.py` | Split, clean, and name ksql CREATE statements |
 | `run_migration` | `ksql_to_flink/migrate_agent.py` | Builds KsqlToFlinkAgent and runs LLM translation |
 | `build_migration_agent` / `run_agent_response` | `flink_skill_common/agents/factory.py` | Agno agent construction and streaming run |
-| `clean_flink_sql_and_validate` | `ksql_to_flink/pipeline.py` | Extract SQL, write files, source stubs, convergence |
+| `clean_flink_sql_and_validate` | `flink_skill_common/convergence.py` | Extract SQL, write files, source stubs, convergence |
+| `extract_sql_blocks` / `write_output` | `flink_skill_common/response_io.py` | Parse LLM response; write DDL/DML files |
 | `generate_source_ddls` | `ksql_to_flink/sources.py` | LLM-generated stub DDL for missing DML sources |
 | `converge_flink_sql` | `flink_skill_common/convergence.py` | Offline validate → deploy → agent-fix retry loop |
 | `validate_syntax_for_statements` | `flink_skill_common/sql_validate.py` | sqlglot Flink dialect syntax check |

@@ -12,7 +12,7 @@ import re
 from typing import List
 
 
-from flink_skill_common.sql_preprocess import split_create_statements, strip_sql_comments_and_drops
+from flink_skill_common.sql_parse import split_create_statements, strip_sql_comments_and_drops
 
 _KSQL_CREATE_PATTERN = re.compile(
     r"\bCREATE(?:\s+OR\s+REPLACE)?\s+(?:STREAM|TABLE)\b",

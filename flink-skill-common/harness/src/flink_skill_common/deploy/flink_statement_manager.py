@@ -8,6 +8,7 @@ Flink statement lifecycle via confluent-sql REST driver.
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from contextlib import contextmanager
@@ -19,11 +20,7 @@ from confluent_sql import connect
 from confluent_sql.exceptions import OperationalError, StatementNotFoundError
 
 from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings
-from flink_skill_common.deploy.statements import (
-    ddl_statement_name,
-    discover_source_ddl_files,
-    dml_statement_name,
-)
+from flink_skill_common.sql_parse import extract_statement_table_name
 
 from logging import getLogger
 
@@ -33,6 +30,38 @@ SqlKind = Literal["snapshot_ddl", "streaming_dml", "batch_dml", "streaming_ddl"]
 
 SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "STOPPED", "DELETED"})
 FAILURE_PHASES = frozenset({"FAILED", "FAILING"})
+
+STATEMENT_NAME_RE = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+
+
+def normalize_statement_prefix(table_name: str) -> str:
+    """Normalize table name for Flink statement names (hyphens, lowercase)."""
+    normalized = table_name.lower().replace("_", "-")
+    if not STATEMENT_NAME_RE.match(normalized):
+        raise ValueError(
+            f"Table name {table_name!r} cannot be normalized to a valid statement name prefix"
+        )
+    return normalized
+
+
+def ddl_statement_name(table_name: str) -> str:
+    return f"{normalize_statement_prefix(table_name)}-ddl"
+
+
+def dml_statement_name(table_name: str) -> str:
+    return f"{normalize_statement_prefix(table_name)}-dml"
+
+
+def discover_source_ddl_files(tests_dir: Path) -> list[tuple[str, Path]]:
+    """Return (table_name, path) for each tests/ddl.{table}.sql source stub."""
+    if not tests_dir.is_dir():
+        return []
+    results: list[tuple[str, Path]] = []
+    for path in sorted(tests_dir.glob("*.sql")):
+        table_name = extract_statement_table_name(path.read_text())
+        if table_name:
+            results.append((table_name, path))
+    return results
 
 
 class StatementManagerError(RuntimeError):

@@ -7,7 +7,7 @@ Prepare the local environment for Agno-based migration CLIs (ksqlDB and Spark SQ
 - macOS or Linux (lab tested on Mac)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) on `PATH`
 - Python 3.11+ (`uv python install 3.11` if needed)
-- A running OpenAI-compatible LLM server (for example oMLX) at the URL configured in `.env`
+- To run LLM locally, we tested only on Mac M4 and 5, running OpenAI-compatible LLM server (oMLX), define the URL endpoint in the `.env` 
 
 ## Run setup
 
@@ -59,22 +59,23 @@ Fill LLM and Flink credentials in `.env`
 | CLI | Harness directory |
 |-----|-------------------|
 | `flink-skill-mcp`, `flink-skill-validate` | `flink-skill-common/harness` |
-| `ksql-flink-migrate`, `ksql-flink-agent` | `ksql-to-flink-skill/harness` |
-| `spark-flink-migrate`, `spark-flink-agent` | `spark-to-flink-skill/harness` |
+| `ksql-flink-migrate` | `ksql-to-flink-skill/harness` |
+| `spark-flink-migrate` | `spark-to-flink-skill/harness` |
 
 *Developer: see the `piproject.toml` under flink-skill-common, ksql-to-flink-skill and spark-to-flink-skill*
 
-## Skills: Agno vs Cursor
+## Skills: Agno vs Cursor/Claude Code
 
 | Runtime | Skill source | Validation |
 |---------|--------------|------------|
 | Agno harness / CLI | `skill/SKILL.md` (canonical) | `flink-skill-validate` CLI or `skill/scripts/validate_offline.py` |
-| Cursor / Claude IDE | `.cursor/skills/` (generated) | MCP `validate_flink_sql_offline` on `flink-skill-common` server |
+| Cursor | `.cursor/skills/` (generated) | MCP `validate_flink_sql_offline` on `flink-skill-common` server |
+| Claude Code | `.claude/skills` (generated) | CLI based tools used within the skill |
 
 As a developer or for tuning the skill, edit the canonical `skill/SKILL.md`, then refresh the IDE skills:
 
 ```bash
-./scripts/adapt-skills.sh --target cursor
-./scripts/adapt-skills.sh --target claude
+./scripts/adapt-skills.sh --target cursor --install
+./scripts/adapt-skills.sh --target claude --install
 ```
 

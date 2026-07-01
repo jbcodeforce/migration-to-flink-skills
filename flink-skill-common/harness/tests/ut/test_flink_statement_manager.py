@@ -12,7 +12,7 @@ from flink_skill_common.deploy.flink_statement_manager import (
     StatementManagerError,
     classify_sql,
 )
-from flink_skill_common.deploy.statements import _extract_table_name
+from flink_skill_common.sql_parse import extract_statement_table_name
 
 
 @pytest.fixture
@@ -37,10 +37,12 @@ def test_classify_sql():
     assert classify_sql("INSERT INTO t SELECT id FROM src;") == "streaming_dml"
 
 def test_extract_table_name():
-    assert _extract_table_name("CREATE TABLE t (id STRING);") == "t"
-    assert _extract_table_name("INSERT INTO t \nSELECT id FROM src;") == "t"
-    assert _extract_table_name("CREATE TABLE IF NOT EXISTS t \n(id STRING);") == "t"
-    assert _extract_table_name("CREATE TABLE IF NOT EXISTS t \n(id STRING) WITH (kafka.topic = 't');") == "t"
+    assert extract_statement_table_name("CREATE TABLE t (id STRING);") == "t"
+    assert extract_statement_table_name("INSERT INTO t \nSELECT id FROM src;") == "t"
+    assert extract_statement_table_name("CREATE TABLE IF NOT EXISTS t \n(id STRING);") == "t"
+    assert extract_statement_table_name(
+        "CREATE TABLE IF NOT EXISTS t \n(id STRING) WITH (kafka.topic = 't');"
+    ) == "t"
 
 
 def test_create_statement_snapshot_ddl(settings):

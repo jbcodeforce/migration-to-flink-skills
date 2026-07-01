@@ -2,10 +2,31 @@
 
 from __future__ import annotations
 
-from flink_skill_common.fixtures import GoldenPair
-from flink_skill_common.fixtures import assert_fixtures_exist as _assert_fixtures_exist
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
 
 from spark_flink_skill.config import c360_flink_root, c360_spark_root
+
+
+@dataclass(frozen=True)
+class GoldenPair:
+    name: str
+    source_file: Path
+    flink_ddl: Path
+    flink_dml: Path
+    table_name: str
+
+
+def _assert_fixtures_exist(pairs: Iterable[GoldenPair]) -> None:
+    """Raise FileNotFoundError if any golden fixture path is missing."""
+    missing = []
+    for pair in pairs:
+        for path in (pair.source_file, pair.flink_ddl, pair.flink_dml):
+            if not path.exists():
+                missing.append(str(path))
+    if missing:
+        raise FileNotFoundError("Missing fixture files:\n" + "\n".join(missing))
 
 
 def c360_golden_pairs() -> list[GoldenPair]:

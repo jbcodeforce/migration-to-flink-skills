@@ -149,20 +149,18 @@ print("flink-skill-mcp ok")
     _verify_entry_points(
         ksql_harness,
         "ksql-flink-skill",
-        ["ksql-flink-migrate", "ksql-flink-agent"],
+        ["ksql-flink-migrate"],
         label="ksql CLI entry points",
     )
-    print("  ksql-flink-agent ok")
 
     _run_cli(spark_harness, "spark-flink-migrate")
     print("  spark-flink-migrate ok")
     _verify_entry_points(
         spark_harness,
         "spark-flink-skill",
-        ["spark-flink-migrate", "spark-flink-agent"],
+        ["spark-flink-migrate"],
         label="spark CLI entry points",
     )
-    print("  spark-flink-agent ok")
 
 
 def verify_llm(repo_root: Path) -> None:

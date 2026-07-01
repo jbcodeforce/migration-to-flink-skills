@@ -54,7 +54,7 @@ def test_migrate_verbose_progress_with_mocks(tmp_path: Path):
         patch("ksql_to_flink.cli.resolve_llm_model", return_value="test-model"),
         patch("ksql_to_flink.cli.run_migration", return_value=agent_response),
         patch(
-            "flink_skill_common.sql_validate.compute_missing_source_tables",
+            "flink_skill_common.convergence.compute_missing_source_tables",
             return_value=[],
         ),
         patch(

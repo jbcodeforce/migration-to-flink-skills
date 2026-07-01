@@ -184,7 +184,7 @@ SL_LLM_API_KEY=no_llm_key
 
 CLI: `uv run spark-flink-migrate --table NAME --file PATH [--out-dir DIR]`
 
-Agno smoke: `uv run spark-flink-agent "Migrate c360 facts/fct_customer_360_profile.sql to Flink SQL"`
+Smoke: `uv run spark-flink-migrate --table fct_customer_360_profile --file path/to/fct_customer_360_profile.sql --out-dir output/ --skip-deploy`
 
 ## Deployment
 

@@ -1,4 +1,6 @@
-"""Integration tests for converge_flink_sql workflow branches."""
+"""
+Integration tests for converge_flink_sql workflow branches.
+"""
 
 from pathlib import Path
 
@@ -13,11 +15,9 @@ from flink_fixtures import (
     validation_issues,
 )
 from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql
-from flink_skill_common.sql_validate import SqlValidationError
 from flink_skill_common.deploy.flink_statement_manager import FlinkStatementManager
 
 pytestmark = pytest.mark.integration
-
 
 TABLE_NAME = "filtered_publications"
 

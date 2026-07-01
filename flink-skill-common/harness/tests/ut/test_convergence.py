@@ -1,7 +1,7 @@
 """Unit tests for Flink SQL convergence loop."""
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -17,6 +17,7 @@ from flink_skill_common.convergence import (
     _deploy_messages,
     _format_validation_errors,
     ConvergenceContext,
+    clean_flink_sql_and_validate,
     converge_flink_sql,
 )
 from flink_skill_common.deploy.flink_statement_manager import DeployError, DeployResult
@@ -442,3 +443,89 @@ def test_format_validation_errors_includes_line():
     ]
     formatted = _format_validation_errors(issues)
     assert formatted == "[ddl#0] bad syntax (line 5)"
+
+
+@patch("flink_skill_common.convergence.converge_flink_sql")
+@patch("flink_skill_common.config.agent_fixer_enabled", return_value=False)
+def test_clean_flink_sql_and_validate_no_dml(mock_agent, mock_converge, tmp_path: Path):
+    response = """
+DDL:
+```sql
+CREATE TABLE IF NOT EXISTS t (id INT);
+```
+"""
+    result = clean_flink_sql_and_validate(
+        response,
+        "t",
+        "CREATE TABLE src (id INT);",
+        skip_deploy=True,
+        out_dir=tmp_path,
+    )
+    assert result is None
+    mock_converge.assert_not_called()
+
+
+@patch("flink_skill_common.convergence.converge_flink_sql")
+@patch("flink_skill_common.config.agent_fixer_enabled", return_value=False)
+def test_clean_flink_sql_and_validate_converges(mock_agent, mock_converge, tmp_path: Path):
+    mock_converge.return_value = MagicMock(success=True)
+    response = """
+DDL:
+```sql
+CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+```
+
+DML:
+```sql
+INSERT INTO target SELECT id FROM src;
+```
+"""
+    result = clean_flink_sql_and_validate(
+        response,
+        "target",
+        "CREATE TABLE src (id INT);",
+        skip_deploy=True,
+        out_dir=tmp_path,
+    )
+    assert result is not None
+    mock_converge.assert_called_once()
+    table_dir = tmp_path / "target"
+    assert (table_dir / "ddl.target.sql").is_file()
+    assert (table_dir / "dml.target.sql").is_file()
+
+
+@patch("flink_skill_common.convergence.converge_flink_sql")
+@patch("flink_skill_common.convergence.generate_source_ddls")
+@patch("flink_skill_common.config.agent_fixer_enabled", return_value=False)
+def test_clean_flink_sql_and_validate_generates_missing_sources(
+    mock_agent,
+    mock_generate,
+    mock_converge,
+    tmp_path: Path,
+):
+    mock_converge.return_value = MagicMock(success=True)
+    mock_generate.return_value = {
+        "publication_events": "CREATE TABLE IF NOT EXISTS publication_events (id INT);",
+    }
+    response = """
+DDL:
+```sql
+CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+```
+
+DML:
+```sql
+INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+```
+"""
+    clean_flink_sql_and_validate(
+        response,
+        "george_martin_books",
+        "CREATE STREAM all_publications (bookid BIGINT);",
+        skip_deploy=True,
+        out_dir=tmp_path,
+    )
+    mock_generate.assert_called_once()
+    source_path = tmp_path / "george_martin_books" / "tests" / "ddl.publication_events.sql"
+    assert source_path.is_file()

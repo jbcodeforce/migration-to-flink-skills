@@ -37,12 +37,6 @@ uv run spark-flink-migrate \
   --out-dir output/
 ```
 
-### Agno agent smoke test
-
-```bash
-uv run spark-flink-agent "Migrate src_customers.sql to Flink SQL for table src_c360_customers"
-```
-
 ## Deploy skill — Cursor
 
 From repo root (generates skills under `.cursor/skills/`):

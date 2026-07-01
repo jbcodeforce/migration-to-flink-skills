@@ -6,16 +6,14 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration. This c
 
 | Module | Purpose |
 |--------|---------|
-| `compare` | Unordered line comparison for golden SQL tests |
-| `output` | Parse LLM migration responses; write DDL/DML files |
+| `response_io` | Parse LLM migration responses; write DDL/DML files |
 | `llm` | OpenAI-compatible LLM reachability and model resolution |
 | `config` | `HarnessContext`, LLM settings, `FlinkDeploySettings`, deploy preflight |
-| `sql_preprocess` | Comment/DROP stripping and CREATE statement splitting |
+| `sql_parse` | Comment/DROP stripping, CREATE statement splitting, dependency analysis |
 | `sql_validate` | Offline (sqlglot) and remote (confluent-sql) SQL syntax validation |
-| `fixtures` | `GoldenPair` dataclass and fixture existence checks |
+| `convergence` | Extract SQL from LLM output, validate, deploy, agent fix loop |
 | `agents.factory` | Agno agent construction helpers |
 | `agents.deploy_fixer` | Agno agent with confluent-sql tools for validation/deploy fixes |
-| `convergence` | sqlglot → remote validate → deploy → agent fix loop |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
 
 ## Convergence loop
@@ -50,16 +48,6 @@ flowchart TD
     loopContinue --> exhaust[return failure after max_attempts]
 ```
 
-## Usage
-
-Each skill harness calls `configure()` once at import time in its thin `config.py`, then depends on this package via an editable path dependency:
-
-```toml
-dependencies = ["flink-skill-common"]
-
-[tool.uv.sources]
-flink-skill-common = { path = "../../flink-skill-common/harness", editable = true }
-```
 
 ## Environment
 
@@ -151,4 +139,11 @@ For integration tests, it requires a reachable LLM and CC Flink deploy credentia
 AGENT_FIXER_EXECUTION_ENABLED=true \
 uv run pytest tests/it/test_convergence_it.py -vs -m integration_agent
 ```
+
+## To use skill in Claude Code
+
+* Prompts supported:
+    ```sh
+    using /validate-flink-sql  validate references/flink/invalid/dd_bad_syntax/ddl.sql and fix it until it deploys successfully on confluent cloud
+    ```
 

@@ -19,7 +19,7 @@ from flink_skill_common.config import (
     llm_base_url,
     load_env,
 )
-from flink_skill_common.output import parse_source_ddls_from_response
+from flink_skill_common.response_io import parse_source_ddls_from_response
 
 
 def _make_model():
