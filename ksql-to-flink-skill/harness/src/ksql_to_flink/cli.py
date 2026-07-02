@@ -18,8 +18,9 @@ from flink_skill_common.config import (
     cli_log_file,
     get_logger,
     llm_base_url,
+    llm_reachable,
 )
-from flink_skill_common.llm import llm_reachable, resolve_llm_model
+from flink_skill_common.llm import resolve_llm_model
 from flink_skill_common.convergence import clean_flink_sql_and_validate
 from flink_skill_common.sql_validate import SqlValidationError
 from .cli_progress import ProgressReporter

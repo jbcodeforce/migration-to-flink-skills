@@ -16,14 +16,17 @@ from sqlglot.errors import ParseError
 
 from flink_skill_common.config import get_logger
 from flink_skill_common.sql_parse import (
+    extract_ddl_with_block,
     is_create_table_statement,
     is_insert_into_statement,
+    parse_with_properties,
     strip_sql_comments_and_drops,
 )
+from flink_skill_common.with_property_rules import validate_with_properties
 from flink_skill_common.sqlglot_flink import Flink  # noqa: F401 — registers read="flink"
 
+# pattern to match DDL extensions
 _FLINK_DDL_EXTENSIONS = re.compile(r"\)\s*(DISTRIBUTED\s+BY|WITH\s*\()", re.IGNORECASE)
-_CHANGELOG_PATTERN = re.compile(r"'changelog.mode'\s*=", re.IGNORECASE)
 
 SqlKind = Literal["ddl", "dml"]
 Severity = Literal["error", "warning"]
@@ -123,15 +126,22 @@ def _validate_one(sql: str, kind: SqlKind, index: int) -> list[SqlValidationIssu
                     severity="error",
                 )
             ]
-        if _FLINK_DDL_EXTENSIONS.search(stripped) and not _CHANGELOG_PATTERN.search(stripped):
+        with_inner, _with_line = extract_ddl_with_block(stripped)
+        if with_inner is not None:
+            props = parse_with_properties(with_inner)
+            issues.extend(validate_with_properties(props, statement_index=index))
+        elif _FLINK_DDL_EXTENSIONS.search(stripped) and re.search(
+            r"\bWITH\s*\(", stripped, re.IGNORECASE
+        ):
             issues.append(
                 SqlValidationIssue(
                     statement_index=index,
                     kind=kind,
-                    message="DDL WITH clause missing 'changelog.mode' property",
-                    severity="warning",
+                    message="Could not parse DDL WITH clause",
+                    severity="error",
                 )
             )
+
     elif not is_insert_into_statement(stripped):
         return [
             SqlValidationIssue(

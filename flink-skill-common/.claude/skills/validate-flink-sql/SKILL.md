@@ -106,9 +106,31 @@ Generate response in JSON format with two clearly separated fields:
 
 After applying the rules above, run syntax checks before deploy.
 
-1. Call MCP `validate_flink_sql_offline(ddls, dmls)` on the `flink-skill-common` server.
+1. Validate offline:
+
+```bash
+uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl path/to/ddl.sql --dml path/to/dml.sql
+```
+
+Or: `python .claude/skills/validate-flink-sql/scripts/validate_offline.py --ddl ... --dml ...`
+
 2. On errors, apply this skill's rules, fix SQL, and re-validate.
-3. Optionally call `validate_flink_sql_remote` when Flink credentials are in repo `.env`.
-4. See [confluent-sql-deploy.md](references/confluent-sql-deploy.md) for deploy MCP sequence.
+3. Optional remote: `flink-skill-validate remote` (requires Flink credentials in repo `.env`).
+4. Deploy: configure `flink-skill-mcp` in Claude Code MCP settings; see [confluent-sql-deploy.md](references/confluent-sql-deploy.md).
+5. On validation or deploy failure, follow the **Fix loop** below (you perform fixes — not the Agno deploy fixer).
+
+## Fix loop on validation or deploy failure
+
+**You** perform the fix loop using this skill and `flink-skill-common` tools. Do **not** invoke Agno deploy fixer, `converge_flink_sql`, or `AGENT_FIXER_EXECUTION_ENABLED`.
+
+1. Read validation errors from `flink-skill-validate offline` / `remote` output, or from MCP `get_flink_statement_exceptions` when deploy is configured.
+2. Apply validation rules in this skill. Fix source stub DDLs in `tests/ddl.*.sql` when errors indicate missing upstream tables.
+3. Write corrected SQL to `ddl.{table}.sql`, `dml.{table}.sql`, and `tests/` stub files.
+4. Re-run `flink-skill-validate offline` (or `remote`); optionally MCP `validate_flink_sql_remote`.
+5. Redeploy via `flink-skill-mcp` MCP: source stub DDLs → target DDL → target DML (`create_flink_statement` + `wait_flink_statement_phase`).
+6. `check_flink_statement_health` on the DML statement when available.
+7. Repeat until validation and deploy succeed or the user stops.
+
+Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Full sequence: [confluent-sql-deploy.md](references/confluent-sql-deploy.md).
 
 Apply these validation rules to the provided Flink SQL scripts and return the corrected versions.

@@ -32,12 +32,12 @@ from flink_skill_common.config import (
     llm_model,
     llm_timeout,
     load_env,
-    resolve_dotenv_path,
+    _resolve_dotenv_path,
     skill_dir,
     skill_md_path,
 )
 
-__COMMON_ROOT = Path(__file__).resolve().parents[2]
+__COMMON_ROOT = Path(__file__).resolve().parents[3]
 __PROJECT_ROOT = __COMMON_ROOT.parent
 _HARNESS = HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT)
 configure(_HARNESS)
@@ -74,7 +74,7 @@ def test_get_context_raises_when_not_configured(monkeypatch):
 def test_skill_dir():
     assert "flink-skill-common/skill" in str(_HARNESS.skill_dir.as_posix())
     assert "flink-skill-common/skill/SKILL.md" in str(_HARNESS.skill_md_path.as_posix())
-    assert "migration-to-flink-skills" in str(_HARNESS.code_root.as_posix())
+    assert "migration-to-flink-skills" in str(_HARNESS.project_root.as_posix())
     assert _HARNESS.harness_root.as_posix() == __COMMON_ROOT.as_posix()
     assert skill_dir() == _HARNESS.skill_dir
     assert skill_md_path() == _HARNESS.skill_md_path
@@ -313,15 +313,15 @@ def test_agent_settings_from_shared_dotenv():
 def test_resolve_dotenv_default_code_root(tmp_path, monkeypatch):
     monkeypatch.delenv("DOTENV_FILE", raising=False)
     ctx = _make_ctx(tmp_path)
-    env_file = ctx.code_root / ".env"
+    env_file = ctx.project_root / ".env"
     env_file.write_text("KEY=value\n")
-    assert resolve_dotenv_path(ctx) == env_file
+    assert _resolve_dotenv_path(ctx) == env_file
 
 
 def test_resolve_dotenv_missing_file(tmp_path, monkeypatch):
     monkeypatch.delenv("DOTENV_FILE", raising=False)
     ctx = _make_ctx(tmp_path)
-    assert resolve_dotenv_path(ctx) is None
+    assert _resolve_dotenv_path(ctx) is None
 
 
 def test_resolve_dotenv_absolute_path(tmp_path, monkeypatch):
@@ -329,32 +329,32 @@ def test_resolve_dotenv_absolute_path(tmp_path, monkeypatch):
     external.write_text("KEY=value\n")
     monkeypatch.setenv("DOTENV_FILE", str(external))
     ctx = _make_ctx(tmp_path)
-    assert resolve_dotenv_path(ctx) == external
+    assert _resolve_dotenv_path(ctx) == external
 
 
 def test_resolve_dotenv_relative_to_code_root(tmp_path, monkeypatch):
     ctx = _make_ctx(tmp_path)
-    relative = ctx.code_root / "config" / "shared.env"
+    relative = ctx.project_root / "config" / "shared.env"
     relative.parent.mkdir(parents=True)
     relative.write_text("KEY=value\n")
     monkeypatch.setenv("DOTENV_FILE", "config/shared.env")
-    assert resolve_dotenv_path(ctx) == relative.resolve()
+    assert _resolve_dotenv_path(ctx) == relative.resolve()
 
 
 def test_dotenv_file_takes_precedence_over_default(tmp_path, monkeypatch):
     ctx = _make_ctx(tmp_path)
-    default = ctx.code_root / ".env"
+    default = ctx.project_root / ".env"
     default.write_text("KEY=default\n")
     external = tmp_path / "override.env"
     external.write_text("KEY=override\n")
     monkeypatch.setenv("DOTENV_FILE", str(external))
-    assert resolve_dotenv_path(ctx) == external
+    assert _resolve_dotenv_path(ctx) == external
 
 
 def test_load_env_reads_dotenv_file(tmp_path, monkeypatch):
     monkeypatch.delenv("DOTENV_FILE", raising=False)
     ctx = _make_ctx(tmp_path)
-    env_file = ctx.code_root / ".env"
+    env_file = ctx.project_root / ".env"
     env_file.write_text("DOTENV_TEST_VAR=from-dotenv\n")
     configure(ctx)
     assert load_env() is True
@@ -373,7 +373,7 @@ def test_load_env_returns_false_when_missing(tmp_path, monkeypatch):
 def test_dotenv_path_accessor(tmp_path, monkeypatch):
     monkeypatch.delenv("DOTENV_FILE", raising=False)
     ctx = _make_ctx(tmp_path)
-    env_file = ctx.code_root / ".env"
+    env_file = ctx.project_root / ".env"
     env_file.write_text("KEY=value\n")
     configure(ctx)
     assert dotenv_path() == env_file

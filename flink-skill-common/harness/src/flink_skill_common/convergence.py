@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from flink_skill_common.agents.deploy_fixer import run_agent_deploy_fixer
+from flink_skill_common.agents.cc_deployment_fixer import run_agent_deploy_fixer
 from flink_skill_common.agents.sources import generate_source_ddls
 from flink_skill_common.config import agent_fixer_enabled, agent_fixer_max_retries, get_logger
 from flink_skill_common.deploy.flink_statement_manager import DeployError, FlinkStatementManager
@@ -148,7 +148,9 @@ def converge_flink_sql(
     agent_on_failure: bool | None = None,
     on_progress: Callable[[str], None] | None = None,
 ) -> ConvergenceResult:
-    """Loop validation, deploy, and agent fix until SQL converge to successful deployments or retries exhaust."""
+    """
+    Loop validation, deploy, and agent fix until SQL converge to successful deployments or retries exhaust.
+    """
     use_agent = agent_fixer_enabled() if agent_on_failure is None else agent_on_failure
     max_attempts = agent_fixer_max_retries() if use_agent else 1
 

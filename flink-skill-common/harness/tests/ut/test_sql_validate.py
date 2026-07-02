@@ -6,7 +6,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlglot.errors import ParseError
 
-from flink_ref_fixtures import load_all_valid_flink_reference_sql
+from flink_ref_fixtures import (
+    assert_has_errors,
+    assert_no_errors,
+    load_flink_pair,
+    load_all_valid_flink_reference_sql,
+    validation_issues,
+    REFERENCES_ROOT
+)
+
 from flink_skill_common.config import HarnessContext, configure
 from flink_skill_common.sql_validate import (
     SqlValidationError,
@@ -18,10 +26,10 @@ from flink_skill_common.sql_validate import (
     log_validation_issues,
     raise_on_errors,
     validate_syntax_for_statements,
-    validate_statements_remote,
+    validate_statements_remote
 )
 
-__COMMON_ROOT = Path(__file__).resolve().parents[2]
+__COMMON_ROOT = Path(__file__).resolve().parents[3]
 __PROJECT_ROOT = __COMMON_ROOT.parent
 configure(HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT))
 
@@ -187,6 +195,19 @@ def test_validate_one_changelog_mode_warning():
     issues = _validate_one(ddl, "ddl", 0)
     warnings = [i for i in issues if i.severity == "warning"]
     assert any("changelog.mode" in i.message for i in warnings)
+    assert any("connector" in i.message for i in warnings)
+
+
+def test_validate_one_invalid_value_format():
+    ddl = """CREATE TABLE t (id INT) WITH (
+        'changelog.mode' = 'append',
+        'value.format' = 'invalid-format-xyz'
+    );"""
+    issues = _validate_one(ddl, "ddl", 0)
+    errors = [i for i in issues if i.severity == "error"]
+    assert len(errors) == 1
+    assert "value.format" in errors[0].message
+    assert "invalid-format-xyz" in errors[0].message
 
 
 @patch("flink_skill_common.sql_validate.get_logger")
@@ -251,6 +272,44 @@ def test_validate_statements_accepts_valid_fixture():
     assert not errors
 
 
+def test_offline_valid_raw_classical_songs():
+    src_dir = REFERENCES_ROOT / "flink" / "valid" / "raw_classical_songs"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    assert_no_errors(issues)
+
+
+def test_offline_valid_watermark_metadata():
+    src_dir = REFERENCES_ROOT / "flink" / "valid" / "watermark_metadata"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    assert_no_errors(issues)
+
+def test_offline_rejects_bad_syntax():
+    src_dir = REFERENCES_ROOT / "flink" / "invalid" / "ddl_bad_syntax"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    assert_has_errors(issues, kind="ddl")
+
+def test_offline_fixable_properties():
+    src_dir = REFERENCES_ROOT / "flink" / "invalid" / "ddl_fixable_typo"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    assert_has_errors(issues, kind="ddl")
+
+def test_offline_rejects_bad_dml():
+    src_dir = REFERENCES_ROOT / "flink" / "invalid" / "dml_bad_syntax"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    assert_has_errors(issues, kind="dml")
+
+def test_offline_multiple_errors():
+    src_dir = REFERENCES_ROOT / "flink" / "invalid" / "multi_error_convergence"
+    ddls, dmls, src_dir = load_flink_pair(src_dir)
+    issues = validation_issues(ddls, dmls, remote=False)
+    print(issues)
+    assert_has_errors(issues, kind="dml")
+
 def test_validate_statements_empty_lists():
     assert validate_syntax_for_statements([], []) == []
 
@@ -293,4 +352,11 @@ def test_validate_all_flink_references():
         f"[{issue.kind}#{issue.statement_index}] {issue.message}" for issue in errors
     )
 
+def test_validate_ctas():
+    _REFERENCES_ROOT = __PROJECT_ROOT / "references"
+    table_path = _REFERENCES_ROOT /  Path("flink/valid/routing/filtering/")
+    ddls, dmls, src_dir = load_flink_pair(table_path)
+    issues = validate_syntax_for_statements(ddls, dmls)
+    print(issues)
+    assert not issues
 

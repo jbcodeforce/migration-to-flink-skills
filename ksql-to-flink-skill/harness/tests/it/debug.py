@@ -9,15 +9,14 @@ _PROJECT_ROOT = _HARNESS_ROOT.parent
 from flink_skill_common.config import (
     HarnessContext,
     configure,
-    configure_cli_logging,
     llm_api_key,
     llm_base_url,
+    llm_reachable
 )
 
 configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
-configure_cli_logging("ksql_to_flink.cli")
 
-from flink_skill_common.llm import llm_reachable
+
 from ksql_to_flink.cli import app
 
 base_url = llm_base_url()

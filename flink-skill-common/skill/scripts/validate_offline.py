@@ -19,7 +19,7 @@ def main() -> None:
         "--directory",
         str(_HARNESS_DIR),
         "flink-skill-validate",
-        "offline",
+        "syntax_only",
         *sys.argv[1:],
     ]
     result = subprocess.run(cmd, cwd=_REPO_ROOT, check=False)

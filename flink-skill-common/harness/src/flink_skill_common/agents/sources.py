@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from agno.agent import Agent
 
-from flink_skill_common.agents.factory import make_openai_model
-from flink_skill_common.llm import resolve_llm_model
+from flink_skill_common.agents.factory import make_openai_model, resolve_llm_model
 
 from flink_skill_common.config import (
     flink_skill_common_skill_dir,
@@ -38,7 +37,7 @@ def _source_ddl_prompt_template() -> str:
 
 def source_ddl_prompt(
     target_table: str,
-    ksql: str,
+    src_sql: str,
     dml_sql: str,
     missing_sources: list[str],
 ) -> str:
@@ -48,7 +47,7 @@ def source_ddl_prompt(
         f"{_source_ddl_prompt_template()}\n\n"
         f"target_table: {target_table}\n"
         f"missing_sources: [{sources_list}]\n\n"
-        f"ksql_script:\n```sql\n{ksql.strip()}\n```\n\n"
+        f"sql_script:\n```sql\n{src_sql.strip()}\n```\n\n"
         f"dml_sql:\n```sql\n{dml_sql.strip()}\n```"
     )
 
@@ -68,7 +67,7 @@ def build_source_ddl_agent() -> Agent:
 
 def generate_source_ddls(
     target_table: str,
-    ksql: str,
+    src_sql: str,
     dml_sql: str,
     missing_sources: list[str],
 ) -> dict[str, str]:
@@ -77,7 +76,7 @@ def generate_source_ddls(
         return {}
 
     agent = build_source_ddl_agent()
-    prompt = source_ddl_prompt(target_table, ksql, dml_sql, missing_sources)
+    prompt = source_ddl_prompt(target_table, src_sql, dml_sql, missing_sources)
     response = agent.run(prompt)
     content = str(response.content) if hasattr(response, "content") else str(response)
     parsed = parse_source_ddls_from_response(content)

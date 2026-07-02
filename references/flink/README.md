@@ -11,8 +11,8 @@ Canonical SQL fixtures for `flink-skill-common` integration tests (offline sqlgl
 | `invalid/ddl_bad_syntax/` | Unclosed `CREATE TABLE` paren | offline fail |
 | `invalid/ddl_missing_pk/` | DDL without PRIMARY KEY / DISTRIBUTED BY | offline may warn; remote fail |
 | `invalid/dml_bad_syntax/` | `INSRT INTO` typo | offline fail |
-| `invalid/ddl_fixable_typo/` | Invalid `value.format` in WITH clause | offline warn only; remote fail; agent-fix IT |
-| `invalid/multi_error_convergence/` | DML offline fail (`INSRT`) + DDL remote fail (`invalid-format-xyz`) | offline → remote → deploy agent IT |
+| `invalid/ddl_fixable_typo/` | Invalid `value.format` in WITH clause | offline fail; remote fail; agent-fix IT |
+| `invalid/multi_error_convergence/` | DML offline fail (`INSRT`) + DDL offline fail (`invalid-format-xyz`) | offline → remote → deploy agent IT |
 
 ## Multi-error convergence flow
 
@@ -21,7 +21,7 @@ The `multi_error_convergence` fixture stages two error types so `converge_flink_
 | File | Error | Tier |
 |------|-------|------|
 | `dml.sql` | `INSRT INTO` typo | Offline (sqlglot) |
-| `ddl.sql` | `'value.format' = 'invalid-format-xyz'` | Remote (CC Flink) |
+| `ddl.sql` | `'value.format' = 'invalid-format-xyz'` | Offline (WITH property rules) |
 | `source.sql` | Intended correct DDL | Agent context |
 
 

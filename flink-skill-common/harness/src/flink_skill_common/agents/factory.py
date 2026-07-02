@@ -1,19 +1,67 @@
-"""Agno agent construction helpers for migration skills."""
+"""Agno agent construction helpers for migration agents, and other validation agents."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Optional
 
 from agno.agent import Agent, RunEvent
 from agno.models.openai import OpenAIChat
 from agno.skills import LocalSkills, Skills
-
+from flink_skill_common.config import llm_model, fetch_models_payload
 
 def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAIChat:
     return OpenAIChat(id=model_id, base_url=base_url, api_key=api_key)
 
 
+def resolve_llm_model(base_url: str | None = None, timeout: float | None = None) -> str:
+    """Resolve SL_LLM_MODEL against the server model list."""
+    configured = llm_model()
+    available = fetch_available_models(base_url, timeout=timeout)
+    if not available:
+        return configured
+
+    if configured in available:
+        return configured
+
+    by_lower = {model.lower(): model for model in available}
+    candidates = [
+        configured,
+        _normalize_model_name(configured),
+        configured.replace(":", "-").replace("b", "B"),
+    ]
+    for candidate in candidates:
+        if candidate in available:
+            return candidate
+        if candidate.lower() in by_lower:
+            return by_lower[candidate.lower()]
+
+    raise RuntimeError(
+        f"SL_LLM_MODEL={configured!r} is not served at {base_url or llm_base_url()}. "
+        f"Available models: {', '.join(available)}"
+    )
+
+
+def fetch_available_models(
+    base_url: str | None = None, timeout: float | None = None
+) -> list[str]:
+    """Return model ids from an OpenAI-compatible /models endpoint."""
+    return list(fetch_model_context_windows(base_url, timeout=timeout).keys())
+
+def fetch_model_context_windows(
+    base_url: Optional[str] = None, timeout: float | None = None
+) -> dict[str, int]:
+    """Return model id -> max context window from /models metadata."""
+    payload = fetch_models_payload(base_url, timeout=timeout)
+    if not payload:
+        return {}
+    windows: dict[str, int] = {}
+    for item in payload.get("data", []):
+        if isinstance(item, dict) and item.get("id"):
+            windows[item["id"]] = int(item.get("max_model_len") or 0)
+    return windows
+    
 def build_migration_agent(
     *,
     name: str,
@@ -22,7 +70,10 @@ def build_migration_agent(
     model: OpenAIChat,
     tools: Sequence[Callable[..., str]] | None = None,
 ) -> Agent:
-    """Create Agno agent with skill loaded from skill_dir."""
+    """
+    Create Agno agent with skill loaded from skill_dir. If skill_dir is not provided, use default skill directory.
+    If tools are provided, add them to the agent.
+    """
     agent_tools = list(tools) if tools else []
     if skill_dir is not None:
         return Agent(
@@ -42,7 +93,13 @@ def build_migration_agent(
     )
 
 
+def _normalize_model_name(name: str) -> str:
+    return name.replace(":", "-").strip()
+
 def _tool_name(chunk) -> str:
+    """
+    Get the name of the tool that was called, by searching the LLM response.
+    """
     tool = getattr(chunk, "tool", None)
     if tool is None:
         return "unknown"

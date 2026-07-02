@@ -6,12 +6,20 @@
 * Still keep the source as part of the context.
 * Assign different rules for different scope
 
-## Tools and dev practices
+## Components
+
+![](../images/arch.drawio.png)
+
 ### flink-skill-common
 
-The role of this component is to process the generated Flink SQL with static analysis or deployment using Confluent Cloud for Flink REST API. 
+The role of this component is to process the generated Flink SQL with static analysis or deployment using Confluent Cloud for Flink REST API and to offer a set of common tools, used for migration.
 
-The component includes LLM factory, and one dedicated agent to validate the SQL and try to fix issues.
+| Important Features | Code | Principles |
+| ------ |-------|-----------|
+| Centralize configuration, logs, load ,env | config.py | Common skill and specific skill loading |
+| Factory to build agno agents | agents.factory.py | |
+| Agent for fixing Flink SQL syntax validation and deployment failures.| cc_deployment_fixer.py| Use syntaxic parser, confluent cloud statement deployment and LLM to fix the error and save results to target folder |
+
 
 * Unit tests without backends
     ```sh

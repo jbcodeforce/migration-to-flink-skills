@@ -32,11 +32,15 @@ Flink statement names must match `[a-z0-9]([-a-z0-9]*[a-z0-9])?`. Normalize tabl
 
 Example: source `kma_chat_st` → `kma-chat-st-ddl`; target `kma_chat` → `kma-chat-ddl`, `kma-chat-dml`.
 
-## Agno / MCP tool sequence (Cursor IDE)
+## IDE deploy and fix loop (Cursor / Claude)
 
-In Cursor, call the **`flink-skill-common` MCP server** tools (same names as the Agno deploy fixer). Preflight: repo-root `.env` with Flink credentials (`DOTENV_FILE=.env` in `.cursor/mcp.json`).
+In Cursor or Claude Code, the **host assistant** validates, fixes, and redeploys using the `validate-flink-sql` skill — not the Agno `FlinkSqlDeployFixerAgent`.
 
-Before deploy, run `validate_flink_sql_offline` on extracted DDL/DML; optionally `validate_flink_sql_remote` when credentials are configured.
+**Cursor:** call **`flink-skill-common` MCP** tools. Preflight: repo-root `.env` with Flink credentials (`DOTENV_FILE=.env` in `.cursor/mcp.json`).
+
+**Claude Code:** validate with `flink-skill-validate` CLI or bundled scripts; deploy via `flink-skill-mcp` MCP when configured.
+
+Before deploy, run offline validation on extracted DDL/DML; optionally remote validation when credentials are configured.
 
 | Step | MCP tool | Notes |
 |------|----------|-------|
@@ -50,13 +54,13 @@ Before deploy, run `validate_flink_sql_offline` on extracted DDL/DML; optionally
 | Deploy target DML | `create_flink_statement` | After target DDL succeeds |
 | Poll target DML | `wait_flink_statement_phase` | Until RUNNING or FAILED |
 | Verify | `check_flink_statement_health` | On DML statement when available |
-| On failure | `get_flink_statement_exceptions` | Apply `validate-flink-sql` skill, then redeploy |
+| On failure | `get_flink_statement_exceptions` | Apply `validate-flink-sql` fix loop, then redeploy |
 
-Deploy order is strict: source DDLs → target DDL → target DML.
+Deploy order is strict: source DDLs → target DDL → target DML. On failure, repeat validate → fix → redeploy until success or the user stops.
 
-## Agno harness tool sequence
+## Agno harness deploy fixer (CI / integration only)
 
-When using the Python harness Agno deploy fixer (not Cursor MCP), the same tool names apply via `FlinkStatementLLMTools`:
+When using migration harness CLIs (`ksql-flink-migrate`, `spark-flink-migrate`) with `AGENT_FIXER_EXECUTION_ENABLED=1`, `converge_flink_sql()` invokes `FlinkSqlDeployFixerAgent` (Agno) with `FlinkStatementLLMTools`:
 
 | Step | Tool | Notes |
 |------|------|-------|
@@ -64,15 +68,15 @@ When using the Python harness Agno deploy fixer (not Cursor MCP), the same tool 
 | Offline validate | `validate_offline.py` script or `flink-skill-validate offline` CLI | sqlglot check before deploy |
 | Remote validate | `validate_remote.py` script or `flink-skill-validate remote` CLI | CC Flink parser (optional) |
 | Deploy source DDL | `create_flink_statement` | For each `tests/ddl.*.sql`, sorted by table name |
-| Poll source DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
+| Poll source DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED |
 | Deploy target DDL | `create_flink_statement` | After all source DDLs succeed |
-| Poll target DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED, or APPLIED |
+| Poll target DDL | `wait_flink_statement_phase` | Until RUNNING, COMPLETED |
 | Deploy target DML | `create_flink_statement` | After target DDL succeeds |
 | Poll target DML | `wait_flink_statement_phase` | Until RUNNING or FAILED |
 | Verify | `check_flink_statement_health` | On DML statement when available |
-| On failure | `get_flink_statement_exceptions` | Feed agent retry loop |
+| On failure | `get_flink_statement_exceptions` | Agno agent retry loop (max `AGENT_FIXER_EXECUTION_MAX_RETRIES`) |
 
-Deploy order is strict: source DDLs → target DDL → target DML.
+Deploy order is strict: source DDLs → target DDL → target DML. Do **not** use this path from Cursor or Claude Code IDE workflows.
 
 ## create_flink_statement parameters
 
@@ -82,10 +86,6 @@ Deploy order is strict: source DDLs → target DDL → target DML.
 | `sql` | Full SQL text from `tests/ddl.{source}.sql`, `ddl.{table}.sql`, or `dml.{table}.sql` |
 
 Credentials and pool settings come from environment variables.
-
-## Agent deploy fixer
-
-When `AGENT_FIXER_EXECUTION_ENABLED=1`, the harness convergence loop invokes an Agno agent with confluent-sql tools to fix SQL and redeploy (max retries from `AGENT_FIXER_EXECUTION_MAX_RETRIES`). The agent deploys source DDLs before target DDL/DML.
 
 ## Post-deploy triage
 

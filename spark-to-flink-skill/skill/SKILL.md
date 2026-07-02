@@ -21,13 +21,29 @@ Confluent Cloud for Flink only. Convert Spark batch SQL (and eventually PySpark)
 
 ## Workflow checklist
 
+<!-- runtime:agno -->
 ```
 - [ ] 1. Clean input (remove DROP, comments)
 - [ ] 2. Detect CREATE TABLE / TEMPORARY VIEW statements
-- [ ] 3. Translate each statement to Flink DDL + DML
+- [ ] 3. Translate each statement to Flink DDL + DML (Agno agent)
 - [ ] 4. Run mandatory validation on DDL and DML
 - [ ] 5. Write ddl.{table}.sql and dml.{table}.sql
 ```
+
+Harness `spark-flink-migrate` runs translation via an Agno agent. Use `--skip-deploy` for translate-only runs.
+<!-- /runtime:agno -->
+
+<!-- runtime:cursor,claude -->
+```
+- [ ] 1. Clean input (remove DROP, comments)
+- [ ] 2. Detect CREATE TABLE / TEMPORARY VIEW statements
+- [ ] 3. Translate each statement to Flink DDL + DML using rules in this skill (your LLM)
+- [ ] 4. Run mandatory validation with flink-skill-common tools
+- [ ] 5. Write ddl.{table}.sql and dml.{table}.sql
+```
+
+**You** perform translation using this skill. Do **not** run `uv run spark-flink-migrate` — that invokes a separate Agno local agent.
+<!-- /runtime:cursor,claude -->
 
 ## Step 1 — Clean input
 
@@ -53,7 +69,26 @@ Spark `CREATE OR REPLACE TEMPORARY VIEW` becomes Flink `INSERT INTO` continuous 
 
 ## Step 4 — Mandatory validation
 
-Apply [validation-rules.md](references/validation-rules.md):
+Apply [validation-rules.md](references/validation-rules.md), then validate with `flink-skill-common` tools:
+
+<!-- runtime:cursor -->
+- Call MCP `validate_flink_sql_offline` on DDL and DML. On errors, apply the `validate-flink-sql` skill and re-validate.
+- On deploy failure: follow **`validate-flink-sql` fix loop** via MCP (`get_flink_statement_exceptions`, fix, redeploy).
+<!-- /runtime:cursor -->
+
+<!-- runtime:claude -->
+- Run `uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl ... --dml ...`
+- Or `python .claude/skills/validate-flink-sql/scripts/validate_offline.py --ddl ... --dml ...`
+- On errors, apply the `validate-flink-sql` skill and re-validate.
+- On deploy failure: follow **`validate-flink-sql` fix loop** (CLI validate + MCP deploy tools when configured).
+<!-- /runtime:claude -->
+
+<!-- runtime:agno -->
+- Run `uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl ... --dml ...`
+- On errors, apply the `validate-flink-sql` skill and re-validate.
+<!-- /runtime:agno -->
+
+Convention checks:
 
 - Every `CREATE TABLE` has `PRIMARY KEY (...) NOT ENFORCED`
 - `DISTRIBUTED BY HASH(pk_column) INTO 1 BUCKETS` uses same column as PK
@@ -141,14 +176,18 @@ SELECT ... FROM step;
 
 See [examples.md](references/examples.md) for c360 `src_customers` and `src_loyalty_program` pairs.
 
-## Local harness (optional)
+## Harness (golden tests / CI only)
+
+<!-- runtime:agno,cursor,claude -->
+Use the Agno harness CLI for regression and integration tests — **not** the Cursor or Claude Code IDE workflow:
 
 ```bash
 cd harness && uv sync --extra dev
 uv run spark-flink-migrate --table src_c360_customers --file <spark-sql-path> --out-dir output/
 ```
 
-Requires OpenAI-compatible LLM (oMLX) at `SL_LLM_BASE_URL`.
+Requires OpenAI-compatible LLM (`SL_LLM_*` in repo `.env`).
+<!-- /runtime:agno,cursor,claude -->
 
 ## References
 

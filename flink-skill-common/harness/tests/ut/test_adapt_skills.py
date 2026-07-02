@@ -50,8 +50,13 @@ def test_parse_skill_name_from_frontmatter():
     assert parse_skill_name(SAMPLE_SKILL, "fallback") == "sample-skill"
 
 
-def test_validate_flink_sql_cursor_adaptation_from_canonical():
+def test_validate_flink_sql_cursor_excludes_agno_fixer():
     skill_md = (_REPO_ROOT / "flink-skill-common/skill/SKILL.md").read_text(encoding="utf-8")
     adapted = adapt_skill_content(skill_md, "cursor")
-    assert "validate_flink_sql_offline" in adapted
+    assert "get_flink_statement_exceptions" in adapted
+    assert "Fix loop on validation or deploy failure" in adapted
+    assert "Do **not** invoke Agno deploy fixer" in adapted
+    assert "AGENT_FIXER_EXECUTION_ENABLED=1" not in adapted
+    assert "run_agent_deploy_fixer" not in adapted
+    assert "FlinkSqlDeployFixerAgent" not in adapted
     assert "get_skill_script" not in adapted

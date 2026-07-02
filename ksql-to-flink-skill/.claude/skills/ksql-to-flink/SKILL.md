@@ -26,34 +26,34 @@ Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` become
 
 ## Multi-statement files
 
-When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statements, the harness **splits** them and migrates **one statement per agent pass**:
+When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statements, process **one statement per turn**:
 
 1. Split on each `CREATE STREAM` / `CREATE TABLE` (through the terminating `;`)
 2. Clean each fragment (remove comments, `DROP`, `SET`)
-3. Validate, write output, and optionally deploy after each pass
+3. Translate using the rules in this skill (your LLM — **not** `ksql-flink-migrate`)
+4. Write output, validate with `flink-skill-common` tools, optionally deploy, then repeat for the next CREATE
 
-Use this for large pipeline scripts (many streams/tables in one file). Each agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.
+Use this for large pipeline scripts (many streams/tables in one file). Each pass receives **only one** CREATE — including a CSAS body when present — not the whole file.
 
-`--table` / `table_name` is the Flink target table name used for output files on every pass. To migrate a subset, use a smaller `.ksql` file or a file with only the CREATEs you need.
+`table_name` is the Flink target table name for output files on every pass. To migrate a subset, use a smaller `.ksql` file or a file with only the CREATEs you need.
 
 ## Workflow
 
 ```
-- [ ] 1. Split file into individual CREATE STREAM/TABLE statements (harness)
+- [ ] 1. Read ksql source; split into individual CREATE STREAM/TABLE statements
 - [ ] 2. For each statement: clean input (remove DROP, SET, comments)
-- [ ] 3. Apply DDL keyword replacements (STREAM/TABLE to CREATE TABLE IF NOT EXISTS).
-- [ ] 4. Map data types and table structure.
-- [ ] 5. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
-- [ ] 6. Apply function, aggregation, and windowing rules.
-- [ ] 7. Write ddl.{table}.sql and dml.{table}.sql
-- [ ] 8. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
-- [ ] 9. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
-- [ ] `0. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
-- [ ] 11. Deploy target DML after target DDL succeeds
-- [ ] 12. Verify statement health; triage on failure; repeat for next CREATE if any remain
+- [ ] 3. Apply DDL keyword replacements (STREAM/TABLE to CREATE TABLE IF NOT EXISTS)
+- [ ] 4. Map data types and table structure
+- [ ] 5. Apply function, aggregation, and windowing rules
+- [ ] 6. Produce Flink DDL and DML (JSON output format below)
+- [ ] 7. Write ddl.{table}.sql and dml.{table}.sql under the output directory
+- [ ] 8. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql
+- [ ] 9. Validate with flink-skill-common tools (see Deploy phase)
+- [ ] 10. Deploy source DDLs, target DDL, then target DML (optional; requires Flink credentials)
+- [ ] 11. Verify statement health; triage on failure; repeat for next CREATE if any remain
 ```
 
-Harness `ksql-flink-migrate` runs steps 6–10 by default after each statement. Use `--skip-deploy` for translate-only runs.
+**You** perform translation using this skill. Do **not** run `uv run ksql-flink-migrate` — that invokes a separate Agno local agent. Use `flink-skill-common` tools only for validation and deploy.
 
 ## Mandatory DDL replacements (apply first)
 
@@ -241,24 +241,27 @@ Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`).
 
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
 
-1. Call MCP `validate_flink_sql_offline` on extracted DDL/DML.
+1. Validate offline:
+
+```bash
+uv run --directory flink-skill-common/harness flink-skill-validate offline \
+  --ddl output/ddl.{table}.sql --dml output/dml.{table}.sql
+```
+
+Or run the bundled script: `python .claude/skills/validate-flink-sql/scripts/validate_offline.py --ddl ... --dml ...`
+
 2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
-3. Optionally call MCP `validate_flink_sql_remote` when Flink credentials are in repo `.env`.
-4. Deploy via the **`flink-skill-common` MCP server** (enable [`.cursor/mcp.json`](../../../.cursor/mcp.json) in Cursor Settings → MCP).
+3. Optional remote validate (requires Flink credentials in repo `.env`):
 
-MCP tool sequence:
+```bash
+uv run --directory flink-skill-common/harness flink-skill-validate remote \
+  --ddl output/ddl.{table}.sql --dml output/dml.{table}.sql
+```
 
-1. `validate_flink_sql_offline` — sqlglot check before deploy
-2. `create_flink_statement` — submit each `tests/ddl.*.sql` source stub
-3. `wait_flink_statement_phase` — poll each source DDL until RUNNING/COMPLETED/APPLIED
-4. `create_flink_statement` — submit target DDL SQL
-5. `wait_flink_statement_phase` — poll until target DDL phase is RUNNING/COMPLETED/APPLIED
-6. `create_flink_statement` — submit target DML SQL
-7. `wait_flink_statement_phase` — poll DML until RUNNING or FAILED
-8. `check_flink_statement_health` — verify DML when available
-9. On failure: `get_flink_statement_exceptions` → apply `validate-flink-sql` → redeploy
+4. Deploy: configure the `flink-skill-common` MCP server (`flink-skill-mcp`) in Claude Code MCP settings, then follow the MCP tool sequence in [confluent-sql-deploy.md](references/confluent-sql-deploy.md). Same tool names as Cursor: `validate_flink_sql_offline`, `create_flink_statement`, `wait_flink_statement_phase`, etc.
+5. On validation or deploy failure: follow **`validate-flink-sql` fix loop** (you fix SQL and redeploy; do not invoke Agno deploy fixer).
 
-Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). Post-deploy triage: `flink-statement-troubleshooting` skill.
+Do **not** use `ksql-flink-migrate` for IDE migration — that runs a separate Agno agent. You translate; common-component tools validate and deploy.
 
 ## References
 
@@ -268,7 +271,7 @@ Full reference: [confluent-sql-deploy.md](references/confluent-sql-deploy.md). P
 
 ## Harness (golden tests / CI only)
 
-Use the CLI for regression and integration tests — not the primary Cursor workflow:
+Use the Agno harness CLI for regression and integration tests — **not** the Cursor or Claude Code IDE workflow:
 
 ```bash
 cd harness && uv sync --extra dev

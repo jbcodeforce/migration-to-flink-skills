@@ -1,4 +1,6 @@
-"""Agno agent for fixing Flink SQL validation and deploy failures."""
+"""
+Agno agent for fixing Flink SQL syntax validation and deployment failures.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +10,7 @@ from flink_skill_common.agents.factory import (
     build_migration_agent,
     make_openai_model,
     run_agent_response,
+    resolve_llm_model,
 )
 from flink_skill_common.config import (
     agent_fixer_max_retries,
@@ -21,7 +24,6 @@ from flink_skill_common.deploy.flink_statement_manager import (
     discover_source_ddl_files,
     dml_statement_name,
 )
-from flink_skill_common.llm import resolve_llm_model
 
 
 def _make_model():

@@ -3,10 +3,15 @@ Copyright 2024-2026 Confluent, Inc.
 KSQL to Flink SQL Translation Agent
 
 Shared harness configuration and environment accessors.
+Load env variables from .env file. Should be called once from skill config module.
+
+Define logger for centralized logging file. 
+Get skills for common and for specific migration skills (spark, ksql).
 """
 
 from __future__ import annotations
 
+import json
 import os, sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,42 +25,115 @@ _ctx: HarnessContext | None = None
 _DOTENV_ENV_VAR = "DOTENV_FILE"
 
 
-def resolve_dotenv_path(ctx: HarnessContext) -> Path | None:
+# Private API 
+def _resolve_dotenv_path(ctx: HarnessContext) -> Path | None:
     """Resolve the shared .env file path for a harness context."""
     raw = os.getenv(_DOTENV_ENV_VAR)
     if raw:
         path = Path(raw)
         if not path.is_absolute():
-            path = (ctx.code_root / path).resolve()
+            path = (ctx.project_root / path).resolve()
     else:
-        path = ctx.code_root / ".env"
+        path = ctx.project_root / ".env"
     return path if path.is_file() else None
+
+
+
+def _configure_cli_logging(name: str) -> logging.Logger:
+    """Configure file (+ stderr) logging once and return the CLI logger."""
+
+    global _LOGGER
+    if _LOGGER:
+        return _LOGGER
+    logger = logging.getLogger(name or "flink_migration_skill.cli")
+
+
+    log_path = cli_log_file()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    level = getattr(logging, cli_log_level(), logging.DEBUG)
+
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler.setLevel(level)
+    file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.WARNING)
+    stderr_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+
+    logger.setLevel(level)
+    logger.handlers.clear()
+    logger.addHandler(file_handler)
+    logger.addHandler(stderr_handler)
+    logger.propagate = False
+
+    _LOGGER = logger
+    logger.debug("Logging to %s (level=%s)", log_path, cli_log_level())
+    return logger
+
+
+def _models_request(
+    base_url: str,
+    *,
+    api_key: str | None = None,
+):
+    import urllib.request
+
+    url = base_url.rstrip("/") + "/models"
+    req = urllib.request.Request(url)
+    key = api_key if api_key is not None else llm_api_key()
+    if key:
+        req.add_header("Authorization", f"Bearer {key}")
+    return req
+
+# ------- Public API -------
+
+def fetch_models_payload(
+    base_url: str | None = None,
+    *,
+    api_key: str | None = None,
+    timeout: float | None = None,
+) -> dict | None:
+    import urllib.error
+    import urllib.request
+
+    load_env()
+    if timeout is None:
+        timeout = llm_timeout()
+    url = (base_url or llm_base_url()).rstrip("/") + "/models"
+    try:
+        req = _models_request(base_url or llm_base_url(), api_key=api_key)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:500]
+        get_logger().error("HTTP %s from %s: %s", e.code, url, body)
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
+        get_logger().error(f"Error fetching models payload from {url}: {e}")
+        return None
 
 
 @dataclass(frozen=True)
 class HarnessContext:
     """Paths and env loading for a skill harness project."""
 
-    harness_root: Path
-    project_root: Path
+    harness_root: Path  # will be one of flink-skill-common, ksql-to-flink-skill, spark-to-flink-skill Paths
+    project_root: Path  # will be migration-to-flink-skill Path
 
     def load_env(self) -> bool:
-        path = resolve_dotenv_path(self)
+        path = _resolve_dotenv_path(self)
         if path is None:
             return False
         return load_dotenv(path, override=True)
 
     @property
     def skill_dir(self) -> Path:
-        return self.project_root / "skill"
+        return self.harness_root / "skill"
 
     @property
     def skill_md_path(self) -> Path:
         return self.skill_dir / "SKILL.md"
-
-    @property
-    def code_root(self) -> Path:
-        return self.project_root.parent
 
 
 @dataclass(frozen=True)
@@ -86,7 +164,7 @@ def configure(ctx: HarnessContext) -> None:
     _ctx = ctx
     if ctx.load_env():
         logging.getLogger(__name__).debug(
-            "Loaded environment from %s", resolve_dotenv_path(ctx)
+            "Loaded environment from %s", _resolve_dotenv_path(ctx)
         )
 
 
@@ -103,7 +181,7 @@ def load_env() -> bool:
 
 
 def dotenv_path() -> Path | None:
-    return resolve_dotenv_path(get_context())
+    return _resolve_dotenv_path(get_context())
 
 
 def llm_base_url() -> str:
@@ -232,42 +310,6 @@ def flink_deploy_settings() -> FlinkDeploySettings:
     )
 
 
-def get_logger() -> logging.Logger:
-    if _LOGGER is None:
-        _configure_cli_logging("flink_migration_skill.cli")
-    return _LOGGER
-
-def _configure_cli_logging(name: str) -> logging.Logger:
-    """Configure file (+ stderr) logging once and return the CLI logger."""
-
-    global _LOGGER
-    if _LOGGER:
-        return _LOGGER
-    logger = logging.getLogger(name or "flink_migration_skill.cli")
-
-
-    log_path = cli_log_file()
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    level = getattr(logging, cli_log_level(), logging.DEBUG)
-
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setLevel(level)
-    file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.WARNING)
-    stderr_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-
-    logger.setLevel(level)
-    logger.handlers.clear()
-    logger.addHandler(file_handler)
-    logger.addHandler(stderr_handler)
-    logger.propagate = False
-
-    _LOGGER = logger
-    logger.debug("Logging to %s (level=%s)", log_path, cli_log_level())
-    return logger
 
 
 
@@ -282,3 +324,30 @@ def cli_log_file() -> Path:
 
 def cli_log_level() -> str:
     return os.getenv("FLINK_LOG_LEVEL", "DEBUG").upper()
+
+def llm_reachable(base_url: str | None = None, timeout: float | None = None) -> bool:
+    """Return True if an OpenAI-compatible /models endpoint responds with model data."""
+    load_env()
+    if timeout is None:
+        timeout = llm_timeout()
+    if not base_url:
+        base_url = llm_base_url()
+    if not base_url:
+        get_logger().error("LLM base URL is not set")
+        return False
+
+    url = base_url.rstrip("/") + "/models"
+    payload = fetch_models_payload(base_url, timeout=timeout)
+    if not payload:
+        return False
+
+    data = payload.get("data")
+    if not isinstance(data, list) or not data:
+        get_logger().error(f"LLM at {url} returned no models")
+        return False
+    return True
+
+def get_logger() -> logging.Logger:
+    if _LOGGER is None:
+        _configure_cli_logging("flink_migration_skill.cli")
+    return _LOGGER

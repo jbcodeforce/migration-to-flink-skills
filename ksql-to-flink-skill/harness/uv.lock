@@ -310,7 +310,11 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "debugpy", specifier = ">=1.8.21" }]
+dev = [
+    { name = "debugpy", specifier = ">=1.8.21" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
+]
 
 [[package]]
 name = "gitdb"

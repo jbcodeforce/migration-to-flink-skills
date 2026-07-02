@@ -66,11 +66,11 @@ Fill LLM and Flink credentials in `.env`
 
 ## Skills: Agno vs Cursor/Claude Code
 
-| Runtime | Skill source | Validation |
-|---------|--------------|------------|
-| Agno harness / CLI | `skill/SKILL.md` (canonical) | `flink-skill-validate` CLI or `skill/scripts/validate_offline.py` |
-| Cursor | `.cursor/skills/` (generated) | MCP `validate_flink_sql_offline` on `flink-skill-common` server |
-| Claude Code | `.claude/skills` (generated) | CLI based tools used within the skill |
+| Runtime | Skill source | Validation | Deploy fix on failure |
+|---------|--------------|------------|------------------------|
+| Agno harness / CLI | `skill/SKILL.md` (canonical) | `flink-skill-validate` CLI or `skill/scripts/validate_offline.py` | Agno `FlinkSqlDeployFixerAgent` when `AGENT_FIXER_EXECUTION_ENABLED=1` |
+| Cursor | `.cursor/skills/` (generated) | MCP `validate_flink_sql_offline` on `flink-skill-common` server | Host assistant + `validate-flink-sql` fix loop via MCP |
+| Claude Code | `.claude/skills` (generated) | CLI tools in skill | Host assistant + `validate-flink-sql` fix loop; MCP deploy when configured |
 
 As a developer or for tuning the skill, edit the canonical `skill/SKILL.md`, then refresh the IDE skills:
 

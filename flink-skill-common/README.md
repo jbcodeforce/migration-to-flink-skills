@@ -13,12 +13,14 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration. This c
 | `sql_validate` | Offline (sqlglot) and remote (confluent-sql) SQL syntax validation |
 | `convergence` | Extract SQL from LLM output, validate, deploy, agent fix loop |
 | `agents.factory` | Agno agent construction helpers |
-| `agents.deploy_fixer` | Agno agent with confluent-sql tools for validation/deploy fixes |
+| `agents.deploy_fixer` | Agno `FlinkSqlDeployFixerAgent` for harness CI only (not IDE fix loop) |
 | `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
 
 ## Convergence loop
 
-`converge_flink_sql()` retries validation, deploy, and agent fix until SQL converges or max retries exhaust. See [references/flink/README.md](../references/flink/README.md) for staged multi-error fixtures and the full IT flow diagram.
+`converge_flink_sql()` retries validation, deploy, and Agno agent fix until SQL converges or max retries exhaust. Used by migration harness CLIs when `AGENT_FIXER_EXECUTION_ENABLED=1`. **Cursor and Claude Code** use the `validate-flink-sql` skill fix loop with MCP/CLI tools instead — the host assistant fixes SQL, not `FlinkSqlDeployFixerAgent`.
+
+See [references/flink/README.md](../references/flink/README.md) for staged multi-error fixtures and the full IT flow diagram.
 
 ```mermaid
 flowchart TD
@@ -101,10 +103,11 @@ Canonical skill content lives in [`skill/`](skill/) for Agno harnesses (`LocalSk
 ./scripts/adapt-skills.sh --target cursor --install
 ```
 
-| Runtime | Skill source | Validation execution |
-|---------|--------------|----------------------|
-| Agno harness | `skill/` in place | `scripts/validate_offline.py` or `flink-skill-validate` CLI |
-| Cursor / Claude | `.cursor/skills/` or `~/.cursor/skills/` | MCP `validate_flink_sql_offline` / `validate_flink_sql_remote` |
+| Runtime | Skill source | Validation execution | Deploy fix on failure |
+|---------|--------------|----------------------|------------------------|
+| Agno harness | `skill/` in place | `scripts/validate_offline.py` or `flink-skill-validate` CLI | `FlinkSqlDeployFixerAgent` via `converge_flink_sql()` when `AGENT_FIXER_EXECUTION_ENABLED=1` |
+| Cursor | `.cursor/skills/` (generated) | MCP `validate_flink_sql_offline` / `validate_flink_sql_remote` | Host assistant + `validate-flink-sql` fix loop via MCP deploy tools |
+| Claude Code | `.claude/skills/` (generated) | `flink-skill-validate` CLI or bundled scripts | Host assistant + `validate-flink-sql` fix loop; deploy via `flink-skill-mcp` MCP when configured |
 
 ## Layout
 
@@ -142,8 +145,11 @@ uv run pytest tests/it/test_convergence_it.py -vs -m integration_agent
 
 ## To use skill in Claude Code
 
-* Prompts supported:
-    ```sh
-    using /validate-flink-sql  validate references/flink/invalid/dd_bad_syntax/ddl.sql and fix it until it deploys successfully on confluent cloud
-    ```
+Load `/validate-flink-sql` and perform the fix loop yourself — apply skill rules, validate with `flink-skill-validate`, redeploy via MCP when configured. Do not rely on Agno `FlinkSqlDeployFixerAgent`.
+
+Example prompt:
+
+```sh
+Load validate-flink-sql. Validate references/flink/invalid/ddl_bad_syntax/ddl.sql, fix using skill rules, re-validate until ok is true. If deploying to CC, use get_flink_statement_exceptions on failure and follow the fix loop.
+```
 

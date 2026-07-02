@@ -1,11 +1,10 @@
 site_name: Migrate to Flink Skills v0.1.0
-repo_url: https://github.com/jbcodeforce/migrate_to_flink_skills
-site_url: https://jbcodeforce.github.io/migrate_to_flink_skills
+repo_url: https://github.com/jbcodeforce/migration-to-flink-skills
+site_url: https://jbcodeforce.github.io/migration-to-flink-skills
 copyright: Copyright &copy; 2024-2026 Jerome Boyer
 nav:
   - Introduction: index.md
   - Tutorials:
-    - Introduction: tutorial/index.md
     - Setup Lab: tutorial/setup_lab.md
     - Migration AI Lab: tutorial/migration_ai_lab.md
   - Developer Guide: dev_guide/index.md
@@ -89,4 +88,4 @@ extra:
     - icon: fontawesome/brands/linkedin
       link: 'https://linkedin.com/in/jeromeboyer'
     - icon: fontawesome/solid/paper-plane
-      mailto: jboyer@confluent.io
+      mailto: jboyer@ibm.com

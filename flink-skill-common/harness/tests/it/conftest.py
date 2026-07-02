@@ -4,8 +4,7 @@ from pathlib import Path
 import os
 import pytest
 from flink_skill_common.config import cli_log_file
-from flink_skill_common.config import FlinkDeployNotReadyError, HarnessContext, configure, flink_deploy_settings
-from flink_skill_common.llm import llm_reachable
+from flink_skill_common.config import FlinkDeployNotReadyError, HarnessContext, configure, flink_deploy_settings, llm_reachable
 
 HARNESS_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = Path(__file__).resolve().parents[4]

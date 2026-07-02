@@ -18,15 +18,15 @@ The core idea is to leverage LLMs and parser tools to understand the source SQL 
 
 ## Prerequisites
 
-Be sure to have done the [Setup Lab](setup_lab.md) and [Setup script](../../scripts/setup.sh) to get different CLIs operational and generate Cursor/Claude skill variants from the canonical Agno `skill/` directories.
+Be sure to have done the [Setup Lab](setup_lab.md) and [Setup script](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/scripts/setup.sh) to get different CLIs operational and generate Cursor/Claude skill variants from the canonical Agno `skill/` directories.
 
 ## Different runtimes
 
-**Agno harness (CLI)** — translation and validation run via Python agents. The harness loads `skill/SKILL.md` directly. Flinl SQL validation and corection uses `flink-skill-validate` or skill scripts under `flink-skill-common/skill/scripts/`.
+**Agno harness (CLI)** — translation and validation run via Python agents and `ksql-flink-migrate` / `spark-flink-migrate`. The harness loads `skill/SKILL.md` directly. Flink SQL validation uses `flink-skill-validate` or skill scripts under `flink-skill-common/skill/scripts/`.
 
-**Cursor (IDE)** — skills under `.cursor/skills/` are generated with MCP-oriented instructions. Validation uses the `flink-skill-common` MCP server (`validate_flink_sql_offline`, `validate_flink_sql_remote`). Enable MCP in Cursor Settings.
+**Cursor (IDE)** — skills under `.cursor/skills/` are generated with MCP-oriented instructions. **You** (the IDE assistant) translate SQL using the skill rules. Validation and deploy use the `flink-skill-common` MCP server (`validate_flink_sql_offline`, `create_flink_statement`, etc.). Do **not** run `ksql-flink-migrate` or `spark-flink-migrate` in the IDE workflow. Enable MCP in Cursor Settings.
 
-**Claude Code (IDE)** — skills under `*/.claude/skills/` plus the same shell CLIs as the Agno harness (`flink-skill-validate`, `ksql-flink-migrate`). No MCP setup is required for this lab.
+**Claude Code (IDE)** — skills under `*/.claude/skills/`. **You** translate SQL using the skill rules. Validation uses `flink-skill-validate` CLI or bundled `validate_offline.py` scripts. Deploy uses the `flink-skill-common` MCP server when configured (`flink-skill-mcp`). Do **not** run Agno migration CLIs for IDE translation.
 
 After editing any canonical `skill/SKILL.md`, run `./scripts/adapt-skills.sh --target cursor` and/or `./scripts/adapt-skills.sh --target claude` before using IDE workflows.
 
@@ -36,18 +36,18 @@ This section covers two skill scopes: Flink SQL validation and ksqlDB to Flink m
 
 | Scope | Skill | Package | Generated Claude path |
 |-------|-------|---------|------------------------|
-| Flink SQL validation | `/validate-flink-sql` | [`flink-skill-common`](../../flink-skill-common/) | `flink-skill-common/.claude/skills/validate-flink-sql/` |
-| ksqlDB to Flink migration | `/ksql-to-flink` | [`ksql-to-flink-skill`](../../ksql-to-flink-skill/) | `ksql-to-flink-skill/.claude/skills/ksql-to-flink/` |
-| spark SQL to Flink migration |  |  |
+| Flink SQL validation | `/validate-flink-sql` | [`flink-skill-common`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/flink-skill-common/) | `flink-skill-common/.claude/skills/validate-flink-sql/` |
+| ksqlDB to Flink migration | `/ksql-to-flink` | [`ksql-to-flink-skill`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/ksql-to-flink-skill/) | `ksql-to-flink-skill/.claude/skills/ksql-to-flink/` |
+| spark SQL to Flink migration | [`spark-to-flink-skill`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/spark-to-flink-skill/) | `spark-to-flink-skill/.claude/skills/spark-to-flink/` |
 
 
 ## Setup
 
-Assume [Setup Lab](setup_lab.md) has already run (`./scripts/setup.sh`). That generates Claude skill copies under each package's `.claude/skills/`.
+Assume [Setup Lab](./setup_lab.md) has already run (`./scripts/setup.sh`). That generates Claude skill copies under each package's `.claude/skills/`.
 
 
-1. **Environment** — repo-root `.env` with `SL_LLM_*` variables. Offline validation does not need an LLM; migration CLI does.
-1. **Optional remote validation / deploy** — fill `FLINK_*` in `.env` only if you run `flink-skill-validate remote` or `ksql-flink-migrate` without `--skip-deploy`.
+1. **Environment** — repo-root `.env` with optional `FLINK_*` for remote validation and deploy.
+2. **Optional remote validation / deploy** — fill `FLINK_*` in `.env` when using `flink-skill-validate remote` or MCP deploy tools (`create_flink_statement`, etc.).
 
 
 ## Scope 1: Flink SQL validation
@@ -94,14 +94,15 @@ Both are syntactically valid per the offline (sqlglot Flink-dialect) check: ok i
 ```
 
 
-### Lab exercise — invalid fixture
+### Invalid DML or DDL
 
-Validate broken DML from [`references/flink/invalid/dml_bad_syntax/`](../../references/flink/invalid/dml_bad_syntax/) (contains an `INSRT INTO` typo):
+Validate broken DML from [`references/flink/invalid/dml_bad_syntax/`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/references/flink/invalid/dml_bad_syntax/) (contains an `INSRT INTO` typo):
+
+#### CLI
 
 ```bash
 cd flink-skill-common/harness
-uv run flink-skill-validate offline \
-  --dml ../../references/flink/invalid/dml_bad_syntax/dml.sql
+uv run flink-skill-validate offline --dml ../../references/flink/invalid/dml_bad_syntax/dml.sql
 ```
 
 **Expected:** exit code 1 and a json like:
@@ -121,7 +122,9 @@ uv run flink-skill-validate offline \
 }
 ```
 
+#### Claude Code
 **Follow-up:** Ask Claude to fix the DML using `validate-flink-sql` rules and re-run validation until it passes.
+
 ```sh
 using /validate-flink-sq assess invalid/dml_bad_syntax/dml.sql
 ```
@@ -156,13 +159,52 @@ Since this lives under invalid/ (a negative test fixture meant to fail), I've le
 ```
 
 ???+ tip "Alternative invalid fixture"
-	For validating a DDL syntax error instead, use [`references/flink/invalid/ddl_bad_syntax/ddl.sql`](../../references/flink/invalid/ddl_bad_syntax/ddl.sql) with `--ddl` only. Expect `"kind": "ddl"` in the issues.
+	For validating a DDL syntax error instead, use [`references/flink/invalid/ddl_bad_syntax/ddl.sql`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/references/flink/invalid/ddl_bad_syntax/ddl.sql) with `--ddl` only. Expect `"kind": "ddl"` in the issues.
 
-### Scope 2: ksqlDB to Flink migration with CC validation
+### Deploy failure fix loop (IDE)
+
+Use when Flink SQL is deployed to Confluent Cloud and a statement fails or is unhealthy. The **host assistant** performs the fix loop using the `validate-flink-sql` skill — not the Agno `FlinkSqlDeployFixerAgent`.
+
+Requires `FLINK_*` credentials in repo `.env` and MCP enabled (Cursor) or `flink-skill-mcp` configured (Claude Code).
+
+#### Cursor
+
+> Load `validate-flink-sql`. For failed statement `{table}-dml`, call MCP `get_flink_statement_exceptions`, fix DDL/DML using skill rules, re-validate with `validate_flink_sql_offline`, then redeploy source DDLs, target DDL, and target DML.
+
+#### Claude Code
+
+> Load `validate-flink-sql`. Call MCP `get_flink_statement_exceptions` on the failed statement. Fix SQL using skill rules, run `flink-skill-validate offline`, then redeploy via MCP `create_flink_statement` and `wait_flink_statement_phase`.
+
+**Workflow:**
+
+1. `get_flink_statement_exceptions` on the failed statement name.
+2. Apply `validate-flink-sql` rules; update `ddl.{table}.sql`, `dml.{table}.sql`, and `tests/ddl.*.sql` stubs if needed.
+3. Re-validate (`validate_flink_sql_offline` or `flink-skill-validate offline`).
+4. Redeploy in order: source stub DDLs → target DDL → target DML.
+5. `check_flink_statement_health` on DML; repeat until success or you stop.
+
+Do **not** set `AGENT_FIXER_EXECUTION_ENABLED` or invoke Agno harness CLIs for IDE fixes.
+
+## Scope 2: ksqlDB to Flink migration with CC validation
 
 Use when converting ksqlDB `CREATE STREAM` / `CREATE TABLE` scripts to Flink DDL and DML.
 
-**CLI** (translate-only, from repo root):
+### Ksql routing examples from Confluent KSQL tutorial
+
+The references/ksql/sources/routing includes the following ksql [from the Confluent.io  tutorial](https://developer.confluent.io/tutorials/):
+
+```sh
+├── routing
+│   ├── deduplicate.ksql
+│   ├── filtering.ksql
+│   ├── insert_acting_events.sql
+│   ├── insert_clicks.sql
+│   ├── insert_songs.sql
+│   ├── merge.ksql
+│   └── splitting.ksql
+```
+
+#### CLI translation only
 
 ```bash
 cd ksql-to-flink-skill/harness && uv sync --extra dev
@@ -170,7 +212,8 @@ cd ksql-to-flink-skill/harness && uv sync --extra dev
 uv run ksql-flink-migrate \
   --table dim_all_songs \
   --file ../../references/ksql/sources/routing/merge.ksql \
-  --out-dir ../../staging/ksql-lab-out 
+  --out-dir ../../staging/ksql-lab-out \
+  --skip-deploy
 ```
 
 Validate generated output:
@@ -181,44 +224,36 @@ uv run --directory flink-skill-common/harness flink-skill-validate offline \
   --dml ../../staging/ksql-lab-out/dml.dim_all_songs.sql
 ```
 
-**Example Claude prompt:**
+#### Agno harness: translation and deployment with fixer agent (CI only)
 
-> Load the `ksql-to-flink` skill. Migrate `references/ksql/sources/routing/merge.ksql` for table `dim_all_songs` using `ksql-flink-migrate`. Then validate output with `flink-skill-validate offline`.
+Requires `AGENT_FIXER_EXECUTION_ENABLED=1` in `.env` and a reachable LLM (`SL_LLM_*`).
+
+```sh
+AGENT_FIXER_EXECUTION_ENABLED=1 uv run ksql-flink-migrate \
+  --table dim_all_songs \
+  --file ../../references/ksql/sources/routing/merge.ksql \
+  --out-dir ../../staging/ksql-lab-out
+```
+
+This invokes `FlinkSqlDeployFixerAgent` (Agno) on validation or deploy failure — not the Cursor/Claude IDE workflow.
+
+#### Claude Code
+
+From the references folder, enter a prompt like:
+
+> Load the `ksql-to-flink` skill. Migrate `ksql/sources/routing/deduplicate.ksql` for table `detected_clicks`. Write `ddl.detected_clicks.sql` and `dml.detected_clicks.sql` under `staging/ksql-lab-out/`. Then validate with `flink-skill-validate offline`.
 
 **Workflow:**
 
-1. Apply `ksql-to-flink` translation rules (or run `ksql-flink-migrate` CLI).
-2. Write `ddl.{table}.sql` and `dml.{table}.sql` under `--out-dir`.
-3. Run `flink-skill-validate offline` on the outputs.
-4. On errors, apply `validate-flink-sql` rules and re-validate.
+1. Apply `ksql-to-flink` translation rules yourself (do **not** run `ksql-flink-migrate`).
+2. Write `ddl.{table}.sql` and `dml.{table}.sql` under the output directory.
+3. Run `flink-skill-validate offline` on the outputs (or MCP `validate_flink_sql_offline` in Cursor).
+4. On errors, follow the **`validate-flink-sql` fix loop** (apply rules, re-validate).
+5. Optional deploy: MCP tools from `flink-skill-common` (`create_flink_statement`, etc.) when Flink credentials are configured. On deploy failure, follow the same fix loop (Scope 1).
 
-#### Lab exercise 2 — merge.ksql
+#### Cursor
 
-| Input | Target table | Golden reference (optional) |
-|-------|--------------|----------------------------|
-| [`references/ksql/sources/routing/merge.ksql`](../../references/ksql/sources/routing/merge.ksql) | `dim_all_songs` | [`references/flink/valid/dimensions/songs/all_song/`](../../references/flink/valid/dimensions/songs/all_song/) |
+> Load the `ksql-to-flink` skill. Migrate `ksql/sources/routing/deduplicate.ksql` for table `detected_clicks` to `staging/ksql-lab-out/`. Validate with MCP `validate_flink_sql_offline`.
 
-Run the migration and validation commands above. Compare output structure against the golden reference if you want a manual sanity check.
+Same workflow as Claude Code, but use MCP tools for validation and deploy instead of shell CLIs.
 
-### Optional: remote validation and deploy
-
-These steps require `FLINK_*` credentials in repo-root `.env`.
-
-**Remote validation** (Confluent Cloud Flink parser):
-
-```bash
-uv run --directory flink-skill-common/harness flink-skill-validate remote \
-  --ddl path/to/ddl.sql \
-  --dml path/to/dml.sql
-```
-
-**Full migration with deploy** (omit `--skip-deploy`):
-
-```bash
-uv run --directory ksql-to-flink-skill/harness ksql-flink-migrate \
-  --table dim_all_songs \
-  --file ../../references/ksql/sources/routing/merge.ksql \
-  --out-dir /tmp/ksql-lab-out
-```
-
-See [flink-skill-common README](../../flink-skill-common/README.md) and [ksql-to-flink-skill FLINK_DEPLOY.md](../../ksql-to-flink-skill/docs/FLINK_DEPLOY.md) for credential details.
