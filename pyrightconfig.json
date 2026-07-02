@@ -1,0 +1,29 @@
+{
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "venvPath": "flink-skill-common/harness",
+  "venv": ".venv",
+  "executionEnvironments": [
+    {
+      "root": "flink-skill-common/harness",
+      "extraPaths": ["src", "tests", "tests/it"]
+    },
+    {
+      "root": "ksql-to-flink-skill/harness",
+      "extraPaths": [
+        "src",
+        "tests",
+        "tests/it",
+        "../../flink-skill-common/harness/src"
+      ]
+    },
+    {
+      "root": "spark-to-flink-skill/harness",
+      "extraPaths": [
+        "src",
+        "tests",
+        "../../flink-skill-common/harness/src"
+      ]
+    }
+  ]
+}

@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flink_skill_common.agents.factory import (
-    build_migration_agent,
+    build_skilled_agent,
     make_openai_model,
     run_agent_response,
 )
@@ -45,7 +45,7 @@ def _make_model():
 
 def build_ksql_migrate_agent():
     """Create Agno agent with ksql-to-flink skill loaded from skill/."""
-    return build_migration_agent(
+    return build_skilled_agent(
         name="KsqlToFlinkAgent",
         skill_dir=skill_dir(),
         instructions=[

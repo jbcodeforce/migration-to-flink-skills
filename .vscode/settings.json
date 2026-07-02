@@ -1,0 +1,35 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/flink-skill-common/harness/.venv/bin/python",
+  "python.analysis.include": [
+    "flink-skill-common/harness/tests",
+    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/tests",
+    "spark-to-flink-skill/harness/tests"
+  ],
+  "python.analysis.extraPaths": [
+    "flink-skill-common/harness/src",
+    "flink-skill-common/harness/tests",
+    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/src",
+    "ksql-to-flink-skill/harness/tests",
+    "ksql-to-flink-skill/harness/tests/it",
+    "spark-to-flink-skill/harness/src",
+    "spark-to-flink-skill/harness/tests"
+  ],
+  "cursorpyright.analysis.include": [
+    "flink-skill-common/harness/tests",
+    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/tests",
+    "spark-to-flink-skill/harness/tests"
+  ],
+  "cursorpyright.analysis.extraPaths": [
+    "flink-skill-common/harness/src",
+    "flink-skill-common/harness/tests",
+    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/src",
+    "ksql-to-flink-skill/harness/tests",
+    "ksql-to-flink-skill/harness/tests/it",
+    "spark-to-flink-skill/harness/src",
+    "spark-to-flink-skill/harness/tests"
+  ]
+}

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from flink_skill_common.agents.cc_deployment_fixer import run_agent_deploy_fixer
-from flink_skill_common.agents.sources import generate_source_ddls
+from flink_skill_common.agents.table_source_agent import generate_source_ddls
 from flink_skill_common.config import agent_fixer_enabled, agent_fixer_max_retries, get_logger
 from flink_skill_common.deploy.flink_statement_manager import DeployError, FlinkStatementManager
 from flink_skill_common.response_io import (
@@ -308,9 +308,9 @@ def converge_flink_sql(
 
 
 def clean_flink_sql_and_validate(
-    response: str,
+    response: str,  # migrated sql response from LLM may include DDLs and DMLs
     table: str,
-    src_sql: str,
+    src_sql: str,  # source SQL before translation
     skip_deploy: bool,
     out_dir: Path,
     *,
@@ -321,7 +321,7 @@ def clean_flink_sql_and_validate(
     Returns ConvergenceResult when DML is present, otherwise None.
     """
     ddls, dmls = extract_sql_blocks(response)
-    _emit_progress(on_progress, f"Extracted {len(ddls)} DDL, {len(dmls)} DML")
+    _emit_progress(on_progress, f"\nExtracted {len(ddls)} DDL, {len(dmls)} DML")
     table_dir = out_dir / table
     table_dir.mkdir(parents=True, exist_ok=True)
     tests_dir = table_dir / "tests"

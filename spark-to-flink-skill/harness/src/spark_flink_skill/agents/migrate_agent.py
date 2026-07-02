@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from flink_skill_common.agents.factory import (
-    build_migration_agent,
+    build_skilled_agent,
     make_openai_model,
     run_agent_response,
 )
-from flink_skill_common.llm import is_agent_error_response, resolve_llm_model
+
 
 from spark_flink_skill.config import llm_api_key, llm_base_url, load_env, skill_dir
 
@@ -30,7 +30,7 @@ def build_migrate_agent():
         "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
         "Do not include explanations outside the SQL blocks.",
     ]
-    return build_migration_agent(
+    return build_skilled_agent(
         name="SparkToFlinkAgent",
         skill_dir=skill_dir(),
         instructions=instructions,
@@ -49,6 +49,21 @@ def migrate_prompt(table_name: str, spark_sql: str) -> str:
 
 class MigrationError(RuntimeError):
     """Raised when the agent fails to produce migration output."""
+
+def is_agent_error_response(text: str) -> bool:
+    """Return True when agent output looks like a provider/runtime failure."""
+    if not text or not text.strip():
+        return True
+    lowered = text.lower()
+    markers = (
+        "not found",
+        "prompt too long",
+        "exceeds max context",
+        "error in agent run",
+        "api status error",
+        "invalid_request_error",
+    )
+    return any(marker in lowered for marker in markers)
 
 
 def run_migration(table_name: str, spark_sql: str) -> str:

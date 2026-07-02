@@ -25,9 +25,10 @@ Think step by step, follow core principles.
 * Add `` around column name that are SQL reserved word as time, period, database
 
 ### 3. Table Distribution:
-* Every table must include: `DISTRIBUTED BY HASH(primary_key_column) INTO 1 BUCKETS`
+* Every table must include: `DISTRIBUTED BY HASH(primary_key_column) INTO 6 BUCKETS`
 * Place this clause after the last column declaration and before the WITH clause
 * Use the same column that is defined as PRIMARY KEY
+* In Confluent Flink there is no `PARTITION BY`
 
 ### 4. Connector Configuration:
 * Remove any `'topic' = 'topic_name'` declarations from WITH clauses

@@ -20,11 +20,11 @@ from flink_skill_common.config import (
     llm_base_url,
     llm_reachable,
 )
-from flink_skill_common.llm import resolve_llm_model
+from flink_skill_common.agents.factory import resolve_llm_model
 from flink_skill_common.convergence import clean_flink_sql_and_validate
 from flink_skill_common.sql_validate import SqlValidationError
-from .cli_progress import ProgressReporter
-from .migrate_agent import run_migration
+from flink_skill_common.cli_progress import ProgressReporter
+from ksql_to_flink.migrate_agent import run_migration
 from .ksql_utils import clean_ksql_input, extract_ksql_object_name, split_ksql_create_statements
 
 

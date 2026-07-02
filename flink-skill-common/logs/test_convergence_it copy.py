@@ -4,12 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from flink_fixtures import (
+from flink_ref_fixtures import (
     assert_convergence_stages,
     assert_has_errors,
     assert_no_errors,
     load_flink_pair,
-    load_source_sql,
     validation_issues,
 )
 from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql

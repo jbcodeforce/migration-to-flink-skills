@@ -62,7 +62,7 @@ def fetch_model_context_windows(
             windows[item["id"]] = int(item.get("max_model_len") or 0)
     return windows
     
-def build_migration_agent(
+def build_skilled_agent(
     *,
     name: str,
     skill_dir: Path | None = None,

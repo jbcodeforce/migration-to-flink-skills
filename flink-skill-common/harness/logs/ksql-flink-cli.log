@@ -1,0 +1,152 @@
+2026-07-02 10:32:11,456 DEBUG [flink_migration_skill.cli] config.py:71 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-02 10:32:11,457 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-02 10:32:11,457 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-02 10:32:11,457 INFO [flink_migration_skill.cli] response_io.py:85 DDL: create table table_test (
+        id int,
+        name string,
+        product string,
+        product_name string,
+        PRIMARY KEY (id) NOT ENFORCED
+    ) DISTRIBUTED BY HASH(id) INTO 6 BUCKETS WITH (
+        'changelog.mode' = 'upsert',
+        'key.format' = 'avro-registry',
+        'value.format' = 'avro-registry',
+    );
+2026-07-02 10:32:11,457 INFO [flink_migration_skill.cli] response_io.py:86 DML: insert into table_test
+    select
+        id,
+        name,
+        product_table.product,
+        product_table.product_name
+    from source_table
+    left join product_table on source_table.product_id = product_table.id;
+2026-07-02 10:33:03,971 INFO [flink_migration_skill.cli] convergence.py:165 Convergence attempt 1 of 2 for table=table_test
+2026-07-02 10:33:03,993 INFO [flink_migration_skill.cli] convergence.py:227 Deploying table=table_test ddl=tests/tmp/table_test/ddl.table_test.sql dml=tests/tmp/table_test/dml.table_test.sql
+2026-07-02 10:33:04,499 ERROR [flink_migration_skill.cli] convergence.py:234 Deploy failed for table=table_test: create-flink-statement failed for product-table-ddl: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 270, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 239, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 667, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 257, in execute
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 378, in _deploy_source_ddls
+    self.create_statement(source_name, source_sql)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 277, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 230, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 510, in deploy_table
+    source_statements = self._deploy_source_ddls(tests_dir, messages)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 380, in _deploy_source_ddls
+    raise DeployError(
+flink_skill_common.deploy.flink_statement_manager.DeployError: create-flink-statement failed for product-table-ddl: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+2026-07-02 10:42:27,848 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-02 10:42:27,849 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-02 10:42:27,849 INFO [flink_migration_skill.cli] response_io.py:85 DDL: 
+2026-07-02 10:42:27,849 INFO [flink_migration_skill.cli] response_io.py:86 DML: 
+2026-07-02 10:42:27,851 INFO [flink_migration_skill.cli] convergence.py:165 Convergence attempt 2 of 2 for table=table_test
+2026-07-02 10:42:27,854 INFO [flink_migration_skill.cli] convergence.py:227 Deploying table=table_test ddl=tests/tmp/table_test/ddl.table_test.sql dml=tests/tmp/table_test/dml.table_test.sql
+2026-07-02 10:42:28,527 ERROR [flink_migration_skill.cli] convergence.py:234 Deploy failed for table=table_test: create-flink-statement failed for product-table-ddl: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 270, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 239, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 667, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 257, in execute
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 378, in _deploy_source_ddls
+    self.create_statement(source_name, source_sql)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 277, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 230, in converge_flink_sql
+    result = FlinkStatementManager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 510, in deploy_table
+    source_statements = self._deploy_source_ddls(tests_dir, messages)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 380, in _deploy_source_ddls
+    raise DeployError(
+flink_skill_common.deploy.flink_statement_manager.DeployError: create-flink-statement failed for product-table-ddl: Failed to create product-table-ddl: Statement submission failed: SQL parse failed. Encountered "PRIMARY" at line 13, column 3.
+Was expecting one of:
+    <EOF> 
+    "AS" ...
+    "LIKE" ...
+    ";" ...
+    
+2026-07-02 10:42:29,647 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-02 10:42:29,647 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-02 10:42:29,648 INFO [flink_migration_skill.cli] response_io.py:85 DDL: 
+2026-07-02 10:42:29,648 INFO [flink_migration_skill.cli] response_io.py:86 DML: 

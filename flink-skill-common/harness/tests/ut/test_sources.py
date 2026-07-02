@@ -4,22 +4,22 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pathlib import Path
-from flink_skill_common.config import HarnessContext, configure, flink_skill_common_skill_dir, skill_dir, llm_reachable,
+from flink_skill_common.config import HarnessContext, configure, flink_skill_common_skill_dir, skill_dir
 __COMMON_ROOT = Path(__file__).resolve().parents[3]
 __PROJECT_ROOT = __COMMON_ROOT.parent
 configure(HarnessContext(harness_root=__COMMON_ROOT, project_root=__PROJECT_ROOT))
 
-from flink_skill_common.agents.sources import (
+from flink_skill_common.agents.table_source_agent import (
     _source_ddl_prompt_template,
-    build_source_ddl_agent,
+    _build_source_ddl_agent,
     generate_source_ddls,
-    source_ddl_prompt,
+    _source_ddl_prompt,
 )
 
 
 def test_source_ddl_prompt_template_uses_common_skill_dir():
     ksql_project = __PROJECT_ROOT / "ksql-to-flink-skill"
-    ksql_root = ksql_project / "harness"
+    ksql_root = ksql_project 
     configure(HarnessContext(harness_root=ksql_root, project_root=ksql_project))
     try:
         assert "ksql-to-flink-skill/skill" in str(skill_dir())
@@ -31,7 +31,7 @@ def test_source_ddl_prompt_template_uses_common_skill_dir():
 
 
 def test_source_ddl_prompt_includes_inputs():
-    prompt = source_ddl_prompt(
+    prompt = _source_ddl_prompt(
         target_table="george_martin",
         src_sql="CREATE STREAM s AS SELECT * FROM src;",
         dml_sql="INSERT INTO george_martin SELECT * FROM all_publications;",
@@ -92,7 +92,7 @@ def test_build_source_ddl_agent():
     fake_model = MagicMock()
     with patch("flink_skill_common.agents.sources._make_model", return_value=fake_model):
         with patch("flink_skill_common.agents.sources.Agent", return_value=fake_agent) as mock_agent:
-            agent = build_source_ddl_agent()
+            agent = _build_source_ddl_agent()
     assert agent is fake_agent
     mock_agent.assert_called_once_with(
         name="SourceDdlAgent",

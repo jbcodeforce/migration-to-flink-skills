@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flink_skill_common.agents.factory import (
-    build_migration_agent,
+    build_skilled_agent,
     make_openai_model,
     run_agent_response,
     resolve_llm_model,
@@ -37,7 +37,7 @@ def _make_model():
 def build_deploy_fixer_agent():
     """Agent with confluent-sql tools for fixing failed Flink SQL validation or deploys."""
     deploy_tools = FlinkStatementLLMTools()
-    return build_migration_agent(
+    return build_skilled_agent(
         name="FlinkSqlDeployFixerAgent",
         skill_dir=flink_skill_common_skill_dir(),
         instructions=[

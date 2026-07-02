@@ -1,8 +1,8 @@
 from pathlib import Path
-
+from unittest.mock import patch
 from agno.skills import LocalSkills, Skills
 
-from flink_skill_common.agents.deploy_fixer import build_deploy_fixer_agent
+from flink_skill_common.agents.cc_deployment_fixer import build_deploy_fixer_agent
 from flink_skill_common.config import (
     HarnessContext,
     configure,
@@ -35,11 +35,12 @@ def test_local_skills_loads_validate_flink_sql():
 
 
 def test_build_deploy_fixer_agent():
-    agent = build_deploy_fixer_agent()
-    assert agent is not None
-    assert agent.name == "FlinkSqlDeployFixerAgent"
-    assert agent.model is not None
-    assert agent.skills is not None
-    assert len(agent.tools) >= 7
-    assert agent.instructions is not None
-    assert agent.markdown is True
+    with patch("flink_skill_common.agents.cc_deployment_fixer.resolve_llm_model", return_value="Ornith-1.0-9B-6bit"):
+        agent = build_deploy_fixer_agent()
+        assert agent is not None
+        assert agent.name == "FlinkSqlDeployFixerAgent"
+        assert agent.model is not None
+        assert agent.skills is not None
+        assert len(agent.tools) >= 7
+        assert agent.instructions is not None
+        assert agent.markdown is True
