@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import spark_flink_skill.config  # noqa: F401 — configure shared harness context
 from flink_skill_common.agents.factory import (
     build_skilled_agent,
     make_openai_model,
-    run_agent_response,
+    resolve_llm_model,
+    run_agent_process_response,
 )
-
-
-from spark_flink_skill.config import llm_api_key, llm_base_url, load_env, skill_dir
+from flink_skill_common.config import llm_api_key, llm_base_url, load_env, skill_dir
 
 
 def _make_model():
@@ -22,17 +22,17 @@ def _make_model():
 
 
 def build_migrate_agent():
-    """Create Agno agent with spark-to-flink skill loaded from skill/."""
+    """Create Agno agent with spark-to-flink translation skill only."""
     instructions = [
         "Migrate Spark SQL to Confluent Cloud Flink SQL using the spark-to-flink skill.",
         "Call get_skill_instructions('spark-to-flink') before translating.",
-        "Apply translation and validation rules before returning output.",
         "Return final DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
         "Do not include explanations outside the SQL blocks.",
+        "Do not validate, deploy, or generate source stub DDL — the harness runs convergence after translation.",
     ]
     return build_skilled_agent(
         name="SparkToFlinkAgent",
-        skill_dir=skill_dir(),
+        skill_dirs=[skill_dir()],
         instructions=instructions,
         model=_make_model(),
     )
@@ -42,7 +42,8 @@ def migrate_prompt(table_name: str, spark_sql: str) -> str:
     """Build a structured migration request for the agent."""
     return (
         f"Migrate the following Spark SQL to Flink SQL for table `{table_name}`.\n\n"
-        f"Follow the spark-to-flink skill workflow: translate, validate, then output DDL and DML.\n\n"
+        f"Follow the spark-to-flink skill workflow: translate and output DDL and DML only. "
+        f"The harness validates and deploys after translation — do not validate or deploy yourself.\n\n"
         f"```sql\n{spark_sql.strip()}\n```"
     )
 
@@ -69,7 +70,7 @@ def is_agent_error_response(text: str) -> bool:
 def run_migration(table_name: str, spark_sql: str) -> str:
     """Run migration agent and return response content."""
     agent = build_migrate_agent()
-    content = run_agent_response(agent, migrate_prompt(table_name, spark_sql))
+    content = run_agent_process_response(agent, migrate_prompt(table_name, spark_sql))
     if is_agent_error_response(content):
         raise MigrationError(content.strip() or "Agent returned no migration output.")
     return content

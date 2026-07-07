@@ -1,15 +1,10 @@
 """Offline ksqlDB utility tests (no LLM)."""
 
-from pathlib import Path
 from ksql_to_flink.ksql_utils import (
     clean_ksql_input,
     extract_ksql_object_name,
     split_ksql_create_statements,
 )
-_HARNESS_ROOT = Path(__file__).resolve().parents[2]
-_PROJECT_ROOT = _HARNESS_ROOT.parent
-from flink_skill_common.config import HarnessContext, configure
-configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
 
 
 def test_clean_ksql_removes_set_and_comments():
@@ -36,7 +31,6 @@ FROM a GROUP BY id;
     parts = split_ksql_create_statements(sql)
     print(parts)
     assert len(parts) == 3
-
 
 
 def test_split_create_table_statements():

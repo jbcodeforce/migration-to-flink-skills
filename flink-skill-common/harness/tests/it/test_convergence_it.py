@@ -5,13 +5,12 @@ Integration tests for converge_flink_sql workflow branches.
 from pathlib import Path
 
 import pytest
-
+import json
 from flink_ref_fixtures import (
     load_flink_pair
 )
 from flink_skill_common.config import configure, HarnessContext
 from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql
-from flink_skill_common.deploy.flink_statement_manager import FlinkStatementManager
 
 pytestmark = pytest.mark.integration
 
@@ -33,28 +32,20 @@ def test_converge_valid_deploy(tmp_path: Path, require_deploy):
     filtering_dir = _REFERENCES_ROOT / "flink" / "valid" / "routing" / "filtering"
     ddls, dmls, src_dir = load_flink_pair(filtering_dir)
 
-    try:
-        ctx = ConvergenceContext(
-            table_name=TABLE_NAME,
-            source_sql=dmls[0],
-            source_label="fixture",
-            out_dir=tmp_path,
-            tests_dir=src_dir / "tests",
-        )
-        result = converge_flink_sql(
-            ddls,
-            dmls,
-            ctx,
-            skip_deploy=False,
-            agent_on_failure=True,
-        )
-        print(result)
-        assert result.success is True
-        assert any("Deploy OK" in msg for msg in result.messages)
-    except Exception as e:
-        print(e)
-    finally:
-        FlinkStatementManager().drop_table(TABLE_NAME);
-        # ADD drop test tables
-        FlinkStatementManager().drop_table("all_publications");
-
+    ctx = ConvergenceContext(
+        table_name=TABLE_NAME,
+        source_sql=dmls[0],
+        source_label="fixture",
+        out_dir=tmp_path,
+        tests_dir=src_dir / "tests",
+    )
+    result = converge_flink_sql(
+        ddls,
+        dmls,
+        ctx,
+        skip_deploy=False,
+        agent_on_failure=True,
+    )
+    print(json.dumps(result.model_dump() if hasattr(result, "model_dump") else result.__dict__, indent=2, default=str))
+    assert result.success is True
+    assert any("Deploy OK" in msg for msg in result.messages)

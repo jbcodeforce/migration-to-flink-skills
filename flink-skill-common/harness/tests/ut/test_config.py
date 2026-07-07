@@ -73,11 +73,12 @@ def test_get_context_raises_when_not_configured(monkeypatch):
 
 def test_skill_dir():
     assert "flink-skill-common/skill" in str(_HARNESS.skill_dir.as_posix())
-    assert "flink-skill-common/skill/SKILL.md" in str(_HARNESS.skill_md_path.as_posix())
+    assert skill_dir() == _HARNESS.skill_dir
+    from flink_skill_common.config import validate_flink_sql_skill_dir
+
+    assert (validate_flink_sql_skill_dir() / "SKILL.md").is_file()
     assert "migration-to-flink-skills" in str(_HARNESS.project_root.as_posix())
     assert _HARNESS.harness_root.as_posix() == __COMMON_ROOT.as_posix()
-    assert skill_dir() == _HARNESS.skill_dir
-    assert skill_md_path() == _HARNESS.skill_md_path
 
 
 def test_logger():

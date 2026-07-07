@@ -1,9 +1,10 @@
-CREATE TABLE IF NOT EXISTS dim_all_songs (
-    artist STRING,
+CREATE TABLE IF NOT EXISTS acting_events_drama (
+    name STRING,
     title STRING,
-    genre STRING
-) WITH (
-    'value.format' = 'avro-registry',
+    PRIMARY KEY (name) NOT ENFORCED
+) DISTRIBUTED BY HASH(name) INTO 1 BUCKETS
+WITH (
+    'value.format' = 'json-registry',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
     'kafka.retention.time' = '0',

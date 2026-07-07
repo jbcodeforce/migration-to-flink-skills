@@ -4,12 +4,13 @@ Agno agent for fixing Flink SQL syntax validation and deployment failures.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 from flink_skill_common.agents.factory import (
     build_skilled_agent,
     make_openai_model,
-    run_agent_response,
+    run_agent_process_response,
     resolve_llm_model,
 )
 from flink_skill_common.config import (
@@ -39,7 +40,7 @@ def build_deploy_fixer_agent():
     deploy_tools = FlinkStatementLLMTools()
     return build_skilled_agent(
         name="FlinkSqlDeployFixerAgent",
-        skill_dir=flink_skill_common_skill_dir(),
+        skill_dirs=[flink_skill_common_skill_dir()],
         instructions=[
             "Fix Flink SQL validation and deploy failures for migration harnesses.",
             "Call get_skill_instructions('validate-flink-sql') before fixing SQL.",
@@ -51,6 +52,7 @@ def build_deploy_fixer_agent():
             "Statement names: {table}-ddl and {table}-dml with underscores replaced by hyphens.",
             "If DML fails because a source table is missing, regenerate stub DDL in tests/.",
             "Return corrected source DDLs, DDL, and DML in labeled ```sql blocks.",
+            "Return corrected SQL in labeled ```sql blocks only. The harness writes files — do not call write_file.",
         ],
         model=_make_model(),
         tools=deploy_tools.as_tools(),
@@ -108,6 +110,8 @@ def run_agent_deploy_fixer(
     dml_path: Path,
     error_message: str,
     tests_dir: Path | None = None,
+    *,
+    on_event: Callable[[str], None] | None = None,
 ) -> str:
     """Invoke Agno agent with confluent-sql tools to fix and redeploy failed statements."""
     agent = build_deploy_fixer_agent()
@@ -123,9 +127,10 @@ def run_agent_deploy_fixer(
     max_retries = agent_fixer_max_retries()
     last_content = ""
     for attempt in range(max_retries):
-        last_content = run_agent_response(
+        last_content = run_agent_process_response(
             agent,
             f"{prompt}\n\nRetry attempt {attempt + 1} of {max_retries}.",
+            on_event=on_event,
         )
         if "RUNNING" in last_content.upper() and "FAILED" not in last_content.upper():
             break

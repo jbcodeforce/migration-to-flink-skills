@@ -1,0 +1,6 @@
+2026-07-06 15:13:29,353 DEBUG [flink_migration_skill.cli] config.py:71 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 15:13:29,353 ERROR [flink_migration_skill.cli] config.py:113 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>
+2026-07-06 15:15:37,690 DEBUG [flink_migration_skill.cli] config.py:71 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 15:15:37,690 ERROR [flink_migration_skill.cli] config.py:113 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>
+2026-07-06 19:39:07,254 DEBUG [flink_migration_skill.cli] config.py:71 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 19:39:07,254 ERROR [flink_migration_skill.cli] config.py:113 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>

@@ -8,8 +8,9 @@ from typing import Optional
 
 from agno.agent import Agent, RunEvent
 from agno.models.openai import OpenAIChat
-from agno.skills import LocalSkills, Skills
-from flink_skill_common.config import llm_model, fetch_models_payload
+from agno.skills import Skills
+from flink_skill_common.agents.skill_loaders import AgnoAdaptedLocalSkills
+from flink_skill_common.config import get_logger, llm_model, fetch_models_payload
 
 def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAIChat:
     return OpenAIChat(id=model_id, base_url=base_url, api_key=api_key)
@@ -65,21 +66,23 @@ def fetch_model_context_windows(
 def build_skilled_agent(
     *,
     name: str,
-    skill_dir: Path | None = None,
+    skill_dirs: Sequence[Path] | None = None,
     instructions: list[str],
     model: OpenAIChat,
     tools: Sequence[Callable[..., str]] | None = None,
 ) -> Agent:
     """
-    Create Agno agent with skill loaded from skill_dir. If skill_dir is not provided, use default skill directory.
-    If tools are provided, add them to the agent.
+    Create Agno agent with skills loaded from one or more skill directories.
+    If skill_dirs is omitted or empty, the agent is created without skills.
     """
     agent_tools = list(tools) if tools else []
-    if skill_dir is not None:
+    dirs = list(skill_dirs) if skill_dirs else []
+    if dirs:
+        loaders = [AgnoAdaptedLocalSkills(str(path), validate=False) for path in dirs]
         return Agent(
             name=name,
             model=model,
-            skills=Skills(loaders=[LocalSkills(str(skill_dir), validate=False)]),
+            skills=Skills(loaders=loaders),
             tools=agent_tools,
             instructions=instructions,
             markdown=True,
@@ -106,39 +109,56 @@ def _tool_name(chunk) -> str:
     return getattr(tool, "tool_name", None) or str(tool)
 
 
-def run_agent_response(
+def run_agent_process_response(
     agent: Agent,
     prompt: str,
     *,
     on_event: Callable[[str], None] | None = None,
 ) -> str:
     """Run agent and return response content as string."""
+    logger = get_logger()
+
+    def _emit(msg: str) -> None:
+        logger.info("agent: %s", msg)
+        if on_event is not None:
+            on_event(msg)
+
     if on_event is None:
+        logger.info("agent: starting run (non-streaming)")
         response = agent.run(prompt)
-        return str(response.content) if hasattr(response, "content") else str(response)
+        content = str(response.content) if hasattr(response, "content") else str(response)
+        logger.info("agent: run finished (%d chars)", len(content))
+        return content
 
     stream = agent.run(prompt, stream=True, stream_events=True)
     content_parts: list[str] = []
     final_content: str | None = None
 
-    for chunk in stream:
-        event = getattr(chunk, "event", None)
-        if event == RunEvent.run_started:
-            on_event("Agent run started")
-        elif event == RunEvent.tool_call_started:
-            on_event(f"Tool: {_tool_name(chunk)}")
-        elif event == RunEvent.tool_call_completed:
-            on_event(f"Tool completed: {_tool_name(chunk)}")
-        elif event == RunEvent.run_completed:
-            on_event("Agent run completed")
-            content = getattr(chunk, "content", None)
-            if isinstance(content, str) and content:
-                final_content = content
-        elif event == RunEvent.run_content:
-            content = getattr(chunk, "content", None)
-            if isinstance(content, str) and content:
-                content_parts.append(content)
+    try:
+        for chunk in stream:
+            event = getattr(chunk, "event", None)
+            if event == RunEvent.run_started:
+                _emit("Agent run started")
+            elif event == RunEvent.tool_call_started:
+                _emit(f"Tool: {_tool_name(chunk)}")
+            elif event == RunEvent.tool_call_completed:
+                _emit(f"Tool completed: {_tool_name(chunk)}")
+            elif event == RunEvent.run_completed:
+                _emit("Agent run completed")
+                content = getattr(chunk, "content", None)
+                if isinstance(content, str) and content:
+                    final_content = content
+            elif event == RunEvent.run_content:
+                content = getattr(chunk, "content", None)
+                if isinstance(content, str) and content:
+                    content_parts.append(content)
+    except KeyboardInterrupt:
+        _emit("Agent run interrupted")
+        raise
 
     if final_content:
+        logger.info("agent: run finished (%d chars)", len(final_content))
         return final_content
-    return "".join(content_parts)
+    content = "".join(content_parts)
+    logger.info("agent: run finished (%d chars)", len(content))
+    return content

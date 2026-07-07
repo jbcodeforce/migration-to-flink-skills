@@ -12,7 +12,7 @@ Get skills for common and for specific migration skills (spark, ksql).
 from __future__ import annotations
 
 import json
-import os, sys
+import os
 from dataclasses import dataclass
 from pathlib import Path
 import logging
@@ -39,14 +39,34 @@ def _resolve_dotenv_path(ctx: HarnessContext) -> Path | None:
 
 
 
+def _configure_agno_file_logging(file_handler: logging.Handler, level: int) -> None:
+    """Route Agno library logs to the CLI log file instead of Rich console output."""
+    try:
+        from agno.utils.log import configure_agno_logging
+    except ImportError:
+        return
+
+    agno_logger = logging.getLogger("agno.cli")
+    agno_logger.handlers.clear()
+    agno_logger.addHandler(file_handler)
+    agno_logger.setLevel(level)
+    agno_logger.propagate = False
+
+    configure_agno_logging(
+        custom_default_logger=agno_logger,
+        custom_agent_logger=agno_logger,
+        custom_team_logger=agno_logger,
+        custom_workflow_logger=agno_logger,
+    )
+
+
 def _configure_cli_logging(name: str) -> logging.Logger:
-    """Configure file (+ stderr) logging once and return the CLI logger."""
+    """Configure file-only logging once and return the CLI logger."""
 
     global _LOGGER
     if _LOGGER:
         return _LOGGER
     logger = logging.getLogger(name or "flink_migration_skill.cli")
-
 
     log_path = cli_log_file()
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -57,15 +77,12 @@ def _configure_cli_logging(name: str) -> logging.Logger:
     file_handler.setLevel(level)
     file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
 
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.WARNING)
-    stderr_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-
     logger.setLevel(level)
     logger.handlers.clear()
     logger.addHandler(file_handler)
-    logger.addHandler(stderr_handler)
     logger.propagate = False
+
+    _configure_agno_file_logging(file_handler, level)
 
     _LOGGER = logger
     logger.debug("Logging to %s (level=%s)", log_path, cli_log_level())
@@ -160,8 +177,11 @@ class FlinkDeployNotReadyError(RuntimeError):
 
 def configure(ctx: HarnessContext) -> None:
     """Register the active harness context (call once from skill config module)."""
-    global _ctx
+    global _ctx, _LOGGER
+    prev_root = _ctx.harness_root if _ctx is not None else None
     _ctx = ctx
+    if prev_root != ctx.harness_root:
+        _LOGGER = None
     if ctx.load_env():
         logging.getLogger(__name__).debug(
             "Loaded environment from %s", _resolve_dotenv_path(ctx)
@@ -258,6 +278,11 @@ def flink_skill_common_skill_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "skill"
 
 
+def validate_flink_sql_skill_dir() -> Path:
+    """Return flink-skill-common/skill/validate-flink-sql."""
+    return flink_skill_common_skill_dir() / "validate-flink-sql"
+
+
 def agent_fixer_enabled() -> bool:
     return os.getenv("AGENT_FIXER_EXECUTION_ENABLED", "").lower() in ("1", "true", "yes")
 
@@ -347,7 +372,17 @@ def llm_reachable(base_url: str | None = None, timeout: float | None = None) -> 
         return False
     return True
 
+def _logger_file_path(logger: logging.Logger) -> Path | None:
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            return Path(handler.baseFilename).resolve()
+    return None
+
+
 def get_logger() -> logging.Logger:
-    if _LOGGER is None:
-        _configure_cli_logging("flink_migration_skill.cli")
-    return _LOGGER
+    global _LOGGER
+    expected = cli_log_file().resolve()
+    if _LOGGER is not None and _logger_file_path(_LOGGER) == expected:
+        return _LOGGER
+    _LOGGER = None
+    return _configure_cli_logging("flink_migration_skill.cli")

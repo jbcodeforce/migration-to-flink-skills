@@ -1,6 +1,7 @@
 """Tests for FlinkStatementManager."""
 
 import json
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,6 +12,8 @@ from flink_skill_common.deploy.flink_statement_manager import (
     FlinkStatementManager,
     StatementManagerError,
     classify_sql,
+    ddl_statement_name,
+    dml_statement_name,
 )
 from flink_skill_common.sql_parse import extract_statement_table_name
 
@@ -108,6 +111,21 @@ def test_wait_for_phase_timeout(settings):
             manager.wait_for_phase("t-ddl", {"RUNNING"}, timeout=0.05)
 
 
+def test_wait_for_phase_propagates_keyboard_interrupt(settings):
+    manager = FlinkStatementManager(settings)
+    with patch.object(
+        manager,
+        "get_statement",
+        return_value={"name": "t-ddl", "phase": "PENDING", "detail": ""},
+    ):
+        with patch(
+            "flink_skill_common.deploy.flink_statement_manager.interruptible_sleep",
+            side_effect=KeyboardInterrupt,
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                manager.wait_for_phase("t-ddl", {"RUNNING"}, timeout=1.0)
+
+
 def test_get_statement_exceptions(settings):
     manager = FlinkStatementManager(settings)
     conn = MagicMock()
@@ -121,4 +139,36 @@ def test_get_statement_exceptions(settings):
         result = manager.get_statement_exceptions("t-dml")
 
     assert result["exceptions"][0]["message"] == "boom"
+
+
+def test_deploy_table_deletes_ddl_statement_after_success(settings, tmp_path: Path):
+    manager = FlinkStatementManager(settings)
+    ddl_path = tmp_path / "ddl.my_table.sql"
+    dml_path = tmp_path / "dml.my_table.sql"
+    ddl_path.write_text("CREATE TABLE my_table (id INT);")
+    dml_path.write_text("INSERT INTO my_table SELECT id FROM src;")
+
+    with patch.object(manager, "create_statement", return_value={"phase": "COMPLETED"}):
+        with patch.object(manager, "_wait_for_deploy_phase", return_value="COMPLETED"):
+            with patch.object(manager, "check_statement_health", return_value={"healthy": True}):
+                with patch.object(manager, "_delete_statement_safe") as mock_delete:
+                    manager.deploy_table("my_table", ddl_path, dml_path)
+
+    mock_delete.assert_called_once_with(ddl_statement_name("my_table"))
+
+
+def test_cleanup_deployed_table_deletes_dml_and_drops_tables(settings, tmp_path: Path):
+    manager = FlinkStatementManager(settings)
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "ddl.src.sql").write_text("CREATE TABLE src (id INT);")
+
+    with patch.object(manager, "_delete_statement_safe") as mock_delete:
+        with patch.object(manager, "drop_table") as mock_drop:
+            manager.cleanup_deployed_table("my_table", tests_dir)
+
+    mock_delete.assert_called_once_with(dml_statement_name("my_table"))
+    mock_drop.assert_any_call("my_table")
+    mock_drop.assert_any_call("src")
+    assert mock_drop.call_count == 2
 

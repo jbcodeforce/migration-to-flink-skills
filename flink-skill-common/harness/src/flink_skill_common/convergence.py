@@ -29,6 +29,7 @@ from flink_skill_common.sql_validate import (
     validate_syntax_for_statements
 )
 from flink_skill_common.sql_parse import compute_missing_source_tables
+from flink_skill_common.user_errors import format_agent_retry_message, format_user_error
 
 
 def _logger():
@@ -36,6 +37,7 @@ def _logger():
 
 
 def _emit_progress(on_progress: Callable[[str], None] | None, message: str) -> None:
+    _logger().info("%s", message)
     if on_progress is not None:
         on_progress(message)
 
@@ -82,6 +84,35 @@ def _resolve_paths(
     return ddl_path, dml_path
 
 
+def _first_validation_error(issues: list[SqlValidationIssue]) -> str:
+    errors = [issue for issue in issues if issue.severity == "error"]
+    if not errors:
+        return "Validation failed."
+    issue = errors[0]
+    line = f" (line {issue.line})" if issue.line else ""
+    return f"[{issue.kind}#{issue.statement_index}] {issue.message}{line}"
+
+
+def _notify_agent_retry(
+    on_progress: Callable[[str], None] | None,
+    *,
+    prefix: str,
+    detail: str,
+    attempt: int,
+    max_attempts: int,
+    messages: list[str],
+) -> None:
+    user_detail = detail.strip()
+    if prefix == "Deploy failed":
+        user_detail = format_user_error(DeployError(detail))
+    user_msg = format_agent_retry_message(f"{prefix}: {user_detail}", attempt, max_attempts)
+    log_msg = f"{prefix}, invoking agent fix (attempt {attempt}): {detail}"
+    if not messages or messages[-1] != log_msg:
+        messages.append(log_msg)
+    _logger().info(log_msg)
+    _emit_progress(on_progress, user_msg)
+
+
 def _apply_agent_fix(
     ctx: ConvergenceContext,
     ddl_path: Path,
@@ -105,6 +136,7 @@ def _apply_agent_fix(
         dml_path=dml_path,
         error_message=error_message,
         tests_dir=tests_dir,
+        on_event=on_progress,
     )
 
     new_ddls, new_dmls = extract_sql_blocks(response)
@@ -160,80 +192,75 @@ def converge_flink_sql(
     last_agent_response: str | None = None
     ddl_path: Path | None = None
     dml_path: Path | None = None
+    manager: FlinkStatementManager | None = None
+    deploy_attempted = False
 
-    for attempt in range(max_attempts):
-        _logger().info("Convergence attempt %d of %d for table=%s", attempt + 1, max_attempts, ctx.table_name)
-        if max_attempts > 1:
-            _emit_progress(on_progress, f"Convergence attempt {attempt + 1} of {max_attempts}")
+    def _manager() -> FlinkStatementManager:
+        nonlocal manager
+        if manager is None:
+            manager = FlinkStatementManager()
+        return manager
 
-        offline_issues = validate_syntax_for_statements(current_ddls, current_dmls)
-        log_validation_issues(offline_issues)
-        offline_errors = [i for i in offline_issues if i.severity == "error"]
-        ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
-        if offline_errors:
-            if not use_agent:
-                raise SqlValidationError(offline_errors)
-            if ddl_path is None:
+    try:
+        for attempt in range(max_attempts):
+            _logger().info("Convergence attempt %d of %d for table=%s", attempt + 1, max_attempts, ctx.table_name)
+            if max_attempts > 1:
+                _emit_progress(on_progress, f"Convergence attempt {attempt + 1} of {max_attempts}")
+
+            offline_issues = validate_syntax_for_statements(current_ddls, current_dmls)
+            log_validation_issues(offline_issues)
+            offline_errors = [i for i in offline_issues if i.severity == "error"]
+            ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
+            if offline_errors:
+                if not use_agent:
+                    raise SqlValidationError(offline_errors)
+                if ddl_path is None:
+                    return ConvergenceResult(
+                        success=False,
+                        ddls=current_ddls,
+                        dmls=current_dmls,
+                        ddl_path=None,
+                        dml_path=dml_path,
+                        messages=["No DDL file found for agent fix"],
+                    )
+                _notify_agent_retry(
+                    on_progress,
+                    prefix="Validation failed",
+                    detail=_first_validation_error(offline_issues),
+                    attempt=attempt + 1,
+                    max_attempts=max_attempts,
+                    messages=messages,
+                )
+                current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
+                    ctx,
+                    ddl_path,
+                    dml_path,
+                    _format_validation_errors(offline_issues),
+                    current_ddls,
+                    current_dmls,
+                    on_progress=on_progress,
+                )
+                continue
+
+            messages.append("Offline validation passed.")
+            _emit_progress(on_progress, messages[-1])
+
+            if skip_deploy:
+                messages.append("Skipped deploy (--skip-deploy).")
+                _emit_progress(on_progress, messages[-1])
                 return ConvergenceResult(
-                    success=False,
+                    success=True,
                     ddls=current_ddls,
                     dmls=current_dmls,
-                    ddl_path=None,
+                    ddl_path=ddl_path,
                     dml_path=dml_path,
-                    messages=["No DDL file found for agent fix"],
+                    messages=messages,
+                    last_agent_response=last_agent_response,
                 )
-            messages.append(f"Offline validation failed, invoking agent fix (attempt {attempt + 1})")
-            _emit_progress(on_progress, messages[-1])
-            _logger().info("Offline validation failed, invoking agent fix (attempt %d)", attempt + 1)  
-            current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
-                ctx,
-                ddl_path,
-                dml_path,
-                _format_validation_errors(offline_issues),
-                current_ddls,
-                current_dmls,
-                on_progress=on_progress,
-            )
-            continue
-
-        messages.append("Offline validation passed.")
-        _emit_progress(on_progress, messages[-1])
-
-        if skip_deploy:
-            messages.append("Skipped deploy (--skip-deploy).")
-            _emit_progress(on_progress, messages[-1])
-            return ConvergenceResult(
-                success=True,
-                ddls=current_ddls,
-                dmls=current_dmls,
-                ddl_path=ddl_path,
-                dml_path=dml_path,
-                messages=messages,
-                last_agent_response=last_agent_response,
-            )
-        # Deploy to CC backend - Need to create inputs so dml will succeed
-        if ctx.tests_dir is None:
-            messages.append("No tests directory found, skipping deploy")
-            _emit_progress(on_progress, messages[-1])
-            return ConvergenceResult(
-                success=False,
-                ddls=current_ddls,
-                dmls=current_dmls,
-                ddl_path=ddl_path,
-                dml_path=dml_path,
-                messages=messages,
-            )
-
-        _logger().info("Deploying table=%s ddl=%s dml=%s", ctx.table_name, ddl_path, dml_path)
-        _emit_progress(on_progress, "Deploying to Confluent Cloud Flink...")
-        try:
-            result = FlinkStatementManager().deploy_table(
-                ctx.table_name, ddl_path, dml_path, tests_dir=ctx.tests_dir
-            )
-        except DeployError as exc:
-            _logger().error("Deploy failed for table=%s: %s", ctx.table_name, exc, exc_info=True)
-            if not use_agent:
-                messages.append(str(exc))
+            # Deploy to CC backend - Need to create inputs so dml will succeed
+            if ctx.tests_dir is None:
+                messages.append("No tests directory found, skipping deploy")
+                _emit_progress(on_progress, messages[-1])
                 return ConvergenceResult(
                     success=False,
                     ddls=current_ddls,
@@ -242,69 +269,106 @@ def converge_flink_sql(
                     dml_path=dml_path,
                     messages=messages,
                 )
-            messages.append(f"Deploy failed, invoking agent fix: {exc}")
-            _emit_progress(on_progress, messages[-1])
+
+            _logger().info("Deploying table=%s ddl=%s dml=%s", ctx.table_name, ddl_path, dml_path)
+            _emit_progress(on_progress, "Deploying to Confluent Cloud Flink...")
+            deploy_attempted = True
+            try:
+                result = _manager().deploy_table(
+                    ctx.table_name, ddl_path, dml_path, tests_dir=ctx.tests_dir
+                )
+            except DeployError as exc:
+                _logger().error("Deploy failed for table=%s: %s", ctx.table_name, exc, exc_info=True)
+                if not use_agent:
+                    messages.append(format_user_error(exc))
+                    return ConvergenceResult(
+                        success=False,
+                        ddls=current_ddls,
+                        dmls=current_dmls,
+                        ddl_path=ddl_path,
+                        dml_path=dml_path,
+                        messages=messages,
+                    )
+                _notify_agent_retry(
+                    on_progress,
+                    prefix="Deploy failed",
+                    detail=str(exc),
+                    attempt=attempt + 1,
+                    max_attempts=max_attempts,
+                    messages=messages,
+                )
+                current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
+                    ctx,
+                    ddl_path,
+                    dml_path,
+                    str(exc),
+                    current_ddls,
+                    current_dmls,
+                    on_progress=on_progress,
+                )
+                continue
+
+            deploy_messages = _deploy_messages(result)
+            messages.extend(deploy_messages)
+            for msg in deploy_messages:
+                _emit_progress(on_progress, msg)
+            if result.success:
+                return ConvergenceResult(
+                    success=True,
+                    ddls=current_ddls,
+                    dmls=current_dmls,
+                    ddl_path=ddl_path,
+                    dml_path=dml_path,
+                    messages=messages,
+                    last_agent_response=last_agent_response,
+                )
+
+            if not use_agent:
+                return ConvergenceResult(
+                    success=False,
+                    ddls=current_ddls,
+                    dmls=current_dmls,
+                    ddl_path=ddl_path,
+                    dml_path=dml_path,
+                    messages=messages,
+                )
+
+            error_message = (
+                f"DDL={result.ddl_phase} DML={result.dml_phase}"
+                + (f" exceptions={result.exceptions}" if result.exceptions else "")
+            )
+            _notify_agent_retry(
+                on_progress,
+                prefix="Deploy unhealthy",
+                detail=error_message,
+                attempt=attempt + 1,
+                max_attempts=max_attempts,
+                messages=messages,
+            )
             current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
                 ctx,
                 ddl_path,
                 dml_path,
-                str(exc),
+                error_message,
                 current_ddls,
                 current_dmls,
                 on_progress=on_progress,
             )
-            continue
- 
-        deploy_messages = _deploy_messages(result)
-        messages.extend(deploy_messages)
-        for msg in deploy_messages:
-            _emit_progress(on_progress, msg)
-        if result.success:
-            return ConvergenceResult(
-                success=True,
-                ddls=current_ddls,
-                dmls=current_dmls,
-                ddl_path=ddl_path,
-                dml_path=dml_path,
-                messages=messages,
-                last_agent_response=last_agent_response,
-            )
 
-        if not use_agent:
-            return ConvergenceResult(
-                success=False,
-                ddls=current_ddls,
-                dmls=current_dmls,
-                ddl_path=ddl_path,
-                dml_path=dml_path,
-                messages=messages,
-            )
-
-        error_message = (
-            f"DDL={result.ddl_phase} DML={result.dml_phase}"
-            + (f" exceptions={result.exceptions}" if result.exceptions else "")
+        return ConvergenceResult(
+            success=False,
+            ddls=current_ddls,
+            dmls=current_dmls,
+            ddl_path=ddl_path,
+            dml_path=dml_path,
+            messages=messages,
+            last_agent_response=last_agent_response,
         )
-        messages.append(f"Deploy unhealthy, invoking agent fix: {error_message}")
-        _emit_progress(on_progress, messages[-1])
-        current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
-            ctx,
-            ddl_path,
-            dml_path,
-            error_message,
-            current_ddls,
-            current_dmls,
-            on_progress=on_progress,
-        )
-
-    return ConvergenceResult(
-        success=False,
-        ddls=current_ddls,
-        dmls=current_dmls,
-        ddl_path=ddl_path,
-        dml_path=dml_path,
-        messages=messages,
-        last_agent_response=last_agent_response,
-    )
+    finally:
+        if deploy_attempted and not skip_deploy and ctx.tests_dir is not None:
+            _logger().info("Cleaning up deployed statements for table=%s", ctx.table_name)
+            _emit_progress(on_progress, "Cleaning up Confluent Cloud statements...")
+            _manager().cleanup_deployed_table(ctx.table_name, ctx.tests_dir)
 
 
 def clean_flink_sql_and_validate(

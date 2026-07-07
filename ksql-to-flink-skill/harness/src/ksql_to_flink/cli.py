@@ -10,32 +10,25 @@ from pathlib import Path
 
 import typer
 
+import ksql_to_flink.config  # noqa: F401 — configure shared harness context
 from flink_skill_common.config import (
     agent_fixer_enabled,
     agent_fixer_max_retries,
-    configure,
-    HarnessContext,
     cli_log_file,
     get_logger,
     llm_base_url,
     llm_reachable,
+    skill_dir,
 )
 from flink_skill_common.agents.factory import resolve_llm_model
-from flink_skill_common.convergence import clean_flink_sql_and_validate
+from flink_skill_common.convergence import ConvergenceResult, clean_flink_sql_and_validate
+from flink_skill_common.user_errors import format_user_error
 from flink_skill_common.sql_validate import SqlValidationError
+from flink_skill_common.cli_interrupt import MIGRATION_INTERRUPT_EXIT_CODE, run_typer_app
 from flink_skill_common.cli_progress import ProgressReporter
 from ksql_to_flink.migrate_agent import run_migration
 from .ksql_utils import clean_ksql_input, extract_ksql_object_name, split_ksql_create_statements
 
-
-_HARNESS_ROOT = Path(__file__).resolve().parents[2]
-_PROJECT_ROOT = _HARNESS_ROOT.parent
-
-_context = HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT)
-configure(_context)
-
-logger = get_logger()
-logger.info("harness_root=%s project_root=%s", _HARNESS_ROOT, _PROJECT_ROOT)    
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 
@@ -48,6 +41,22 @@ def _discover_statement_names(statements: list[str]) -> list[str]:
         names.append(extract_ksql_object_name(cleaned) or f"statement_{index}")
     return names
 
+
+def _convergence_failure_message(result: ConvergenceResult) -> str:
+    for msg in reversed(result.messages):
+        if "Agent fixer will attempt" in msg:
+            return msg.split(" Agent fixer will attempt", 1)[0]
+        if msg.startswith(("Deploy failed:", "Validation failed:", "Deploy unhealthy:")):
+            return msg
+    return result.messages[-1] if result.messages else "Validation or deploy failed."
+
+
+def _on_convergence_progress(progress: ProgressReporter, msg: str) -> None:
+    if "Agent fixer will attempt" in msg:
+        progress.warn(msg)
+    else:
+        progress.sub(msg)
+
         
 @app.command()
 def migrate(
@@ -57,6 +66,8 @@ def migrate(
     skip_deploy: bool = typer.Option(False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
 ) -> None:
     """Migrate ksqlDB CREATE statements to Flink DDL/DML, one statement at a time."""
+    logger = get_logger()
+    logger.info("skill_dir=%s", skill_dir())
     progress = ProgressReporter()
     logger.info(
         "migrate start table=%s file=%s out_dir=%s skip_deploy=%s",
@@ -93,8 +104,8 @@ def migrate(
             )
             raise typer.Exit(1)
         progress.done(1, f"LLM reachable at {llm_base_url()}")
-
-        ksql_statements = split_ksql_create_statements(file.read_text())
+        src_ksql_text = file.read_text()
+        ksql_statements = split_ksql_create_statements(src_ksql_text)
         if not ksql_statements:
             typer.echo("No CREATE STREAM/TABLE statements found in file.", err=True)
             raise typer.Exit(1)
@@ -109,67 +120,80 @@ def migrate(
         )
 
         processed = 0
-        for index, ksql_statement in enumerate(ksql_statements, start=1):
-            ksql_cleaned = clean_ksql_input(ksql_statement)
-            if not ksql_cleaned.strip():
-                logger.warning("Skipping empty statement index=%d", index)
-                continue
+        try:
+            for index, ksql_statement in enumerate(ksql_statements, start=1):
+                ksql_cleaned = clean_ksql_input(ksql_statement)
+                if not ksql_cleaned.strip():
+                    logger.warning("Skipping empty statement index=%d", index)
+                    continue
 
-            source_name = extract_ksql_object_name(ksql_cleaned) or f"statement_{index}"
-            processed += 1
-            progress.header(f"[{processed}/{total}] {source_name} → {table}")
+                source_name = extract_ksql_object_name(ksql_cleaned) or f"statement_{index}"
+                processed += 1
+                progress.header(f"[{processed}/{total}] {source_name} → {table}")
 
-            logger.info(
-                "Migrating statement %d/%d source=%s target=%s",
+                logger.info(
+                    "Migrating statement %d/%d source=%s target=%s",
+                    processed,
+                    total,
+                    source_name,
+                    table,
+                )
+
+                progress.done(1, "Cleaned ksql input", f"{len(ksql_cleaned)} chars")
+
+                progress.step(2, "Running translation agent...")
+                response = run_migration(
+                    table_name=table,
+                    ksql=ksql_cleaned,
+                    src_ksql=src_ksql_text,
+                    source_name=source_name,
+                    on_event=progress.agent_event,
+                )
+                progress.done(2, "Translation agent finished", f"{len(response)} chars")
+                progress.step(3, "Extracting SQL blocks and validating...")
+                result = clean_flink_sql_and_validate(
+                    response,
+                    table,
+                    ksql_cleaned,
+                    skip_deploy,
+                    out_dir,
+                    on_progress=lambda msg: _on_convergence_progress(progress, msg),
+                )
+                if result is None:
+                    progress.done(3, "Output files written", "no DML")
+                elif not result.success:
+                    failure_msg = _convergence_failure_message(result)
+                    logger.error("Migration failed for table=%s: %s", table, failure_msg)
+                    progress.done(3, "Validation failed")
+                    progress.warn(failure_msg)
+                    typer.echo(failure_msg, err=True)
+                    raise typer.Exit(1)
+                else:
+                    detail = ""
+                    if result.ddl_path is not None:
+                        detail = result.ddl_path.name
+                    progress.done(3, "Validation finished", detail)
+                    if skip_deploy:
+                        progress.done(4, "Offline validation passed")
+                    else:
+                        progress.done(5, "Deploy succeeded")
+
+            typer.echo(
+                f"\nDone. Processed {processed} statement(s). Output: {out_dir.resolve()}"
+            )
+        except KeyboardInterrupt:
+            source_name = locals().get("source_name", "unknown")
+            logger.warning(
+                "Migration interrupted at statement %d/%d (%s)",
                 processed,
                 total,
                 source_name,
-                table,
             )
-
-            progress.done(1, "Cleaned ksql input", f"{len(ksql_cleaned)} chars")
-
-            progress.step(2, "Running translation agent...")
-            response = run_migration(
-                table,
-                ksql_cleaned,
-                source_name=source_name,
-                on_event=progress.agent_event,
+            typer.echo(
+                f"\nInterrupted during {source_name} ({processed}/{total}).",
+                err=True,
             )
-            progress.done(2, "Translation agent finished", f"{len(response)} chars")
-            print("-"*80)
-            print(f"LLM response from translation agent: {response}")
-            print("-"*80)
-            progress.step(3, "Extracting SQL blocks and validating...")
-            result = clean_flink_sql_and_validate(
-                response,
-                table,
-                ksql_cleaned,
-                skip_deploy,
-                out_dir,
-                on_progress=progress.sub,
-            )
-            if result is None:
-                progress.done(3, "Output files written", "no DML")
-            elif not result.success:
-                progress.done(3, "Validation failed")
-                for msg in result.messages:
-                    progress.sub(msg)
-                typer.echo("\n".join(result.messages), err=True)
-                raise typer.Exit(1)
-            else:
-                detail = ""
-                if result.ddl_path is not None:
-                    detail = result.ddl_path.name
-                progress.done(3, "Validation finished", detail)
-                if skip_deploy:
-                    progress.done(4, "Offline validation passed")
-                else:
-                    progress.done(5, "Deploy succeeded")
-
-        typer.echo(
-            f"\nDone. Processed {processed} statement(s). Output: {out_dir.resolve()}"
-        )
+            raise typer.Exit(MIGRATION_INTERRUPT_EXIT_CODE) from None
 
     except typer.Exit:
         raise
@@ -179,12 +203,13 @@ def migrate(
         raise typer.Exit(1) from exc
     except Exception as exc:
         logger.exception("migrate failed table=%s file=%s", table, file)
-        typer.echo(f"Error: {exc}", err=True)
+        typer.echo(f"Error: {format_user_error(exc)}", err=True)
         raise typer.Exit(1) from exc
 
 
-def main():
-    app()
+def main() -> None:
+    get_logger()
+    run_typer_app(app)
 
 
 if __name__ == "__main__":

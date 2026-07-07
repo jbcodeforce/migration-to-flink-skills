@@ -19,8 +19,21 @@ Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` become
 
 ## Required inputs
 
-- `table_name` — target Flink table name for output files (`ddl.{table}.sql`, `dml.{table}.sql`)
-- ksqlDB source — `.ksql` file or pasted SQL containing one or more `CREATE STREAM` / `CREATE TABLE` statements or `INSERT INTO` statement.
+Every migration pass receives **two ksql inputs** plus naming parameters:
+
+| Input | Description |
+|-------|-------------|
+| **`statement`** | Single `CREATE STREAM` / `CREATE TABLE` (or CSAS) to translate this pass |
+| **`full_ksql_script`** | Entire `.ksql` file — use to resolve upstream table names, columns, and types |
+| **`table_name`** | Flink **sink** name for output files (`ddl.{table}.sql`, `dml.{table}.sql`) and `INSERT INTO` |
+| **`source_name`** | ksql object identifier in the current `statement` (provided by harness when available) |
+
+How to use `full_ksql_script`:
+
+1. Scan every `CREATE STREAM` / `CREATE TABLE` block in the full script
+2. Build a map: ksql object name → columns, types, PRIMARY KEY hints
+3. Use those **object names verbatim** in DML `FROM` / `JOIN` clauses
+4. Do **not** substitute `KAFKA_TOPIC` values for object names (see [Table naming](#table-naming))
 
 ## Multi-statement files
 
@@ -29,7 +42,8 @@ When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statemen
 
 1. Split on each `CREATE STREAM` / `CREATE TABLE` (through the terminating `;`)
 2. Clean each fragment (remove comments, `DROP`, `SET`)
-3. Validate, write output, and optionally deploy after each pass
+3. Translate with the Agno agent (DDL + DML in ```sql blocks only)
+4. Harness runs `clean_flink_sql_and_validate` → source stubs → validate → deploy after each pass
 
 Use this for large pipeline scripts (many streams/tables in one file). Each Agno agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.
 
@@ -53,21 +67,21 @@ Use this for large pipeline scripts (many streams/tables in one file). Each pass
 
 <!-- runtime:agno -->
 ```
-- [ ] 1. Split file into individual CREATE STREAM/TABLE statements (harness)
-- [ ] 2. For each statement: clean input (remove DROP, SET, comments)
-- [ ] 3. Apply DDL keyword replacements (STREAM/TABLE to CREATE TABLE IF NOT EXISTS).
-- [ ] 4. Map data types and table structure.
-- [ ] 5. Validate extracted SQL syntax (offline sqlglot; CC Flink parser before deploy)
-- [ ] 6. Apply function, aggregation, and windowing rules.
-- [ ] 7. Write ddl.{table}.sql and dml.{table}.sql
-- [ ] 8. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql (LLM)
-- [ ] 9. Deploy source DDLs from tests/ to Confluent Cloud Flink (confluent-sql)
-- [ ] 10. Deploy target DDL after source DDLs reach RUNNING/COMPLETED
-- [ ] 11. Deploy target DML after target DDL succeeds
-- [ ] 12. Verify statement health; triage on failure; repeat for next CREATE if any remain
+Agent (translation only):
+- [ ] 1. Call get_skill_instructions('ksql-to-flink')
+- [ ] 2. Apply DDL keyword replacements (STREAM/TABLE → CREATE TABLE IF NOT EXISTS)
+- [ ] 3. Map data types and table structure
+- [ ] 4. Apply function, aggregation, and windowing rules
+- [ ] 5. Return DDL and DML in labeled ```sql blocks
+
+Harness (after each agent response — do not run these in the migrate agent):
+- [ ] 6. Split file / clean input (CLI)
+- [ ] 7. Extract SQL, write ddl.{table}.sql and dml.{table}.sql
+- [ ] 8. Generate source stub DDL in tests/ (SourceDdlAgent when needed)
+- [ ] 9. Offline validate → deploy → deploy fixer loop (`converge_flink_sql`)
 ```
 
-Harness `ksql-flink-migrate` runs translation (Agno agent) and steps 8–11 by default after each statement. Use `--skip-deploy` for translate-only runs.
+The migrate agent translates only. `ksql-flink-migrate` runs convergence after translation. Use `--skip-deploy` for translate + offline validate only.
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor,claude -->
@@ -79,7 +93,7 @@ Harness `ksql-flink-migrate` runs translation (Agno agent) and steps 8–11 by d
 - [ ] 5. Apply function, aggregation, and windowing rules
 - [ ] 6. Produce Flink DDL and DML (JSON output format below)
 - [ ] 7. Write ddl.{table}.sql and dml.{table}.sql under the output directory
-- [ ] 8. Analyze DML FROM/JOIN dependencies; generate source stub DDL in tests/ddl.{source}.sql
+- [ ] 8. Verify DML FROM/JOIN names match ksql object names from full script; stubs are generated on deploy (source-ddl skill / MCP), not by inventing topic names
 - [ ] 9. Validate with flink-skill-common tools (see Deploy phase)
 - [ ] 10. Deploy source DDLs, target DDL, then target DML (optional; requires Flink credentials)
 - [ ] 11. Verify statement health; triage on failure; repeat for next CREATE if any remain
@@ -107,11 +121,70 @@ JSON only, no markdown fences:
 
 Source-only tables: empty `flink_dml_output`. Continuous queries: `INSERT INTO` replaces `EMIT CHANGES`.
 
+## Table naming
+
+Three distinct names appear in every migration. Do not conflate them.
+
+| Role | Source | Example (`deduplicate.ksql`) |
+|------|--------|------------------------------|
+| **Sink / output files** | `table_name` (CLI `--table` or user) | `detected_clicks` → `ddl.detected_clicks.sql`, `dml.detected_clicks.sql` |
+| **Current statement object** | ksql identifier in the `statement` being migrated | `detected_clicks` (CTAS) or `clicks` (source stream) |
+| **Upstream in DML** | ksql **object name** from `FROM`/`JOIN`, looked up in `full_ksql_script` | `clicks` |
+| **Test stubs** | Same names as upstream DML references | `tests/ddl.clicks.sql` |
+| **Never use** | `KAFKA_TOPIC` value | `publication_events`, `DETECTED_CLICKS` |
+
+`table_name` may differ from the ksql object when the user renames the sink (e.g. `--table dim_all_songs` for ksql `all_songs`). Sink DDL and DML always use `table_name`; upstream refs always use ksql object names.
+
+```
+DO:   INSERT INTO detected_clicks ... FROM clicks
+DON'T: FROM publication_events   -- that is KAFKA_TOPIC, not the ksql stream name
+```
+
+```mermaid
+flowchart LR
+  fullScript[full_ksql_script]
+  statement[current_statement]
+  tableName[table_name_sink]
+  dmlRefs[upstream_ksql_object_names]
+  stubs[tests/ddl.source.sql]
+
+  fullScript --> dmlRefs
+  statement --> tableName
+  dmlRefs --> stubs
+  tableName --> ddlOut[ddl.table_name.sql]
+  tableName --> dmlOut[dml.table_name.sql]
+```
+
+### Worked example: deduplicate.ksql → detected_clicks
+
+Source: `references/ksql/sources/routing/deduplicate.ksql`
+
+Migrate the CSAS statement:
+
+```sql
+CREATE TABLE detected_clicks AS
+    SELECT ... FROM clicks WINDOW TUMBLING (SIZE 2 MINUTES, ...) GROUP BY ip_address, url EMIT CHANGES;
+```
+
+- `table_name`: `detected_clicks` — sink DDL/DML and output file names
+- DML: `INSERT INTO detected_clicks ... FROM TABLE(TUMBLE(TABLE clicks, ...))` — upstream ref is `clicks`
+- Upstream stub (harness generates): `tests/ddl.clicks.sql` — schema from `CREATE STREAM clicks` in `full_ksql_script`
+- Do **not** name stubs after `DETECTED_CLICKS` (the `KAFKA_TOPIC` on the later `raw_values_clicks` stream) unless migrating that statement
+
+Anti-pattern from `filtering.ksql`:
+
+- ksql: `CREATE STREAM all_publications ... WITH (KAFKA_TOPIC='publication_events' ...)`
+- Correct DML upstream: `FROM all_publications` → stub `tests/ddl.all_publications.sql`
+- Wrong: `FROM publication_events` or stub `ddl.publication_events.sql`
+
 ## Stream vs table
 
-- ksqlDB STREAM → Flink TABLE
-- ksqlDB TABLE → Flink TABLE with PRIMARY KEY
-- `KAFKA_TOPIC` property → table name in DDL (lowercase, unquoted)
+- ksqlDB `STREAM` = logical view over an existing Kafka topic; in Flink it is `CREATE TABLE IF NOT EXISTS` (no separate stream type)
+- ksqlDB `TABLE` → Flink `CREATE TABLE IF NOT EXISTS` with `PRIMARY KEY`
+- Flink **sink** DDL/DML = business logic for the `statement` being migrated
+- Upstream ksql streams/tables referenced in DML are **not** part of the migrated artifact; the harness creates `tests/ddl.{ksql_object_name}.sql` stubs so Confluent Cloud Flink can run the DML
+- Flink table identifier = ksql **object name** (the name after `CREATE STREAM` / `CREATE TABLE`)
+- Do **not** use `KAFKA_TOPIC` as the Flink table name — CC Flink binds topics implicitly; omit `'topic'` and `'connector'` from WITH (see [Connector WITH block](#connector-with-block))
 
 ## Types
 
@@ -251,20 +324,30 @@ WITH ( ... );
 
 ## Source table stubs (tests/)
 
-DML references upstream tables (`FROM`, `JOIN`) that may not exist in CC Flink. Before deploy:
+DML references upstream ksql objects (`FROM`, `JOIN`) that may not yet exist in Confluent Cloud Flink. Stubs let the real business-logic DML run on deploy.
 
-1. Extract table names from DML not defined in target DDL
-2. LLM-generate `CREATE TABLE IF NOT EXISTS` stubs matching DML column usage
-3. Write `tests/ddl.{source_table}.sql` under the output directory
+**Naming:** stub file and table name = exact ksql object name used in DML (= ksql identifier from `full_ksql_script`, **not** `KAFKA_TOPIC`).
 
-Example layout:
+**Agent responsibility:** use correct ksql object names in DML. The migrate agent does **not** write stub DDL.
+
+**Harness responsibility** (Agno CLI / convergence):
+
+1. Parse DML for upstream table names not defined in target DDL
+2. LLM-generate `CREATE TABLE IF NOT EXISTS` stubs (SourceDdlAgent) using `full_ksql_script` for schema context
+3. Write `tests/ddl.{ksql_object_name}.sql` under the output directory
+
+<!-- runtime:cursor,claude -->
+**IDE workflow:** verify DML upstream names match ksql objects from the full script. On deploy, stubs are generated by harness tools or the **source-ddl** skill — do not invent names from Kafka topics.
+<!-- /runtime:cursor,claude -->
+
+Example layout (`deduplicate.ksql` → `detected_clicks`):
 
 ```
 output/
-  ddl.kma_chat.sql
-  dml.kma_chat.sql
+  ddl.detected_clicks.sql    # sink DDL
+  dml.detected_clicks.sql    # INSERT INTO detected_clicks ... FROM clicks
   tests/
-    ddl.kma_chat_st.sql
+    ddl.clicks.sql           # upstream stub (ksql object name, not topic name)
 ```
 
 ## Deploy phase (validate-flink-sql)
@@ -276,13 +359,14 @@ Prerequisites: Flink API credentials in the repo-root `.env` (or `DOTENV_FILE`).
 Statement names: `{table-with-hyphens}-ddl` and `{table-with-hyphens}-dml` (underscores → hyphens). Source stubs use the same `-ddl` suffix on the source table name.
 
 <!-- runtime:agno -->
-1. Validate offline: `uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl output/ddl.{table}.sql --dml output/dml.{table}.sql`
-2. On errors, apply the **`validate-flink-sql`** skill, fix SQL, and re-validate.
-3. Optional remote validate: `flink-skill-validate remote` (requires Flink credentials).
-4. Deploy via harness convergence (`ksql-flink-migrate` runs validate → deploy → agent fix loop by default).
-5. On deploy failure with `AGENT_FIXER_EXECUTION_ENABLED=1`, the deploy fixer agent uses `create_flink_statement` and related tools.
+The migrate agent does **not** validate or deploy. After translation, `ksql-flink-migrate` calls `clean_flink_sql_and_validate` which runs:
 
-Full deploy sequence: [confluent-sql-deploy.md](references/confluent-sql-deploy.md).
+1. Offline sqlglot validation
+2. Source stub DDL generation when DML references missing tables
+3. Confluent Cloud deploy (unless `--skip-deploy`)
+4. Deploy fixer agent when `AGENT_FIXER_EXECUTION_ENABLED=1`
+
+Full deploy sequence: [confluent-sql-deploy.md](references/confluent-sql-deploy.md) (used by harness convergence, not the migrate agent).
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor -->
@@ -330,11 +414,6 @@ uv run --directory flink-skill-common/harness flink-skill-validate remote \
 Do **not** use `ksql-flink-migrate` for IDE migration — that runs a separate Agno agent. You translate; common-component tools validate and deploy.
 <!-- /runtime:claude -->
 
-## References
-
-- [examples.md](references/examples.md)
-- [confluent-sql-deploy.md](references/confluent-sql-deploy.md)
-- [flink-deploy-setup.md](references/flink-deploy-setup.md)
 
 ## Harness (golden tests / CI only)
 
@@ -349,4 +428,4 @@ uv run ksql-flink-migrate --table dim_all_songs --file <path>/merge.ksql --out-d
 # translate only: add --skip-deploy
 ```
 
-Progress is printed to the terminal; detailed logs go to `harness/logs/ksql-flink-cli.log`.
+Progress is printed to the terminal; detailed logs go to `logs/ksql-flink-cli.log` (under the skill package root, e.g. `ksql-to-flink-skill/logs/`).

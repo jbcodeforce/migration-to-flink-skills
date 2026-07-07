@@ -1,30 +1,19 @@
 """Integration test harness context (loads repo-root .env)."""
 
-from pathlib import Path
+import ksql_to_flink.config  # noqa: F401 — configure shared harness context
 
 import pytest
 
 from flink_skill_common.config import (
     FlinkDeployNotReadyError,
-    HarnessContext,
     cli_log_file,
-    configure,
     flink_deploy_settings,
     llm_reachable,
 )
 
 
-HARNESS_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = Path(__file__).resolve().parents[4]
-
-
 @pytest.fixture(autouse=True)
-def _configure_harness_context():
-    configure(HarnessContext(harness_root=HARNESS_ROOT, project_root=REPO_ROOT))
-
-
-@pytest.fixture(autouse=True)
-def _clear_logs_file(_configure_harness_context):
+def _clear_logs_file():
     log_file = cli_log_file()
     try:
         if log_file.exists():

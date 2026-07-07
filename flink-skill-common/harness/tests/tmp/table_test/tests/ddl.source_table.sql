@@ -1,8 +1,9 @@
 CREATE TABLE IF NOT EXISTS source_table (
-    `id` INT,
+    id INT,
     name STRING,
-    product_id INT
-) WITH (
+    product_id INT,
+    PRIMARY KEY (id) NOT ENFORCED
+) DISTRIBUTED BY HASH(id) INTO 6 BUCKETS WITH (
     'changelog.mode' = 'upsert',
     'key.format' = 'avro-registry',
     'value.format' = 'avro-registry',
@@ -10,4 +11,4 @@ CREATE TABLE IF NOT EXISTS source_table (
     'scan.bounded.mode' = 'unbounded',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all'
-) PRIMARY KEY (`product_id`) NOT ENFORCED DISTRIBUTED BY HASH(`product_id`) INTO 6 BUCKETS;
+);

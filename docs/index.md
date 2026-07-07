@@ -25,3 +25,7 @@ After working through this site, you will be able to:
 5. **Understand the architecture** — how translation, validation, and convergence agents fit together, and where to extend the tooling
 
 Start with the [Setup Lab](tutorial/setup_lab.md), then follow the [Migration AI Lab](tutorial/migration_ai_lab.md). Contributors can use the [Developer Guide](dev_guide/index.md) for implementation details.
+
+## Core Principles
+
+![](./images/ai_agent_new_flow.drawio.png)

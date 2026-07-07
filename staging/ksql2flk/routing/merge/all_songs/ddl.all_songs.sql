@@ -1,7 +1,10 @@
-CREATE TABLE IF NOT EXISTS rock_songs (
+CREATE TABLE IF NOT EXISTS all_songs (
     artist STRING,
-    title STRING
-) WITH (
+    title STRING,
+    genre STRING,
+    PRIMARY KEY (genre) NOT ENFORCED
+) DISTRIBUTED BY HASH(genre) INTO 1 BUCKETS
+WITH (
     'value.format' = 'avro-registry',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',

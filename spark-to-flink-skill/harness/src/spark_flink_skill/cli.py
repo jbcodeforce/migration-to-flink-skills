@@ -6,22 +6,14 @@ from pathlib import Path
 
 import typer
 
+from flink_skill_common.cli_interrupt import MIGRATION_INTERRUPT_EXIT_CODE, run_typer_app
+from flink_skill_common.agents.factory import resolve_llm_model
+from flink_skill_common.config import llm_reachable
+from flink_skill_common.convergence import clean_flink_sql_and_validate
+from flink_skill_common.sql_validate import SqlValidationError
+import spark_flink_skill.config  # noqa: F401 — configure shared harness context
 from spark_flink_skill.agents.migrate_agent import MigrationError, run_migration
-from spark_flink_skill.output import extract_sql_blocks, resolve_table_paths, write_output
-from flink_skill_common.sql_validate import (
-    SqlValidationError,
-    log_validation_issues,
-    raise_on_errors,
-    validate_syntax_for_statements,
-)
-from spark_flink_skill.sql_utils import (
-    LlmConfigError,
-    clean_sql_input,
-    detect_tables,
-    ensure_model_context,
-    llm_reachable,
-    resolve_llm_model,
-)
+from spark_flink_skill.sql_utils import clean_sql_input, detect_tables
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -31,6 +23,9 @@ def migrate(
     table: str = typer.Option(..., "--table", "-t", help="Target Flink table name"),
     file: Path = typer.Option(..., "--file", "-f", help="Spark SQL source file"),
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o", help="Output directory"),
+    skip_deploy: bool = typer.Option(
+        False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."
+    ),
 ) -> None:
     """Migrate a Spark SQL file to Flink DDL and DML."""
     if not file.exists():
@@ -44,8 +39,7 @@ def migrate(
         raise typer.Exit(1)
     try:
         resolved_model = resolve_llm_model()
-        ensure_model_context(resolved_model)
-    except LlmConfigError as exc:
+    except RuntimeError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"Using model: {resolved_model}")
@@ -54,41 +48,50 @@ def migrate(
     detection = detect_tables(cleaned)
     statements = detection.table_statements if detection.has_multiple_tables else [cleaned]
 
-    ddls: list[str] = []
-    dmls: list[str] = []
-    for stmt in statements:
-        try:
-            response = run_migration(table, stmt)
-        except MigrationError as exc:
-            typer.echo(f"Migration failed: {exc}", err=True)
-            raise typer.Exit(1) from exc
-        stmt_ddls, stmt_dmls = extract_sql_blocks(response)
-        ddls.extend(stmt_ddls)
-        dmls.extend(stmt_dmls)
-
-    if not ddls and not dmls:
-        typer.echo(
-            "Migration produced no DDL or DML. Check SL_LLM_MODEL context window "
-            "and agent output format.",
-            err=True,
-        )
-        raise typer.Exit(1)
-
     try:
-        offline_issues = validate_syntax_for_statements(ddls, dmls)
-        log_validation_issues(offline_issues)
-        raise_on_errors(offline_issues)
+        for index, stmt in enumerate(statements, start=1):
+            if not stmt.strip():
+                continue
+            typer.echo(f"[{index}/{len(statements)}] Translating...")
+            try:
+                response = run_migration(table, stmt)
+            except MigrationError as exc:
+                typer.echo(f"Migration failed: {exc}", err=True)
+                raise typer.Exit(1) from exc
+
+            typer.echo("Extracting SQL blocks and validating...")
+            result = clean_flink_sql_and_validate(
+                response,
+                table,
+                stmt,
+                skip_deploy,
+                out_dir,
+            )
+            if result is None:
+                typer.echo("Output files written (no DML)")
+            elif not result.success:
+                typer.echo("\n".join(result.messages), err=True)
+                raise typer.Exit(1)
+            else:
+                detail = result.ddl_path.name if result.ddl_path is not None else ""
+                if skip_deploy:
+                    typer.echo(f"Offline validation passed{f' ({detail})' if detail else ''}")
+                else:
+                    typer.echo(f"Deploy succeeded{f' ({detail})' if detail else ''}")
+
+        typer.echo(f"\nDone. Output: {out_dir.resolve()}")
+    except KeyboardInterrupt:
+        typer.echo("\nMigration interrupted.", err=True)
+        raise typer.Exit(MIGRATION_INTERRUPT_EXIT_CODE) from None
+    except typer.Exit:
+        raise
     except SqlValidationError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
 
-    ddl_paths, dml_paths = write_output(table, ddls, dmls, out_dir)
-    for path in ddl_paths + dml_paths:
-        typer.echo(f"Wrote {path}")
-
 
 def main() -> None:
-    app()
+    run_typer_app(app)
 
 
 if __name__ == "__main__":

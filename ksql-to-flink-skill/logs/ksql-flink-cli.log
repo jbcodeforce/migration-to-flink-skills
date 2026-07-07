@@ -1,0 +1,41 @@
+2026-07-06 22:12:53,565 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 22:13:00,562 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 22:13:00,562 ERROR [flink_migration_skill.cli] config.py:130 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>
+2026-07-06 22:13:00,565 ERROR [flink_migration_skill.cli] config.py:130 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>
+2026-07-06 22:13:00,569 INFO [flink_migration_skill.cli] cli.py:70 skill_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/skill
+2026-07-06 22:13:00,569 INFO [flink_migration_skill.cli] cli.py:72 migrate start table=george_martin file=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/input.ksql out_dir=/private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/output skip_deploy=True
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 ksql-flink-migrate
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 table: george_martin
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 file: /private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/input.ksql
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 out_dir: /private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/output
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 deploy: skipped
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 model: test-model
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 agent_fixer: enabled
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 agent_fixer_retries: 2
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 log: /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 → 1. Checking LLM at http://10.0.0.148:7999/v1 ...
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 1. LLM reachable at http://10.0.0.148:7999/v1
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 2. Found 1 CREATE statement(s) (SONGS)
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli_progress.py:14 === [1/1] SONGS → george_martin ===
+2026-07-06 22:13:00,570 INFO [flink_migration_skill.cli] cli.py:134 Migrating statement 1/1 source=SONGS target=george_martin
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 1. Cleaned ksql input (77 chars)
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] cli_progress.py:14 → 2. Running translation agent...
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 2. Translation agent finished (206 chars)
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] cli_progress.py:14 → 3. Extracting SQL blocks and validating...
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin SELECT id FROM src;
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 1 DML
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] cli_progress.py:14 Extracted 1 DDL, 1 DML
+2026-07-06 22:13:00,571 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/output/george_martin
+2026-07-06 22:13:00,572 INFO [flink_migration_skill.cli] cli_progress.py:14 Writing output files to /private/var/folders/xm/fv3xp5152cv47n_qnfs797z00000gn/T/pytest-of-jerome/pytest-236/test_migrate_verbose_progress_0/output/george_martin
+2026-07-06 22:13:00,572 INFO [flink_migration_skill.cli] cli_progress.py:14 Running offline validation...
+2026-07-06 22:13:00,572 INFO [flink_migration_skill.cli] cli_progress.py:14 Offline validation passed.
+2026-07-06 22:13:00,572 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 3. Validation finished (ddl.george_martin.sql)
+2026-07-06 22:13:00,572 INFO [flink_migration_skill.cli] cli_progress.py:14 ✓ 4. Offline validation passed
+2026-07-06 22:13:12,494 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-06 22:13:12,494 ERROR [flink_migration_skill.cli] config.py:130 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>
+2026-07-06 22:13:12,497 ERROR [flink_migration_skill.cli] config.py:130 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 65] No route to host>

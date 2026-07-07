@@ -21,12 +21,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import ksql_to_flink.config  # noqa: F401 — configure shared harness context
 from flink_skill_common.agents.factory import (
     build_skilled_agent,
     make_openai_model,
-    run_agent_response,
+    run_agent_process_response,
 )
-from flink_skill_common.llm import resolve_llm_model
+from flink_skill_common.agents.factory import resolve_llm_model
 
 from flink_skill_common.config import (
     llm_api_key,
@@ -44,21 +45,26 @@ def _make_model():
 
 
 def build_ksql_migrate_agent():
-    """Create Agno agent with ksql-to-flink skill loaded from skill/."""
+    """Create Agno agent with ksql-to-flink translation skill only."""
     return build_skilled_agent(
         name="KsqlToFlinkAgent",
-        skill_dir=skill_dir(),
+        skill_dirs=[skill_dir()],
         instructions=[
             "Migrate one ksqlDB CREATE STREAM/TABLE statement at a time to Confluent Cloud Flink SQL.",
             "Call get_skill_instructions('ksql-to-flink') before translating.",
-            "Apply translation rules from skill references as needed.",
-         ],
+            "Return DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
+            "Do not validate, deploy, or generate source stub DDL — the harness runs convergence after translation.",
+        ],
         model=_make_model(),
-        tools=[]
+        tools=[],
     )
 
 
-def migrate_prompt(table_name: str, ksql: str, *, source_name: str | None = None) -> str:
+def _migrate_prompt(
+    table_name: str,
+    ksql: str,
+    src_ksql: str,
+    source_name: str | None = None) -> str:
     """Build a structured migration request for the agent."""
     source = source_name or "the ksql object in this statement"
     return (
@@ -67,7 +73,11 @@ def migrate_prompt(table_name: str, ksql: str, *, source_name: str | None = None
         f"ksql object in this statement: `{source}`.\n\n"
         f"Follow the ksql-to-flink skill workflow: translate only this one CREATE "
         f"(stream/table definition and any CSAS query in the same statement). "
-        f"Do not assume other CREATE statements from the same file are in scope.\n\n"
+        f"Return DDL and DML in labeled ```sql blocks.\n\n"
+        f"Full ksql script (for upstream table names and schemas):\n"
+        f"```sql\n{src_ksql.strip()}\n```\n\n"
+        f"The harness validates and deploys after translation — do not validate or deploy yourself.\n\n"
+        f"Statement to migrate:\n"
         f"```sql\n{ksql.strip()}\n```"
     )
 
@@ -75,14 +85,19 @@ def migrate_prompt(table_name: str, ksql: str, *, source_name: str | None = None
 def run_migration(
     table_name: str,
     ksql: str,
+    src_ksql: str,
     *,
     source_name: str | None = None,
     on_event: Callable[[str], None] | None = None,
 ) -> str:
     """Run migration agent and return response content."""
     agent = build_ksql_migrate_agent()
-    return run_agent_response(
+    return run_agent_process_response(
         agent,
-        migrate_prompt(table_name, ksql, source_name=source_name),
+        _migrate_prompt(
+            table_name=table_name, 
+            ksql=ksql, 
+            src_ksql=src_ksql, 
+            source_name=source_name),
         on_event=on_event,
     )

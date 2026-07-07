@@ -73,13 +73,15 @@ def ctx_with_tests(ctx: ConvergenceContext, tmp_path: Path) -> ConvergenceContex
 
 
 def test_converge_skip_deploy_success(ctx: ConvergenceContext):
-    result = converge_flink_sql(
-        [VALID_DDL], [VALID_DML], ctx, skip_deploy=True, agent_on_failure=False
-    )
+    with patch("flink_skill_common.convergence.FlinkStatementManager") as mock_cls:
+        result = converge_flink_sql(
+            [VALID_DDL], [VALID_DML], ctx, skip_deploy=True, agent_on_failure=False
+        )
     assert result.success is True
     assert result.ddl_path is not None
     assert "Offline validation passed." in result.messages
     assert "Skipped deploy" in result.messages[-1]
+    mock_cls.return_value.cleanup_deployed_table.assert_not_called()
 
 
 def test_converge_offline_validation_raises_without_agent(ctx: ConvergenceContext):
@@ -102,6 +104,10 @@ def test_converge_deploy_success(ctx_with_tests: ConvergenceContext):
         result.dml_path,
         tests_dir=ctx_with_tests.tests_dir,
     )
+    mock_cls.return_value.cleanup_deployed_table.assert_called_once_with(
+        "my_table",
+        ctx_with_tests.tests_dir,
+    )
 
 
 def test_converge_deploy_error_without_agent(ctx_with_tests: ConvergenceContext):
@@ -113,6 +119,7 @@ def test_converge_deploy_error_without_agent(ctx_with_tests: ConvergenceContext)
 
     assert result.success is False
     assert any("DDL failed" in msg for msg in result.messages)
+    mock_cls.return_value.cleanup_deployed_table.assert_called_once()
 
 
 def test_converge_agent_fix_on_offline_error(ctx_with_tests: ConvergenceContext):

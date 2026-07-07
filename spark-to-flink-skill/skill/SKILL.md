@@ -23,14 +23,17 @@ Confluent Cloud for Flink only. Convert Spark batch SQL (and eventually PySpark)
 
 <!-- runtime:agno -->
 ```
-- [ ] 1. Clean input (remove DROP, comments)
-- [ ] 2. Detect CREATE TABLE / TEMPORARY VIEW statements
-- [ ] 3. Translate each statement to Flink DDL + DML (Agno agent)
-- [ ] 4. Run mandatory validation on DDL and DML
-- [ ] 5. Write ddl.{table}.sql and dml.{table}.sql
+Agent (translation only):
+- [ ] 1. Clean input (harness)
+- [ ] 2. Detect CREATE TABLE / TEMPORARY VIEW statements (harness)
+- [ ] 3. Translate each statement to Flink DDL + DML (Agno agent — ```sql blocks only)
+
+Harness (after each agent response):
+- [ ] 4. Extract SQL, write output files
+- [ ] 5. Source stubs, offline validate, deploy, fixer loop (`clean_flink_sql_and_validate`)
 ```
 
-Harness `spark-flink-migrate` runs translation via an Agno agent. Use `--skip-deploy` for translate-only runs.
+The migrate agent translates only. `spark-flink-migrate` runs convergence after translation. Use `--skip-deploy` for translate + offline validate only.
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor,claude -->
@@ -84,8 +87,7 @@ Apply [validation-rules.md](references/validation-rules.md), then validate with 
 <!-- /runtime:claude -->
 
 <!-- runtime:agno -->
-- Run `uv run --directory flink-skill-common/harness flink-skill-validate offline --ddl ... --dml ...`
-- On errors, apply the `validate-flink-sql` skill and re-validate.
+The migrate agent does **not** validate or deploy. After translation, `spark-flink-migrate` calls `clean_flink_sql_and_validate` (same convergence path as ksql). Apply [validation-rules.md](references/validation-rules.md) mentally when translating; harness enforces them during convergence.
 <!-- /runtime:agno -->
 
 Convention checks:

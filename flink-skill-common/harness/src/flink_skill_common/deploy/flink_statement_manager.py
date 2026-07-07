@@ -19,12 +19,18 @@ from typing import Any, Iterator, Literal
 from confluent_sql import connect
 from confluent_sql.exceptions import OperationalError, StatementNotFoundError
 
-from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings
+from flink_skill_common.cli_interrupt import interruptible_sleep
+from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings, get_logger
 from flink_skill_common.sql_parse import extract_statement_table_name
 
-from logging import getLogger
 
-logger = getLogger(__name__)
+def _logger():
+    try:
+        return get_logger()
+    except RuntimeError:
+        import logging
+
+        return logging.getLogger("flink_migration_skill.deploy")
 
 SqlKind = Literal["snapshot_ddl", "streaming_dml", "batch_dml", "streaming_ddl"]
 
@@ -203,6 +209,31 @@ class FlinkStatementManager:
                 )
             return {"statements": normalized, "count": len(normalized)}
 
+    def _delete_statement_safe(self, statement_name: str) -> None:
+        """Delete a statement; log and continue on failure."""
+        try:
+            self.delete_statement(statement_name)
+        except StatementManagerError:
+            _logger().warning("Failed to delete statement %s", statement_name)
+
+    def cleanup_deployed_table(
+        self,
+        table_name: str,
+        tests_dir: Path | None = None,
+    ) -> None:
+        """Delete DML statement and drop target plus source stub tables."""
+        self._delete_statement_safe(dml_statement_name(table_name))
+        try:
+            self.drop_table(table_name)
+        except StatementManagerError:
+            _logger().warning("Failed to drop table %s", table_name)
+        if tests_dir is not None:
+            for source_table, _ in discover_source_ddl_files(tests_dir):
+                try:
+                    self.drop_table(source_table)
+                except StatementManagerError:
+                    _logger().warning("Failed to drop source table %s", source_table)
+
     def delete_statement(self, statement_name: str) -> dict[str, Any]:
         """Delete a statement and wait until it is gone."""
         with self.connect() as conn:
@@ -218,7 +249,7 @@ class FlinkStatementManager:
                     conn.get_statement(statement_name)
                 except StatementNotFoundError:
                     return {"name": statement_name, "status": "deleted"}
-                time.sleep(poll)
+                interruptible_sleep(poll)
 
             raise StatementManagerError(
                 f"Statement {statement_name} still present after delete timeout"
@@ -255,7 +286,12 @@ class FlinkStatementManager:
                 stmt = cur.statement
         else:
             raise StatementManagerError(f"Unsupported SQL kind for {statement_name}: {kind}")
-        print(f"Statement {statement_name} results: {stmt}")
+        _logger().info(
+            "Statement %s submitted (kind=%s, phase=%s)",
+            statement_name,
+            kind,
+            _statement_phase(stmt),
+        )
         return {
             "name": statement_name,
             "phase": _statement_phase(stmt),
@@ -269,7 +305,7 @@ class FlinkStatementManager:
             try:
                 return self._submit_on_connection(conn, statement_name, sql)
             except OperationalError as exc:
-                print(f"OperationalError: {exc}")
+                _logger().warning("OperationalError creating %s: %s", statement_name, exc)
                 if exc.http_status_code != 409:
                     detail = str(exc)
                     if exc.http_status_code is not None:
@@ -285,7 +321,7 @@ class FlinkStatementManager:
                 while time.monotonic() < deadline:
                     try:
                         conn.get_statement(statement_name)
-                        time.sleep(self._settings.poll_seconds)
+                        interruptible_sleep(self._settings.poll_seconds)
                     except StatementNotFoundError:
                         break
                 else:
@@ -311,8 +347,20 @@ class FlinkStatementManager:
             last = self.get_statement(statement_name)
             phase = last.get("phase", "UNKNOWN")
             if phase in accepted or phase in FAILURE_PHASES or phase == "NOT_FOUND":
+                _logger().info(
+                    "Statement %s reached phase %s (detail=%s)",
+                    statement_name,
+                    phase,
+                    last.get("detail", ""),
+                )
                 return last
-            time.sleep(poll)
+            _logger().debug(
+                "Statement %s phase %s; polling again in %.1fs",
+                statement_name,
+                phase,
+                poll,
+            )
+            interruptible_sleep(poll)
 
         raise StatementManagerError(
             f"Timeout waiting for {statement_name}; last status: {json.dumps(last)}"
@@ -374,6 +422,7 @@ class FlinkStatementManager:
             if not source_sql:
                 continue
             source_name = ddl_statement_name(source_table)
+            _logger().info("Deploying source DDL %s from %s", source_name, source_path)
             try:
                 self.create_statement(source_name, source_sql)
             except StatementManagerError as exc:
@@ -392,6 +441,8 @@ class FlinkStatementManager:
                 raise DeployError(
                     f"Source DDL {source_name} failed with phase {phase}: {exceptions}"
                 )
+
+            self._delete_statement_safe(source_name)
 
         return source_statements
 
@@ -472,7 +523,7 @@ class FlinkStatementManager:
             try:
                 self.delete_statement(name)
             except StatementManagerError:
-                logger.warning("Failed to delete validation statement %s", name)
+                _logger().warning("Failed to delete validation statement %s", name)
 
         return []
 
@@ -512,6 +563,7 @@ class FlinkStatementManager:
         if not ddl_sql:
             raise DeployError(f"DDL file is empty: {ddl_path}")
 
+        _logger().info("Deploying target DDL %s from %s", ddl_name, ddl_path)
         try:
             self.create_statement(ddl_name, ddl_sql)
         except StatementManagerError as exc:
@@ -525,11 +577,14 @@ class FlinkStatementManager:
             exceptions = self.get_statement_exceptions(ddl_name)
             raise DeployError(f"DDL {ddl_name} failed with phase {ddl_phase}: {exceptions}")
 
+        self._delete_statement_safe(ddl_name)
+
         dml_phase = ""
         health = ""
         exceptions = ""
 
         if dml_sql:
+            _logger().info("Deploying target DML %s from %s", dml_name, dml_path)
             try:
                 self.create_statement(dml_name, dml_sql)
             except StatementManagerError as exc:

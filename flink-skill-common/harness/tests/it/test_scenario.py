@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pytest
-
+import json
 from flink_skill_common.config import (
     flink_deploy_settings, 
     configure, 
@@ -110,7 +110,7 @@ def test_fix_bad_sql_with_agent(require_deploy):
         manager.drop_table("raw_classical_songs")
     assert failed
 
-def test_add_source_tables_with_agent(require_deploy):
+def test_add_source_tables_with_agent(require_deploy, require_llm):
     """Add source tables with agent."""
     failed = False
     llm_response = """
@@ -163,16 +163,19 @@ def test_add_source_tables_with_agent(require_deploy):
     left join product_table on source_table.product_id = product_table.id
     """
     try:
-        progress = ProgressReporter()    
-        result=clean_flink_sql_and_validate(
-            response= llm_response, 
+        progress = ProgressReporter()
+        result = clean_flink_sql_and_validate(
+            response=llm_response,
             table="table_test",
-             src_sql=source_sql, 
-             skip_deploy=False, 
-             out_dir=Path("tests/tmp"),
-             on_progress=progress.sub)
+            src_sql=source_sql,
+            skip_deploy=False,
+            out_dir=Path("tests/tmp"),
+            on_progress=progress.sub,
+        )
         assert result is not None
-        print(result)
+
+        print(json.dumps(result.model_dump() if hasattr(result, "model_dump") else result.__dict__, indent=2, default=str))
+
         assert result.success
         assert len(result.ddls) > 0
         assert len(result.dmls) > 0
@@ -184,6 +187,4 @@ def test_add_source_tables_with_agent(require_deploy):
     except Exception as e:
         print(e)
         failed = True
-    finally:
-        manager = FlinkStatementManager()
-        manager.drop_table("filtered_publications")
+    assert not failed

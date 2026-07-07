@@ -8,9 +8,7 @@ Generate stub DDL for DML source tables via LLM.
 
 from __future__ import annotations
 
-from agno.agent import Agent
-
-from flink_skill_common.agents.factory import make_openai_model, resolve_llm_model, build_skilled_agent
+from flink_skill_common.agents.factory import build_skilled_agent, make_openai_model, resolve_llm_model
 
 from flink_skill_common.config import (
     flink_skill_common_skill_dir,
@@ -30,9 +28,8 @@ def _make_model():
     )
 
 
-def _source_ddl_prompt_template() -> str:
-    path = flink_skill_common_skill_dir() / "prompts/source_ddl.txt"
-    return path.read_text()
+def _source_ddl_skill_dir():
+    return flink_skill_common_skill_dir() / "source-ddl"
 
 
 def _source_ddl_prompt(
@@ -41,10 +38,9 @@ def _source_ddl_prompt(
     dml_sql: str,
     missing_sources: list[str],
 ) -> str:
-    """Build prompt for LLM source DDL generation."""
+    """Build runtime prompt for LLM source DDL generation."""
     sources_list = ", ".join(missing_sources)
     return (
-        f"{_source_ddl_prompt_template()}\n\n"
         f"target_table: {target_table}\n"
         f"missing_sources: [{sources_list}]\n\n"
         f"sql_script:\n```sql\n{src_sql.strip()}\n```\n\n"
@@ -64,11 +60,12 @@ def generate_source_ddls(
 
     agent = build_skilled_agent(
         name="SourceDdlAgent",
-        skill_dir=flink_skill_common_skill_dir(),
+        skill_dirs=[_source_ddl_skill_dir()],
         model=_make_model(),
         instructions=[
             "Generate Flink CREATE TABLE IF NOT EXISTS DDL stubs for upstream source tables.",
-            "Follow the JSON output format in the user prompt exactly.",
+            "Call get_skill_instructions('source-ddl') before generating.",
+            "Follow the JSON output format in the source-ddl skill exactly.",
             "Respond with JSON only — no markdown fences or explanations.",
         ],
     )

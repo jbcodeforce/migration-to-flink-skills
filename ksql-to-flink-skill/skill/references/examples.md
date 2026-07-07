@@ -34,11 +34,24 @@ Flink golden (drama branch): `references/flink/valid/dimensions/acting_events/ac
 - DDL: `dim_acting_events_drama` with PK on `name`
 - DML: `INSERT INTO` filtered `WHERE genre = 'drama'`
 
+## deduplicate.ksql → detected_clicks
+
+KSQL: `references/ksql/sources/routing/deduplicate.ksql`
+
+- `CREATE STREAM clicks` with `KAFKA_TOPIC='clicks'`
+- `CREATE TABLE detected_clicks AS SELECT ... FROM clicks WINDOW TUMBLING ... GROUP BY ip_address, url`
+
+Flink migration (`--table detected_clicks`):
+
+- Sink DDL/DML: `detected_clicks` (table_name)
+- DML upstream ref: `clicks` (ksql object name — **not** topic name)
+- Upstream stub: `tests/ddl.clicks.sql` (schema from `CREATE STREAM clicks` in full script)
+- Later stream `raw_values_clicks` uses `KAFKA_TOPIC='DETECTED_CLICKS'` — do not use that topic name unless migrating that statement
+
 ## Sources without references goldens
 
-These ksql tutorial files have no matching `references` output yet:
+These ksql tutorial files have no matching `references/flink` golden output yet:
 
-- `sources/routing/deduplicate.ksql`
 - `sources/aggregations/count_pageviews.ksql`
 
 Use for manual migration experiments only.

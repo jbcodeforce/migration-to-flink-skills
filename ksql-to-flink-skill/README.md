@@ -9,6 +9,7 @@ See [SPEC.md](SPEC.md).
 1. **Skills** — agent playbooks loaded in Cursor/Claude:
    - `ksql-to-flink` — translation rules (`skill/SKILL.md` + `skill/references/`)
    - `validate-flink-sql` — DDL/DML normalization ([`../flink-skill-common/skill/`](../flink-skill-common/skill/))
+   - `source-ddl` - Create DDL for source tables not available in the inventory of existing tables
 2. **MCP tools** — validate and deploy via [`flink-skill-common` MCP server](../flink-skill-common/README.md#mcp-server-cursor-ide) (repo [`.cursor/mcp.json`](../.cursor/mcp.json))
 3. **Harness CLI** — regression and integration tests only (`harness/`); shared Python utilities in [`../flink-skill-common/`](../flink-skill-common/)
 
@@ -35,7 +36,7 @@ uv sync --extra dev
 # Integration tests (live LLM)
 uv run pytest tests/it
 
-# Golden migrate
+# migrate with deployment to CC
 uv run ksql-flink-migrate \
   --table dim_all_songs \
   --file path/to/merge.ksql \

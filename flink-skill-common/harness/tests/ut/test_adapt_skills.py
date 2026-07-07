@@ -9,7 +9,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from scripts.adapt_skills import adapt_skill_content, parse_skill_name
+from flink_skill_common.skill_adapt import adapt_skill_content, parse_skill_name
 
 
 SAMPLE_SKILL = """---
@@ -51,7 +51,9 @@ def test_parse_skill_name_from_frontmatter():
 
 
 def test_validate_flink_sql_cursor_excludes_agno_fixer():
-    skill_md = (_REPO_ROOT / "flink-skill-common/skill/SKILL.md").read_text(encoding="utf-8")
+    skill_md = (
+        _REPO_ROOT / "flink-skill-common/skill/validate-flink-sql/SKILL.md"
+    ).read_text(encoding="utf-8")
     adapted = adapt_skill_content(skill_md, "cursor")
     assert "get_flink_statement_exceptions" in adapted
     assert "Fix loop on validation or deploy failure" in adapted

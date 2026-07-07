@@ -5,14 +5,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from flink_skill_common.config import HarnessContext, configure
 from flink_skill_common.convergence import ConvergenceResult
-
-_HARNESS_ROOT = Path(__file__).resolve().parents[2]
-_PROJECT_ROOT = _HARNESS_ROOT.parent.parent
-
-configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
-
 from ksql_to_flink.cli import app
 
 runner = CliRunner()
