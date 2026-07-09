@@ -11,6 +11,13 @@ INSERT INTO pageviews (msg) VALUES ('https://www.acme.com/products');
 SET 'auto.offset.reset'='earliest';
 SET 'ksql.streams.cache.max.bytes.buffering' = '10000000';
 
+
+CREATE STREAM pageview_counts(msg_count BIGINT)
+WITH (KAFKA_TOPIC='pageview-counts',
+          PARTITIONS=1,
+          VALUE_FORMAT='AVRO');
+
+INSERT INTO pageview_counts(msg_count BIGINT)
 SELECT COUNT(*) AS msg_count
 FROM pageviews
 EMIT CHANGES;

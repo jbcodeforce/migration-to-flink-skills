@@ -10,9 +10,7 @@ See [SPEC.md](SPEC.md).
    - `ksql-to-flink` — translation rules (`skill/SKILL.md` + `skill/references/`)
    - `validate-flink-sql` — DDL/DML normalization ([`../flink-skill-common/skill/`](../flink-skill-common/skill/))
    - `source-ddl` - Create DDL for source tables not available in the inventory of existing tables
-2. **MCP tools** — validate and deploy via [`flink-skill-common` MCP server](../flink-skill-common/README.md#mcp-server-cursor-ide) (repo [`.cursor/mcp.json`](../.cursor/mcp.json))
-3. **Harness CLI** — regression and integration tests only (`harness/`); shared Python utilities in [`../flink-skill-common/`](../flink-skill-common/)
-
+2. **Harness CLI** — regression and integration tests only (`harness/`); shared Python utilities in [`../flink-skill-common/`](../flink-skill-common/)
 
 ## Harness CLI
 
@@ -104,29 +102,15 @@ Workflow:
 
 ## Golden pairs
 
-Source for KSQL are under `references/sources`
-
-TBC
+Source for KSQL are under `references/ksql/sources`
+Matching Flink statements are under `references/flink/valid` then specific sub-folders:
 
 
 | KSQL | Flink golden | Table |
 |------|--------------|-------|
-| `routing/filter.ksql` | `flink_ref/dimensions/songs/all_song/` | `dim_all_songs` |
-| `routing/merge.ksql` | `flink_ref/dimensions/songs/all_song/` | `dim_all_songs` |
-| `joins/stream_stream.ksql` | `flink_ref/joins/shipped_orders/` | `shipped_orders` |
-| `routing/splitting.ksql` | `flink_ref/.../acting_events_drama/` | `dim_acting_events_drama` |
-
-
-## Tests
-
-* unit tests
-```sh
-# No LLM required
-uv run pytest -v tests/ut -m "not integration"
-```
-
-* integration tests with local LLM
-```sh
-uv run pytest -vs tests/it
-```
+| `routing/filter.ksql` | `routing/filtering` | `filtered_publications` |
+| `routing/merge.ksql` | `routing/merge` | `all_songs` |
+| `routing/deduplicate.ksql` | `routing/deduplicate` | `detected_clicks` |
+| `routing/splitting.ksql` | `routing/splitting` | `acting_events_drama`, `acting_events_fantasy`, `acting_events_other` |
+| `joins/stream_stream.ksql` | `joins/stream_stream/` | `shipped_orders` |
 

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from ksql_to_flink.cli import app
+from live_cli_runner import LiveCliRunner
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 KSQL_SOURCES_ROOT = REPO_ROOT / "references" / "ksql" / "sources"
 
-
+runner = LiveCliRunner()
+output_path = REPO_ROOT / "staging" / "ksql2flk"
 @dataclass(frozen=True)
 class KsqlMigrateCase:
     """One ksqlDB tutorial source file and its Flink migration target table."""
@@ -71,3 +74,21 @@ def ksql_source_path(case: KsqlMigrateCase) -> Path:
 def staging_out_dir(tmp_path: Path, case: KsqlMigrateCase) -> Path:
     stem = Path(case.rel_path).stem
     return tmp_path / case.category / stem
+
+
+def run_and_assert_cli(case):
+    out_dir = staging_out_dir(output_path, case)
+
+    result = runner.invoke(
+        app,
+        [
+            "--table",
+            case.target_table,
+            "--file",
+            str(ksql_source_path(case)),
+            "--out-dir",
+            str(out_dir),
+        ],
+    )
+    print(result.output)
+    assert result.exit_code == 0, result.output

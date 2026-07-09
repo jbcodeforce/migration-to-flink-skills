@@ -1,4 +1,6 @@
-"""Terminal progress reporting for ksql-flink-migrate."""
+"""
+Terminal progress reporting for migrate to flink CLI
+"""
 
 from __future__ import annotations
 
@@ -14,8 +16,8 @@ class ProgressReporter:
         get_logger().info("%s", msg)
 
     def banner(self, **config: str) -> None:
-        typer.echo("ksql-flink-migrate")
-        self._log("ksql-flink-migrate")
+        typer.echo("migrate to flink CLI")
+        self._log("migrate to flink CLI")
         for key, value in config.items():
             line = f"  {key}: {value}"
             typer.echo(line)

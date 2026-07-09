@@ -24,9 +24,4 @@
 - Added `KMA-CHAT.sql` → `kma_chat` worked example in `skill/references/examples.md`.
 - Added `test_skill_patterns.py` to guard the documented pattern offline.
 
-## 2026-06-10 — mcp-confluent deploy integration
 
-- Harness deploys DDL then DML via `@confluentinc/mcp-confluent` MCP tools after translation.
-- Default: always deploy; `--skip-deploy` for translate-only runs.
-- `--agent-deploy-on-failure` enables Agno + MCPTools retry loop.
-- Docs: `docs/MCP_SETUP.md`, `skill/references/mcp-deploy.md`.

@@ -9,8 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-
-import ksql_to_flink.config  # noqa: F401 — configure shared harness context
 from flink_skill_common.config import (
     agent_fixer_enabled,
     agent_fixer_max_retries,
@@ -65,7 +63,9 @@ def migrate(
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o"),
     skip_deploy: bool = typer.Option(False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
 ) -> None:
-    """Migrate ksqlDB CREATE statements to Flink DDL/DML, one statement at a time."""
+    """
+    Migrate ksqlDB CREATE statements to Flink DDL/DML, one statement at a time.
+    """
     logger = get_logger()
     logger.info("skill_dir=%s", skill_dir())
     progress = ProgressReporter()
@@ -126,17 +126,18 @@ def migrate(
                 if not ksql_cleaned.strip():
                     logger.warning("Skipping empty statement index=%d", index)
                     continue
-
+                progress.step(index, f"Processing KSQL {ksql_cleaned}")
                 source_name = extract_ksql_object_name(ksql_cleaned) or f"statement_{index}"
                 processed += 1
                 progress.header(f"[{processed}/{total}] {source_name} → {table}")
 
                 logger.info(
-                    "Migrating statement %d/%d source=%s target=%s",
+                    "Migrating statement %d/%d source=%s target=%s ksql=%s",
                     processed,
                     total,
                     source_name,
                     table,
+                    ksql_cleaned,
                 )
 
                 progress.done(1, "Cleaned ksql input", f"{len(ksql_cleaned)} chars")
@@ -149,6 +150,7 @@ def migrate(
                     source_name=source_name,
                     on_event=progress.agent_event,
                 )
+                progress.agent_event(response)
                 progress.done(2, "Translation agent finished", f"{len(response)} chars")
                 progress.step(3, "Extracting SQL blocks and validating...")
                 result = clean_flink_sql_and_validate(
@@ -166,6 +168,8 @@ def migrate(
                     logger.error("Migration failed for table=%s: %s", table, failure_msg)
                     progress.done(3, "Validation failed")
                     progress.warn(failure_msg)
+                    progress.agent_event(result.ddls[0] if result.ddls else "no DDL")
+                    progress.agent_event(result.dmls[0] if result.dmls else "no DML")
                     typer.echo(failure_msg, err=True)
                     raise typer.Exit(1)
                 else:
@@ -173,6 +177,8 @@ def migrate(
                     if result.ddl_path is not None:
                         detail = result.ddl_path.name
                     progress.done(3, "Validation finished", detail)
+                    progress.agent_event(result.ddls[0] if result.ddls else "no DDL")
+                    progress.agent_event(result.dmls[0] if result.dmls else "no DML")
                     if skip_deploy:
                         progress.done(4, "Offline validation passed")
                     else:

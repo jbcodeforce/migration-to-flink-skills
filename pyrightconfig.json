@@ -1,5 +1,5 @@
 {
-  "pythonVersion": "3.11",
+  "pythonVersion": "3.12",
   "typeCheckingMode": "basic",
   "venvPath": "flink-skill-common/harness",
   "venv": ".venv",
@@ -19,6 +19,14 @@
     },
     {
       "root": "spark-to-flink-skill/harness",
+      "extraPaths": [
+        "src",
+        "tests",
+        "../../flink-skill-common/harness/src"
+      ]
+    },
+    {
+      "root": "flink-qa-skill/harness",
       "extraPaths": [
         "src",
         "tests",

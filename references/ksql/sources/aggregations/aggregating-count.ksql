@@ -12,6 +12,12 @@ INSERT INTO movie_ticket_sales (title, sale_ts, ticket_total_value) VALUES ('Twi
 INSERT INTO movie_ticket_sales (title, sale_ts, ticket_total_value) VALUES ('Twisters', '2024-09-18T11:40:00Z', 36);
 INSERT INTO movie_ticket_sales (title, sale_ts, ticket_total_value) VALUES ('Twisters', '2024-09-18T11:40:09Z', 18);
 
+CREATE STREAM movie_count(title VARCHAR, tickets_sold BIGINT)
+WITH (KAFKA_TOPIC='movie-count',
+          PARTITIONS=1,
+          VALUE_FORMAT='AVRO');
+
+INSERT INTO movie_count
 SELECT title,
        COUNT(*) AS tickets_sold
 FROM movie_ticket_sales

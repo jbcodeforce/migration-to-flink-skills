@@ -20,28 +20,18 @@ Use Agno agent with skills to translate KSQL to Flink SQL.
 from __future__ import annotations
 
 from collections.abc import Callable
-
-import ksql_to_flink.config  # noqa: F401 — configure shared harness context
 from flink_skill_common.agents.factory import (
     build_skilled_agent,
     make_openai_model,
     run_agent_process_response,
+    resolve_llm_model
 )
-from flink_skill_common.agents.factory import resolve_llm_model
 
 from flink_skill_common.config import (
     llm_api_key,
     llm_base_url,
     skill_dir,
 )
-
-
-def _make_model():
-    return make_openai_model(
-        base_url=llm_base_url(),
-        api_key=llm_api_key(),
-        model_id=resolve_llm_model(),
-    )
 
 
 def build_ksql_migrate_agent():
@@ -55,7 +45,11 @@ def build_ksql_migrate_agent():
             "Return DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
             "Do not validate, deploy, or generate source stub DDL — the harness runs convergence after translation.",
         ],
-        model=_make_model(),
+        model=make_openai_model(
+                    base_url=llm_base_url(),
+                    api_key=llm_api_key(),
+                    model_id=resolve_llm_model(),
+                ),
         tools=[],
     )
 
@@ -93,11 +87,12 @@ def run_migration(
     """Run migration agent and return response content."""
     agent = build_ksql_migrate_agent()
     return run_agent_process_response(
-        agent,
-        _migrate_prompt(
-            table_name=table_name, 
-            ksql=ksql, 
-            src_ksql=src_ksql, 
-            source_name=source_name),
-        on_event=on_event,
-    )
+            agent,
+            _migrate_prompt(
+                table_name=table_name, 
+                ksql=ksql, 
+                src_ksql=src_ksql, 
+                source_name=source_name
+                ),
+            on_event=on_event,
+         )

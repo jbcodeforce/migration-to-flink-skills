@@ -1,0 +1,4 @@
+2026-07-08 10:46:22,418 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-08 10:48:43,907 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-08 10:52:45,609 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-08 10:55:24,884 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/logs/ksql-flink-cli.log (level=DEBUG)

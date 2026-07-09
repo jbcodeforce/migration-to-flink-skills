@@ -10,7 +10,7 @@ from agno.agent import Agent, RunEvent
 from agno.models.openai import OpenAIChat
 from agno.skills import Skills
 from flink_skill_common.agents.skill_loaders import AgnoAdaptedLocalSkills
-from flink_skill_common.config import get_logger, llm_model, fetch_models_payload
+from flink_skill_common.config import get_logger, llm_model, fetch_models_payload, llm_base_url
 
 def make_openai_model(*, base_url: str, api_key: str, model_id: str) -> OpenAIChat:
     return OpenAIChat(id=model_id, base_url=base_url, api_key=api_key)
