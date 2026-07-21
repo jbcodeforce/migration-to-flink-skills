@@ -161,7 +161,7 @@ Since this lives under invalid/ (a negative test fixture meant to fail), I've le
 ???+ tip "Alternative invalid fixture"
 	For validating a DDL syntax error instead, use [`references/flink/invalid/ddl_bad_syntax/ddl.sql`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/references/flink/invalid/ddl_bad_syntax/ddl.sql) with `--ddl` only. Expect `"kind": "ddl"` in the issues.
 
-### Deploy failure fix loop (IDE)
+### Deploy failure fix loop
 
 Use when Flink SQL is deployed to Confluent Cloud and a statement fails or is unhealthy. The **host assistant** performs the fix loop using the `validate-flink-sql` skill — not the Agno `FlinkSqlDeployFixerAgent`.
 
@@ -185,46 +185,41 @@ Requires `FLINK_*` credentials in repo `.env` and MCP enabled (Cursor) or `flink
 
 Do **not** set `AGENT_FIXER_EXECUTION_ENABLED` or invoke Agno harness CLIs for IDE fixes.
 
+---
+
 ## Scope 2: ksqlDB to Flink migration with CC validation
 
 Use when converting ksqlDB `CREATE STREAM` / `CREATE TABLE` scripts to Flink DDL and DML.
 
-### Ksql routing examples from Confluent KSQL tutorial
-
 The references/ksql/sources/routing includes the following ksql [from the Confluent.io  tutorial](https://developer.confluent.io/tutorials/):
 
 ```sh
-├── routing
+├── references/ksql/sources/routing
 │   ├── deduplicate.ksql
 │   ├── filtering.ksql
-│   ├── insert_acting_events.sql
-│   ├── insert_clicks.sql
-│   ├── insert_songs.sql
 │   ├── merge.ksql
 │   └── splitting.ksql
 ```
 
 #### CLI translation only
 
-```bash
-cd ksql-to-flink-skill/harness && uv sync --extra dev
+* Be sure to be in the ksql-to-flink-skill folder
+* Run a migration for a unique table without CC deployment and validation.
+  ```bash
+  ./scripts/run-migration-sh --table dim_all_songs \
+    --file ../../references/ksql/sources/routing/merge.ksql \
+    --out-dir ../../staging/ksql-lab-out \
+    --skip-deploy
+  ```
 
-uv run ksql-flink-migrate \
-  --table dim_all_songs \
-  --file ../../references/ksql/sources/routing/merge.ksql \
-  --out-dir ../../staging/ksql-lab-out \
-  --skip-deploy
-```
+* Run a migration with a file containing multiple ksql statements, with deployment to CC
+  ```sh
+  /scripts/run-migration-sh --file  
+  ```
 
-Validate generated output:
 
-```bash
-uv run --directory flink-skill-common/harness flink-skill-validate offline \
-  --ddl ../../staging/ksql-lab-out/ddl.dim_all_songs.sql \
-  --dml ../../staging/ksql-lab-out/dml.dim_all_songs.sql
-```
 
-#### Agno harness: translation and deployment with fixer agent (CI only)
+#### Agno harness: translation and deployment with fixer agent
 
 Requires `AGENT_FIXER_EXECUTION_ENABLED=1` in `.env` and a reachable LLM (`SL_LLM_*`).
 

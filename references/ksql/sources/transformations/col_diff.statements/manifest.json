@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "source_file": "/Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/transformations/col_diff.ksql",
+  "source_sha256": "8ec488935ecc4e2ed1361bd4421fa7400661071902980f65fbafa2fe0ac3b7fa",
+  "created_at": "2026-07-21T20:39:58.625275+00:00",
+  "updated_at": "2026-07-21T21:07:08.882468+00:00",
+  "statements": [
+    {
+      "index": 1,
+      "name": "customer_purchases",
+      "file": "001_customer_purchases.ksql",
+      "table": "customer_purchases",
+      "status": "failed",
+      "error": "Validation or deploy failed.",
+      "updated_at": "2026-07-21T21:07:08.882468+00:00"
+    }
+  ]
+}

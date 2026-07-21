@@ -19,7 +19,7 @@ theme:
       - content.code.annotate
       - content.code.copy
       - content.tooltips
-      - content.tabs.link
+      - content.tabs.linkß
       - search.suggest
       - search.highlight
       - navigation.instant

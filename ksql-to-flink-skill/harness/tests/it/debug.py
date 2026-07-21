@@ -19,6 +19,8 @@ configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT)
 
 from ksql_to_flink.cli import app
 
+print(f"_HARNESS_ROOT: {_HARNESS_ROOT}")
+print(f"_PROJECT_ROOT: {_PROJECT_ROOT}")
 base_url = llm_base_url()
 api_key = llm_api_key()
 print(f"SL_LLM_BASE_URL={base_url}")
@@ -37,6 +39,9 @@ ksql_file = (
     + "/Documents/Code/MyAIAssistant/workspaces/biz-db/docs/notes/"
     "kaes-koch-ag-energy-solutions/notes/ksql/terminal_throughput_target_table/"
     "terminal_throughput_history.sql"
+)
+ksql_file = (
+    _PROJECT_ROOT / "references" / "ksql" / "sources" / "transformations" / "col_diff.ksql"
 )
 print(ksql_file)
 out_dir = Path("output/debug")

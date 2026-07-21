@@ -2,7 +2,7 @@
 
 ## Sequence diagram
 
-End-to-end flow for `ksql-flink-migrate migrate --table <name> --file <path> [--out-dir output] [--skip-deploy]`.
+End-to-end flow for `ksql-flink-migrate migrate [--table <name>] --file <path> [--out-dir output] [--skip-deploy]`.
 
 ```mermaid
 sequenceDiagram
@@ -27,7 +27,7 @@ sequenceDiagram
     participant FSM as FlinkStatementManager
     participant CC as Confluent Cloud Flink<br/>(confluent-sql REST)
 
-    User->>CLI: ksql-flink-migrate migrate -t table -f file.ksql [-o out_dir] [--skip-deploy]
+    User->>CLI: ksql-flink-migrate migrate [-t table] -f file.ksql [-o out_dir] [--skip-deploy]
     CLI->>Config: configure(HarnessContext)
     CLI->>Progress: banner(table, file, out_dir, model, agent_fixer, log)
     Progress-->>User: echo config banner
@@ -57,21 +57,24 @@ sequenceDiagram
     Note over CLI,KsqlUtils: per statement: clean_ksql_input() + extract_ksql_object_name()
     CLI->>Progress: done(2, "Found N CREATE statement(s)")
 
-    loop for each ksql CREATE statement
-        CLI->>KsqlUtils: clean_ksql_input(ksql_statement)
-        KsqlUtils-->>CLI: ksql_cleaned
-        CLI->>KsqlUtils: extract_ksql_object_name(ksql_cleaned)
-        KsqlUtils-->>CLI: source_name
-        CLI->>Progress: header("[i/N] source_name → table")
+    CLI->>CLI: init_or_load_manifest(file, statements, source_text)
+    Note over CLI: Writes `<stem>.statements/NNN_name.ksql` + manifest.json\nResumes pending/failed/interrupted when source sha matches
+    CLI->>Progress: done(2, "Wrote statement files" or "Resuming from manifest")
+
+    loop for each non-migrated statement (from manifest)
+        CLI->>CLI: read_statement_sql + clean_ksql_input
+        CLI->>CLI: table_name = object name (or --table if single-statement)
+        CLI->>CLI: update_status(in_progress)
+        CLI->>Progress: header("[i/N] source_name → table_name")
 
         rect rgb(240, 248, 255)
             Note over CLI,LLM: Phase 1 — LLM translation
             CLI->>Progress: step(2, "Running translation agent...")
-            CLI->>Migrate: run_migration(table, ksql_cleaned, source_name, on_event)
+            CLI->>Migrate: run_migration(table_name, ksql_cleaned, source_name, on_event)
             Migrate->>Migrate: build_ksql_migrate_agent()
             Migrate->>Factory: build_migration_agent(name, skill_dir, instructions, model)
             Factory-->>Migrate: KsqlToFlinkAgent
-            Migrate->>Migrate: migrate_prompt(table, ksql, source_name)
+            Migrate->>Migrate: migrate_prompt(table_name, ksql, source_name)
             Migrate->>Factory: run_agent_response(agent, prompt, on_event)
             Factory->>KsqlAgent: agent.run(prompt, stream=True)
             KsqlAgent->>KsqlAgent: get_skill_instructions("ksql-to-flink")
@@ -86,18 +89,18 @@ sequenceDiagram
         rect rgb(255, 250, 240)
             Note over CLI,CC: Phase 2 — extract, write, validate, deploy
             CLI->>Progress: step(3, "Extracting SQL blocks and writing output...")
-            CLI->>Convergence: clean_flink_sql_and_validate(response, table, ksql_cleaned, skip_deploy, out_dir)
+            CLI->>Convergence: clean_flink_sql_and_validate(response, table_name, ksql_cleaned, skip_deploy, out_dir)
 
             Convergence->>ResponseIO: extract_sql_blocks(response)
             ResponseIO-->>Convergence: ddls[], dmls[]
-            Convergence->>ResponseIO: write_output(table, ddls, dmls, out_dir)
+            Convergence->>ResponseIO: write_output(table_name, ddls, dmls, out_dir)
             ResponseIO-->>Convergence: ddl_paths[], dml_paths[]
 
             alt DML present
-                Convergence->>KsqlUtils: compute_missing_source_tables(dml, table, ddl)
+                Convergence->>KsqlUtils: compute_missing_source_tables(dml, table_name, ddl)
                 KsqlUtils-->>Convergence: missing[]
                 opt missing source tables
-                    Convergence->>Sources: generate_source_ddls(table, src_ksql, dml, missing)
+                    Convergence->>Sources: generate_source_ddls(table_name, src_ksql, dml, missing)
                     Sources->>SourceAgent: agent.run(source_ddl_prompt)
                     SourceAgent->>LLM: generate stub CREATE TABLE DDL (JSON)
                     LLM-->>SourceAgent: source DDL stubs
@@ -175,9 +178,11 @@ sequenceDiagram
 
             Convergence-->>Convergence: ConvergenceResult
             alt convergence failed
+                CLI->>CLI: update_status(failed)
                 Convergence-->>CLI: raise typer.Exit(1)
             end
             Convergence-->>CLI: (ddl_path, dml_path) or None if skip_deploy
+            CLI->>CLI: update_status(migrated)
             CLI->>Progress: done(3..5, validation/deploy status)
         end
     end
@@ -189,7 +194,8 @@ sequenceDiagram
 
 | Component | Module | Role |
 |-----------|--------|------|
-| `cli.migrate` | `ksql_to_flink/cli.py` | Typer entry point; orchestrates per-statement loop |
+| `cli.migrate` | `ksql_to_flink/cli.py` | Typer entry point; orchestrates per-statement loop + resume |
+| `migration_manifest` | `flink_skill_common/migration_manifest.py` | Split statement files + migration status for resume |
 | `ProgressReporter` | `ksql_to_flink/cli_progress.py` | Terminal step / agent event output |
 | `ksql_utils` | `ksql_to_flink/ksql_utils.py` | Split, clean, and name ksql CREATE statements |
 | `run_migration` | `ksql_to_flink/migrate_agent.py` | Builds KsqlToFlinkAgent and runs LLM translation |
@@ -204,12 +210,23 @@ sequenceDiagram
 
 ## Output layout
 
-After a successful run, `out_dir` typically contains:
+Beside the source file, the harness writes resume state:
+
+```
+path/to/pipeline.ksql
+path/to/pipeline.statements/
+├── manifest.json
+├── 001_clicks.ksql
+└── 002_detected_clicks.ksql
+```
+
+After a successful run, `out_dir` typically contains one subdirectory per Flink table (ksql object name):
 
 ```
 out_dir/
-├── ddl.{table}.sql          # target table DDL
-├── dml.{table}.sql          # INSERT INTO … SELECT … (if CSAS)
-└── tests/
-    └── ddl.{source}.sql     # stub DDL for upstream tables referenced in DML
+└── {table}/
+    ├── ddl.{table}.sql          # target table DDL
+    ├── dml.{table}.sql          # INSERT INTO … SELECT … (if CSAS)
+    └── tests/
+        └── ddl.{source}.sql     # stub DDL for upstream tables referenced in DML
 ```

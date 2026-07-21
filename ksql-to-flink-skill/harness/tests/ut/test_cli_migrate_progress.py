@@ -70,11 +70,14 @@ def test_migrate_verbose_progress_with_mocks(tmp_path: Path):
 
     assert result.exit_code == 0
     output = result.output
-    assert "ksql-flink-migrate" in output
+    assert "migrate to flink CLI" in output or "ksql-flink-migrate" in output
     assert "test-model" in output
     assert "Found 1 CREATE statement(s)" in output
+    assert "Wrote statement files to input.statements/" in output
+    assert "SONGS → george_martin" in output
     assert "Running translation agent" in output
     assert "Extracted 1 DDL, 1 DML" in output
     assert "Running offline validation" in output
     assert "Offline validation passed" in output
     assert mock_converge.call_args.kwargs["on_progress"] is not None
+    assert (tmp_path / "input.statements" / "manifest.json").is_file()

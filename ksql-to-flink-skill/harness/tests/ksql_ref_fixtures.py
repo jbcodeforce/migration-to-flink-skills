@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
+
+from flink_skill_common.migration_manifest import statements_dir_for
 from ksql_to_flink.cli import app
 from live_cli_runner import LiveCliRunner
 
@@ -77,6 +80,11 @@ def staging_out_dir(tmp_path: Path, case: KsqlMigrateCase) -> Path:
 
 
 def run_and_assert_cli(case):
+    source = ksql_source_path(case)
+    statements_dir = statements_dir_for(source)
+    if statements_dir.exists():
+        shutil.rmtree(statements_dir)
+
     out_dir = staging_out_dir(output_path, case)
 
     result = runner.invoke(
@@ -85,7 +93,7 @@ def run_and_assert_cli(case):
             "--table",
             case.target_table,
             "--file",
-            str(ksql_source_path(case)),
+            str(source),
             "--out-dir",
             str(out_dir),
         ],

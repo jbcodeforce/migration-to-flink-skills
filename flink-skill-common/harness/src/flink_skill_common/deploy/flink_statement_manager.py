@@ -264,8 +264,10 @@ class FlinkStatementManager:
         kind = classify_sql(sql)
         pool = self._settings.compute_pool_id
         timeout = int(self._settings.timeout_seconds)
-        props: dict[str, str] = {}
-
+        props: dict[str, str] = {
+            "sql.dry-run": "true",
+            "sql.inline-result": "false"
+        }
         if kind == "snapshot_ddl":
             stmt = conn.execute_snapshot_ddl(
                 sql,
@@ -275,6 +277,7 @@ class FlinkStatementManager:
                 timeout=timeout,
             )
         elif kind in ("streaming_dml", "batch_dml", "streaming_ddl"):
+            props['sql.dry-run']='true'
             with conn.closing_streaming_cursor() as cur:
                 cur.execute(
                     sql,

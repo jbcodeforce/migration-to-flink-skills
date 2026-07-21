@@ -119,7 +119,7 @@ def _apply_agent_fix(
     dml_path: Path,
     error_message: str,
     ddls: list[str],
-    dmls: list[str],
+    dmls: list[str] | None,
     *,
     on_progress: Callable[[str], None] | None = None,
 ) -> tuple[list[str], list[str], str]:
@@ -167,6 +167,13 @@ def _deploy_messages(result) -> list[str]:
         )
     return messages
 
+manager_singleton: FlinkStatementManager | None = None
+def _manager() -> FlinkStatementManager:
+        global manager_singleton
+        if manager_singleton is None:
+            manager_singleton = FlinkStatementManager()
+        return manager_singleton
+
 #
 # Public API
 # ---------
@@ -192,14 +199,7 @@ def converge_flink_sql(
     last_agent_response: str | None = None
     ddl_path: Path | None = None
     dml_path: Path | None = None
-    manager: FlinkStatementManager | None = None
     deploy_attempted = False
-
-    def _manager() -> FlinkStatementManager:
-        nonlocal manager
-        if manager is None:
-            manager = FlinkStatementManager()
-        return manager
 
     try:
         for attempt in range(max_attempts):
@@ -212,6 +212,7 @@ def converge_flink_sql(
             offline_errors = [i for i in offline_issues if i.severity == "error"]
             ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
             if offline_errors:
+                error_messages = [msg for err in offline_errors for msg in err.message]
                 if not use_agent:
                     raise SqlValidationError(offline_errors)
                 if ddl_path is None:
@@ -221,7 +222,7 @@ def converge_flink_sql(
                         dmls=current_dmls,
                         ddl_path=None,
                         dml_path=dml_path,
-                        messages=["No DDL file found for agent fix"],
+                        messages=error_messages,
                     )
                 _notify_agent_retry(
                     on_progress,
@@ -229,7 +230,7 @@ def converge_flink_sql(
                     detail=_first_validation_error(offline_issues),
                     attempt=attempt + 1,
                     max_attempts=max_attempts,
-                    messages=messages,
+                    messages=error_messages,
                 )
                 current_ddls, current_dmls, last_agent_response = _apply_agent_fix(
                     ctx,

@@ -37,6 +37,7 @@ CREATE STREAM shipped_orders AS
     ON o.id = s.order_id
     EMIT CHANGES;
 
+
 SELECT customer_name,
        order_id,
        order_ts,

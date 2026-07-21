@@ -1,190 +1,863 @@
-2026-07-07 21:12:12,422 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
-2026-07-07 21:12:12,422 INFO [flink_migration_skill.cli] cli.py:70 skill_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/skill
-2026-07-07 21:12:12,422 INFO [flink_migration_skill.cli] cli.py:72 migrate start table=all_songs file=/Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/routing/merge.ksql out_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge skip_deploy=False
-2026-07-07 21:12:12,445 INFO [flink_migration_skill.cli] cli_progress.py:16 migrate to flink CLI
-2026-07-07 21:12:12,445 INFO [flink_migration_skill.cli] cli_progress.py:16 table: all_songs
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 file: /Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/routing/merge.ksql
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 out_dir: /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 deploy: enabled
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 model: Ornith-1.0-9B-6bit
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer: enabled
-2026-07-07 21:12:12,446 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer_retries: 2
-2026-07-07 21:12:12,447 INFO [flink_migration_skill.cli] cli_progress.py:16 log: /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log
-2026-07-07 21:12:12,447 INFO [flink_migration_skill.cli] cli_progress.py:16 → 1. Checking LLM at http://10.0.0.148:7999/v1 ...
-2026-07-07 21:12:12,474 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. LLM reachable at http://10.0.0.148:7999/v1
-2026-07-07 21:12:12,474 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Found 3 CREATE statement(s) (rock_songs, classical_songs, all_songs)
-2026-07-07 21:12:12,474 INFO [flink_migration_skill.cli] cli_progress.py:16 → 1. Processing KSQL CREATE STREAM rock_songs (artist VARCHAR, title VARCHAR)
-WITH (KAFKA_TOPIC='rock_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:12:12,474 INFO [flink_migration_skill.cli] cli_progress.py:16 === [1/3] rock_songs → all_songs ===
-2026-07-07 21:12:12,474 INFO [flink_migration_skill.cli] cli.py:134 Migrating statement 1/3 source=rock_songs target=all_songs ksql=CREATE STREAM rock_songs (artist VARCHAR, title VARCHAR)
-WITH (KAFKA_TOPIC='rock_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:12:12,475 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned ksql input (124 chars)
-2026-07-07 21:12:12,475 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
-2026-07-07 21:12:12,552 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
-2026-07-07 21:12:12,552 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run started
-2026-07-07 21:12:18,759 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
-2026-07-07 21:12:18,761 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool: get_skill_instructions
-2026-07-07 21:12:18,763 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
-2026-07-07 21:12:18,763 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool completed: get_skill_instructions
-2026-07-07 21:13:56,205 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run completed
-2026-07-07 21:13:56,206 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run completed
-2026-07-07 21:13:56,975 INFO [flink_migration_skill.cli] factory.py:160 agent: run finished (422 chars)
-2026-07-07 21:13:56,977 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: 
+2026-07-21 13:39:58,575 DEBUG [flink_migration_skill.cli] config.py:88 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-21 13:39:58,575 INFO [flink_migration_skill.cli] cli.py:105 skill_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/skill
+2026-07-21 13:39:58,575 INFO [flink_migration_skill.cli] cli.py:107 migrate start table=customer_purchases file=/Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/transformations/col_diff.ksql out_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/transformations/col_diff skip_deploy=False
+2026-07-21 13:39:58,599 INFO [flink_migration_skill.cli] cli_progress.py:16 migrate to flink CLI
+2026-07-21 13:39:58,600 INFO [flink_migration_skill.cli] cli_progress.py:16 table: customer_purchases
+2026-07-21 13:39:58,600 INFO [flink_migration_skill.cli] cli_progress.py:16 file: /Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/transformations/col_diff.ksql
+2026-07-21 13:39:58,600 INFO [flink_migration_skill.cli] cli_progress.py:16 out_dir: /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/transformations/col_diff
+2026-07-21 13:39:58,600 INFO [flink_migration_skill.cli] cli_progress.py:16 deploy: enabled
+2026-07-21 13:39:58,600 INFO [flink_migration_skill.cli] cli_progress.py:16 model: Ornith-1.0-9B-6bit
+2026-07-21 13:39:58,601 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer: enabled
+2026-07-21 13:39:58,601 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer_retries: 2
+2026-07-21 13:39:58,601 INFO [flink_migration_skill.cli] cli_progress.py:16 log: /Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/logs/ksql-flink-cli.log
+2026-07-21 13:39:58,601 INFO [flink_migration_skill.cli] cli_progress.py:16 → 1. Checking LLM at http://10.0.0.148:7999/v1 ...
+2026-07-21 13:39:58,624 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. LLM reachable at http://10.0.0.148:7999/v1
+2026-07-21 13:39:58,624 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Splitting ksql statements...
+2026-07-21 13:39:58,625 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Found 1 CREATE statement(s) (customer_purchases)
+2026-07-21 13:39:58,626 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Wrote statement files to col_diff.statements/ (1 file(s))
+2026-07-21 13:39:58,626 INFO [flink_migration_skill.cli] cli_progress.py:16 === [1/1] customer_purchases → customer_purchases ===
+2026-07-21 13:39:58,626 INFO [flink_migration_skill.cli] cli.py:243 Migrating statement 1/1 source=customer_purchases target=customer_purchases ksql=CREATE STREAM customer_purchases (
+id VARCHAR,
+current_purchase DOUBLE,
+previous_purchase DOUBLE,
+txn_ts VARCHAR,
+first_name VARCHAR,
+last_name  VARCHAR)
+WITH (KAFKA_TOPIC='customer_purchases',
+VALUE_FORMAT='JSON',
+PARTITIONS=1);
+2026-07-21 13:39:58,626 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned ksql input (229 chars)
+2026-07-21 13:39:58,627 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
+2026-07-21 13:39:58,680 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-21 13:39:58,680 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run started
+2026-07-21 13:40:03,092 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
+2026-07-21 13:40:03,093 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool: get_skill_instructions
+2026-07-21 13:40:03,094 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
+2026-07-21 13:40:03,095 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool completed: get_skill_instructions
+2026-07-21 13:40:19,549 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run completed
+2026-07-21 13:40:19,550 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run completed
+2026-07-21 13:40:19,941 INFO [flink_migration_skill.cli] factory.py:160 agent: run finished (1776 chars)
+2026-07-21 13:40:19,943 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: 
 
 
 
-This is a simple `CREATE STREAM` (source definition) with no CSAS. It becomes a Flink `CREATE TABLE IF NOT EXISTS` and produces no DML.
+Now I have the instructions. Let me analyze and translate the statement.
+
+**Analysis:**
+- This is a ksqlDB `CREATE STREAM` → Flink `CREATE TABLE IF NOT EXISTS`
+- `VARCHAR` → `STRING`; `DOUBLE` → `DOUBLE`
+- `PARTITIONS=1` → `DISTRIBUTED BY HASH(id) INTO 1 BUCKETS`
+- No CSAS in this statement — the source-only DML is empty per instructions
+- Primary key hint: `id` is the most natural candidate for `DISTRIBUTED BY`
+
+**DDL Translation:**
+```
+CREATE TABLE IF NOT EXISTS customer_purchases
+(id STRING,
+ PRIMARY KEY (id) NOT ENFORCED)
+DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH (
+    'value.format' = 'json-registry',
+    'scan.startup.mode' = 'earliest-offset'
+);
+```
+
+**DML Translation:** This is a source stream (not a CTAS). No DML to generate — it's referenced by name only.
+
+```sql
+-- DML: empty (source stream, no business-logic INSERT INTO)
+-- The Flink table customer_purchases is upstream and referenced in other DML statements.
+-- No INSERT INTO or WITH deduplicated AS is needed here.
+```
+
+However, the instructions say to return DML in a labeled block. Since this is a source-only table (not a CTAS), DML is empty. I'll include the block as instructed:
+
+```sql
+-- Source stream: no INSERT INTO DML needed
+-- Referenced upstream in other DML statements.
+```
+
+Let me now format the final output:
 
 ---
 
 ```sql
-CREATE TABLE IF NOT EXISTS rock_songs (
-    artist STRING,
-    title STRING
+CREATE TABLE IF NOT EXISTS customer_purchases (
+    id STRING,
+    current_purchase DOUBLE,
+    previous_purchase DOUBLE,
+    txn_ts STRING,
+    first_name STRING,
+    last_name STRING,
+    PRIMARY KEY (id) NOT ENFORCED
 ) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all'
+    'value.format' = 'json-registry',
+    'scan.startup.mode' = 'earliest-offset'
 );
 ```
 
 ```sql
--- Source-only table definition; no DML needed.
+-- Source stream: no DML needed.
+-- The Flink table `customer_purchases` is upstream and referenced in other DML statements.
 ```
-2026-07-07 21:13:56,978 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (422 chars)
-2026-07-07 21:13:56,979 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
-2026-07-07 21:13:56,980 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
-2026-07-07 21:13:56,980 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
-2026-07-07 21:13:56,981 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS rock_songs (
-    artist STRING,
-    title STRING
-) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all'
+2026-07-21 13:40:19,943 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (1776 chars)
+2026-07-21 13:40:19,944 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
+2026-07-21 13:40:19,945 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-21 13:40:19,945 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-21 13:40:19,946 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS customer_purchases
+(id STRING,
+ PRIMARY KEY (id) NOT ENFORCED)
+DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH (
+    'value.format' = 'json-registry',
+    'scan.startup.mode' = 'earliest-offset'
 );
-2026-07-07 21:13:56,982 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- Source-only table definition; no DML needed.
-2026-07-07 21:13:56,983 INFO [flink_migration_skill.cli] convergence.py:40 
-Extracted 1 DDL, 0 DML
-2026-07-07 21:13:56,983 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 0 DML
-2026-07-07 21:13:56,984 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:13:56,985 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:13:56,987 INFO [flink_migration_skill.cli] convergence.py:40 No DML in response; skipped validation and deploy
-2026-07-07 21:13:56,988 INFO [flink_migration_skill.cli] cli_progress.py:16 No DML in response; skipped validation and deploy
-2026-07-07 21:13:56,988 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Output files written (no DML)
-2026-07-07 21:13:56,989 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Processing KSQL CREATE STREAM classical_songs (artist VARCHAR, title VARCHAR)
-WITH (KAFKA_TOPIC='classical_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:13:56,989 INFO [flink_migration_skill.cli] cli_progress.py:16 === [2/3] classical_songs → all_songs ===
-2026-07-07 21:13:56,989 INFO [flink_migration_skill.cli] cli.py:134 Migrating statement 2/3 source=classical_songs target=all_songs ksql=CREATE STREAM classical_songs (artist VARCHAR, title VARCHAR)
-WITH (KAFKA_TOPIC='classical_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:13:56,990 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned ksql input (134 chars)
-2026-07-07 21:13:56,990 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
-2026-07-07 21:13:57,093 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
-2026-07-07 21:13:57,093 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run started
-2026-07-07 21:14:02,077 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
-2026-07-07 21:14:02,078 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool: get_skill_instructions
-2026-07-07 21:14:02,078 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
-2026-07-07 21:14:02,078 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool completed: get_skill_instructions
-2026-07-07 21:14:14,561 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run completed
-2026-07-07 21:14:14,562 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run completed
-2026-07-07 21:14:14,949 INFO [flink_migration_skill.cli] factory.py:160 agent: run finished (348 chars)
-2026-07-07 21:14:14,950 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: 
+2026-07-21 13:40:19,946 INFO [flink_migration_skill.cli] response_io.py:86 DML: -- DML: empty (source stream, no business-logic INSERT INTO)
+-- The Flink table customer_purchases is upstream and referenced in other DML statements.
+-- No INSERT INTO or WITH deduplicated AS is needed here.
+2026-07-21 13:40:19,946 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 2 DML
+2026-07-21 13:40:19,946 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 2 DML
+2026-07-21 13:40:19,947 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/transformations/col_diff/customer_purchases
+2026-07-21 13:40:19,948 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/transformations/col_diff/customer_purchases
+2026-07-21 13:40:19,950 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=customer_purchases
+2026-07-21 13:40:19,950 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-21 13:40:19,950 INFO [flink_migration_skill.cli] cli_progress.py:16 Convergence attempt 1 of 2
+2026-07-21 13:40:19,953 WARNING [flink_migration_skill.cli] sql_validate.py:174 SQL validation warning [ddl#0]: DDL WITH clause missing 'changelog.mode' property
+2026-07-21 13:40:19,953 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [dml#0]: Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []>
+2026-07-21 13:40:19,953 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [dml#1]: Expected table name but got <Token token_type: TokenType.OR, text: or, line: 1, col: 14, start: 12, end: 13, comments: []>
+2026-07-21 13:40:19,954 INFO [flink_migration_skill.cli] convergence.py:112 Validation failed, invoking agent fix (attempt 1): [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1)
+2026-07-21 13:40:19,955 INFO [flink_migration_skill.cli] convergence.py:40 Validation failed: [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1) Agent fixer will attempt to correct SQL automatically (attempt 1/2).
+2026-07-21 13:40:19,955 WARNING [flink_migration_skill.cli] cli_progress.py:52 Validation failed: [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1) Agent fixer will attempt to correct SQL automatically (attempt 1/2).
+2026-07-21 13:40:19,955 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-21 13:40:19,955 INFO [flink_migration_skill.cli] cli_progress.py:16 Invoking deploy fixer agent...
+2026-07-21 13:40:20,079 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-21 13:40:20,079 INFO [flink_migration_skill.cli] cli_progress.py:16 Agent run started
+2026-07-21 13:40:27,009 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
+2026-07-21 13:40:27,009 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_skill_instructions
+2026-07-21 13:40:27,010 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
+2026-07-21 13:40:27,010 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_skill_instructions
+2026-07-21 13:40:27,011 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_flink_statement_exceptions
+2026-07-21 13:40:27,011 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_flink_statement_exceptions
+2026-07-21 13:40:27,280 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_flink_statement_exceptions
+2026-07-21 13:40:27,281 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_flink_statement_exceptions
+2026-07-21 13:40:27,281 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_flink_statement_exceptions
+2026-07-21 13:40:27,282 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_flink_statement_exceptions
+2026-07-21 13:40:27,496 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_flink_statement_exceptions
+2026-07-21 13:40:27,497 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_flink_statement_exceptions
+2026-07-21 13:48:56,952 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:48:56,953 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:48:57,757 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:48:57,758 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
 
+The above exception was the direct cause of the following exception:
 
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
 
-```sql
-CREATE TABLE IF NOT EXISTS classical_songs (
-    artist STRING,
-    title STRING
-) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all',
-    'kafka.retention.time' = '0',
-    'kafka.producer.compression.type' = 'snappy',
-    'scan.bounded.mode' = 'unbounded'
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:48:57,770 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:48:57,770 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:49:07,287 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:49:07,289 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:49:07,891 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:49:07,892 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:49:07,895 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:49:07,896 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:49:16,377 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: list_flink_statements
+2026-07-21 13:49:16,378 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: list_flink_statements
+2026-07-21 13:49:16,846 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: list_flink_statements
+2026-07-21 13:49:16,847 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: list_flink_statements
+2026-07-21 13:49:51,592 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_reference
+2026-07-21 13:49:51,592 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_skill_reference
+2026-07-21 13:49:51,595 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_reference
+2026-07-21 13:49:51,596 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_skill_reference
+2026-07-21 13:53:19,318 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:53:19,319 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:53:20,004 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:20,005 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:20,008 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:53:20,009 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:53:33,589 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:53:33,590 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:53:34,211 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:34,212 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:34,215 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:53:34,216 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:53:44,269 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:53:44,270 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:53:45,123 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:45,125 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:53:45,128 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:53:45,128 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:54:33,025 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_script
+2026-07-21 13:54:33,027 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_skill_script
+2026-07-21 13:54:33,460 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_script
+2026-07-21 13:54:33,461 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_skill_script
+2026-07-21 13:54:42,573 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:54:42,573 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:54:43,262 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:54:43,263 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:54:43,264 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:54:43,266 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:54:53,242 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:54:53,244 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:54:53,863 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:54:53,863 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:54:53,866 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:54:53,866 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:55:00,815 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:55:00,817 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:55:01,486 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:55:01,487 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:55:01,489 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:55:01,489 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:55:07,347 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:55:07,349 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:55:07,825 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-dml: Statement submission failed: SQL validation failed. Error from line 16, column 6 to line 16, column 23.
+
+Caused by: Table (or view) 'customer_purchases' does not exist, may be on a private cluster, or you do not have permission to access it.
+If the cluster is private, please connect using a private network.
+Using current catalog 'env-yk3jm6' and current database 'j9r-kafka'.
+2026-07-21 13:55:07,826 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 282, in _submit_on_connection
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 255, in execute
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: Statement submission failed: SQL validation failed. Error from line 16, column 6 to line 16, column 23.
+
+Caused by: Table (or view) 'customer_purchases' does not exist, may be on a private cluster, or you do not have permission to access it.
+If the cluster is private, please connect using a private network.
+Using current catalog 'env-yk3jm6' and current database 'j9r-kafka'.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-dml: Statement submission failed: SQL validation failed. Error from line 16, column 6 to line 16, column 23.
+
+Caused by: Table (or view) 'customer_purchases' does not exist, may be on a private cluster, or you do not have permission to access it.
+If the cluster is private, please connect using a private network.
+Using current catalog 'env-yk3jm6' and current database 'j9r-kafka'.
+2026-07-21 13:55:07,828 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:55:07,828 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:55:16,536 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:55:16,537 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:55:17,164 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:55:17,165 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:55:17,167 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:55:17,167 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:56:22,654 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:56:22,655 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:56:23,377 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:56:23,378 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:56:23,381 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:56:23,381 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 13:56:30,095 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_script
+2026-07-21 13:56:30,096 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: get_skill_script
+2026-07-21 13:56:30,097 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_script
+2026-07-21 13:56:30,098 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: get_skill_script
+2026-07-21 13:56:48,120 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: create_flink_statement
+2026-07-21 13:56:48,121 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool: create_flink_statement
+2026-07-21 13:56:49,092 WARNING [flink_migration_skill.cli] flink_statement_manager.py:311 OperationalError creating customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:56:49,094 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1183, in _request
+    response.raise_for_status()
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '404 Not Found' for url 'https://flink.us-west-2.aws.confluent.cloud/sql/v1/organizations/49cee212-6346-438a-a1fa-d1b1cbd90d44/environments/env-yk3jm6/statements/customer-purchases-ddl'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1092, in _get_statement
+    return self._request(f"/statements/{statement_name}").json()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1193, in _request
+    raise OperationalError(
+confluent_sql.exceptions.OperationalError: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 309, in create_statement
+    return self._submit_on_connection(conn, statement_name, sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 272, in _submit_on_connection
+    stmt = conn.execute_snapshot_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 596, in execute_snapshot_ddl
+    cur.execute(
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 261, in execute
+    self._wait_for_statement_ready(timeout)
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/cursor.py", line 667, in _wait_for_statement_ready
+    response = self._connection._get_statement(self._statement.name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/ksql-to-flink-skill/harness/.venv/lib/python3.12/site-packages/confluent_sql/connection.py", line 1096, in _get_statement
+    raise StatementNotFoundError(
+confluent_sql.exceptions.StatementNotFoundError: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/flink_statement_manager.py", line 316, in create_statement
+    raise StatementManagerError(
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create customer-purchases-ddl: Statement 'customer-purchases-ddl' not found: error sending request '404' - Statement resource=customer-purchases-ddl does not exist
+2026-07-21 13:56:49,098 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: create_flink_statement
+2026-07-21 13:56:49,099 INFO [flink_migration_skill.cli] cli_progress.py:16 Tool completed: create_flink_statement
+2026-07-21 14:06:54,223 ERROR [agno.cli] log.py:237 Error from OpenAI API: timed out
+2026-07-21 14:06:54,226 ERROR [agno.cli] log.py:237 Error in Agent run: timed out
+2026-07-21 14:06:54,228 INFO [flink_migration_skill.cli] factory.py:163 agent: run finished (3055 chars)
+2026-07-21 14:06:54,265 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-21 14:06:54,265 INFO [flink_migration_skill.cli] cli_progress.py:16 Agent run started
+2026-07-21 14:06:58,842 ERROR [agno.cli] log.py:237 API connection error from OpenAI API: Connection error.
+2026-07-21 14:06:58,843 ERROR [agno.cli] log.py:237 Error in Agent run: Connection error.
+2026-07-21 14:06:58,843 INFO [flink_migration_skill.cli] factory.py:163 agent: run finished (0 chars)
+2026-07-21 14:06:58,844 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 2 of 2 for table=customer_purchases
+2026-07-21 14:06:58,844 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 2 of 2
+2026-07-21 14:06:58,845 INFO [flink_migration_skill.cli] cli_progress.py:16 Convergence attempt 2 of 2
+2026-07-21 14:06:58,849 WARNING [flink_migration_skill.cli] sql_validate.py:174 SQL validation warning [ddl#0]: DDL WITH clause missing 'changelog.mode' property
+2026-07-21 14:06:58,849 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [dml#0]: Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []>
+2026-07-21 14:06:58,849 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [dml#1]: Expected table name but got <Token token_type: TokenType.OR, text: or, line: 1, col: 14, start: 12, end: 13, comments: []>
+2026-07-21 14:06:58,854 INFO [flink_migration_skill.cli] convergence.py:112 Validation failed, invoking agent fix (attempt 2): [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1)
+2026-07-21 14:06:58,854 INFO [flink_migration_skill.cli] convergence.py:40 Validation failed: [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1) Agent fixer will attempt to correct SQL automatically (attempt 2/2).
+2026-07-21 14:06:58,855 WARNING [flink_migration_skill.cli] cli_progress.py:52 Validation failed: [dml#0] Expected table name but got <Token token_type: TokenType.R_PAREN, text: ), line: 1, col: 12, start: 11, end: 11, comments: []> (line 1) Agent fixer will attempt to correct SQL automatically (attempt 2/2).
+2026-07-21 14:06:58,855 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-21 14:06:58,855 INFO [flink_migration_skill.cli] cli_progress.py:16 Invoking deploy fixer agent...
+2026-07-21 14:06:59,969 ERROR [flink_migration_skill.cli] config.py:130 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error [Errno 61] Connection refused>
+2026-07-21 14:07:00,001 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-21 14:07:00,002 INFO [flink_migration_skill.cli] cli_progress.py:16 Agent run started
+2026-07-21 14:07:04,478 ERROR [agno.cli] log.py:237 API connection error from OpenAI API: Connection error.
+2026-07-21 14:07:04,479 ERROR [agno.cli] log.py:237 Error in Agent run: Connection error.
+2026-07-21 14:07:04,479 INFO [flink_migration_skill.cli] factory.py:163 agent: run finished (0 chars)
+2026-07-21 14:07:04,510 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-21 14:07:04,510 INFO [flink_migration_skill.cli] cli_progress.py:16 Agent run started
+2026-07-21 14:07:08,877 ERROR [agno.cli] log.py:237 API connection error from OpenAI API: Connection error.
+2026-07-21 14:07:08,878 ERROR [agno.cli] log.py:237 Error in Agent run: Connection error.
+2026-07-21 14:07:08,879 INFO [flink_migration_skill.cli] factory.py:163 agent: run finished (0 chars)
+2026-07-21 14:07:08,879 ERROR [flink_migration_skill.cli] cli.py:278 Migration failed for table=customer_purchases: Validation or deploy failed.
+2026-07-21 14:07:08,880 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Validation failed
+2026-07-21 14:07:08,881 WARNING [flink_migration_skill.cli] cli_progress.py:52 Validation or deploy failed.
+2026-07-21 14:07:08,881 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: CREATE TABLE IF NOT EXISTS customer_purchases
+(id STRING,
+ PRIMARY KEY (id) NOT ENFORCED)
+DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH (
+    'value.format' = 'json-registry',
+    'scan.startup.mode' = 'earliest-offset'
 );
-```
-2026-07-07 21:14:14,951 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (348 chars)
-2026-07-07 21:14:14,952 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
-2026-07-07 21:14:14,953 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
-2026-07-07 21:14:14,953 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
-2026-07-07 21:14:14,954 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS classical_songs (
-    artist STRING,
-    title STRING
-) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all',
-    'kafka.retention.time' = '0',
-    'kafka.producer.compression.type' = 'snappy',
-    'scan.bounded.mode' = 'unbounded'
-);
-2026-07-07 21:14:14,955 INFO [flink_migration_skill.cli] response_io.py:86 DML: 
-2026-07-07 21:14:14,955 INFO [flink_migration_skill.cli] convergence.py:40 
-Extracted 1 DDL, 0 DML
-2026-07-07 21:14:14,956 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 0 DML
-2026-07-07 21:14:14,957 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:14:14,957 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:14:14,961 INFO [flink_migration_skill.cli] convergence.py:40 No DML in response; skipped validation and deploy
-2026-07-07 21:14:14,961 INFO [flink_migration_skill.cli] cli_progress.py:16 No DML in response; skipped validation and deploy
-2026-07-07 21:14:14,962 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Output files written (no DML)
-2026-07-07 21:14:14,962 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Processing KSQL CREATE STREAM all_songs (artist VARCHAR, title VARCHAR, genre VARCHAR)
-WITH (KAFKA_TOPIC='all_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:14:14,962 INFO [flink_migration_skill.cli] cli_progress.py:16 === [3/3] all_songs → all_songs ===
-2026-07-07 21:14:14,963 INFO [flink_migration_skill.cli] cli.py:134 Migrating statement 3/3 source=all_songs target=all_songs ksql=CREATE STREAM all_songs (artist VARCHAR, title VARCHAR, genre VARCHAR)
-WITH (KAFKA_TOPIC='all_songs', PARTITIONS=1, VALUE_FORMAT='AVRO');
-2026-07-07 21:14:14,963 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned ksql input (137 chars)
-2026-07-07 21:14:14,963 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
-2026-07-07 21:14:15,100 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
-2026-07-07 21:14:15,101 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run started
-2026-07-07 21:14:19,385 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
-2026-07-07 21:14:19,386 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool: get_skill_instructions
-2026-07-07 21:14:19,387 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
-2026-07-07 21:14:19,388 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool completed: get_skill_instructions
-2026-07-07 21:14:40,592 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run completed
-2026-07-07 21:14:40,593 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run completed
-2026-07-07 21:14:41,035 INFO [flink_migration_skill.cli] factory.py:160 agent: run finished (289 chars)
-2026-07-07 21:14:41,036 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: 
-
-
-
-```sql
-CREATE TABLE IF NOT EXISTS all_songs (
-    artist STRING,
-    title STRING,
-    genre STRING
-) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all',
-    'scan.bounded.mode' = 'unbounded'
-);
-```
-
-```sql
-
-```
-2026-07-07 21:14:41,037 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (289 chars)
-2026-07-07 21:14:41,037 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
-2026-07-07 21:14:41,038 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
-2026-07-07 21:14:41,038 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
-2026-07-07 21:14:41,039 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS all_songs (
-    artist STRING,
-    title STRING,
-    genre STRING
-) WITH (
-    'value.format' = 'avro-registry',
-    'scan.startup.mode' = 'earliest-offset',
-    'value.fields-include' = 'all',
-    'scan.bounded.mode' = 'unbounded'
-);
-2026-07-07 21:14:41,039 INFO [flink_migration_skill.cli] response_io.py:86 DML: 
-2026-07-07 21:14:41,039 INFO [flink_migration_skill.cli] convergence.py:40 
-Extracted 1 DDL, 0 DML
-2026-07-07 21:14:41,040 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 0 DML
-2026-07-07 21:14:41,041 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:14:41,041 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/ksql2flk/routing/merge/all_songs
-2026-07-07 21:14:41,045 INFO [flink_migration_skill.cli] convergence.py:40 No DML in response; skipped validation and deploy
-2026-07-07 21:14:41,045 INFO [flink_migration_skill.cli] cli_progress.py:16 No DML in response; skipped validation and deploy
-2026-07-07 21:14:41,046 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Output files written (no DML)
+2026-07-21 14:07:08,882 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: INSERT INTO)
+-- The Flink table customer_purchases is upstream and referenced in other DML statements.
+-- No

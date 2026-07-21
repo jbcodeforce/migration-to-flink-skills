@@ -47,7 +47,7 @@ When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statemen
 
 Use this for large pipeline scripts (many streams/tables in one file). Each Agno agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.
 
-`--table` / `table_name` is the Flink target table name used for output files on every pass. To migrate a subset, use a smaller `.ksql` file or a file with only the CREATEs you need.
+The harness writes each CREATE to `<stem>.statements/` beside the source file and tracks status in `manifest.json`. Re-running the same `--file` resumes only non-migrated statements. Each CREATE’s object name is the Flink table / output dir name. `--table` is optional and only overrides a single-statement file.
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor,claude -->
@@ -315,6 +315,9 @@ CREATE TABLE IF NOT EXISTS table_name (
 WITH ( ... );
 ```
 
+* Do not use 'PARTITION BY' this is not Flink. Use 'DISTRIBUTED BY BUCKETS' instead.
+* When using DISTRIBUTED BY, be sure to declare a PRIMARY KEY(key) NOT ENFORCED
+
 ## Quality checks
 
 - `flink_ddl_output` must not contain `CREATE STREAM`
@@ -423,9 +426,13 @@ Use the Agno harness CLI for regression and integration tests — **not** the Cu
 
 ```bash
 cd harness && uv sync --extra dev
-# Single or multi-statement .ksql — each CREATE is migrated separately
-uv run ksql-flink-migrate --table dim_all_songs --file <path>/merge.ksql --out-dir output/
+# Multi-statement .ksql — each CREATE is migrated separately (object name = Flink table)
+uv run ksql-flink-migrate --file <path>/merge.ksql --out-dir output/
+# Optional --table override for a single-statement file
+uv run ksql-flink-migrate --table dim_all_songs --file <path>/one.ksql --out-dir output/
 # translate only: add --skip-deploy
 ```
+
+Split statements and resume state live beside the source: `<stem>.statements/*.ksql` and `manifest.json`. Re-run the same command to continue after failure or interrupt.
 
 Progress is printed to the terminal; detailed logs go to `logs/ksql-flink-cli.log` (under the skill package root, e.g. `ksql-to-flink-skill/logs/`).
