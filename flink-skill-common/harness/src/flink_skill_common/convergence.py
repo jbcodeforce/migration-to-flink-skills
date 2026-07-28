@@ -183,7 +183,7 @@ def converge_flink_sql(
     dmls: list[str],
     ctx: ConvergenceContext,
     *,
-    skip_deploy: bool = False,
+    skip_deploy: bool = True,
     agent_on_failure: bool | None = None,
     on_progress: Callable[[str], None] | None = None,
 ) -> ConvergenceResult:

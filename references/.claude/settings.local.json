@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/jerome/Documents/Code/migration-to-flink-skills/**)",
+      "Bash(find . -path ./node_modules -prune -o -name \"deduplication.ksql\" -print)",
+      "Bash(ls /Users/jerome/.claude/skills/ksql-to-flink/harness)",
+      "Bash(find . -name \"deduplication.ksql\")",
+      "Bash(find . -type d -name routing)",
+      "Read(//Users/jerome/.claude/skills/ksql-to-flink/**)",
+      "Bash(uv sync *)",
+      "Bash(uv run *)"
+    ]
+  }
+}

@@ -7,7 +7,8 @@ Prepare the local environment for Agno-based migration CLIs (ksqlDB and Spark SQ
 - macOS or Linux (lab tested on Mac)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) on `PATH`
 - Python 3.11+ (`uv python install 3.11` if needed)
-- To run LLM locally, we tested only on Mac M4 and 5, running OpenAI-compatible LLM server (oMLX), define the URL endpoint in the `.env` 
+- To run LLM locally, we tested only on Mac M4 and M5, running OpenAI-compatible LLM server (oMLX). If you use a second machine on LAN, expose oMLX server to listen on 0.0.0.0, port 7999. 
+* Define the SL_LLM_BASE_URL endpoint in the `.env` to the ipaddress of the oMLX server.
 
 ## Run setup
 
@@ -33,6 +34,24 @@ Re-run verification without reinstalling:
 
 ## LLM configuration
 
+### Use oMLX on Mac M3 to M5
+
+* Install [oMLX](https://omlx.ai/) on local mac or a remote Mac on the same LAN
+* `omlx start` 
+* [localhost:8000/admin(http://localhost:8000/admin) 
+
+* Change the settings: set the network to listen on port 7999 and all ip address, also set a key. 
+    ![](./images/omlx-settings.png)
+* Restart the server: `omlx stop` then `omlx start`
+* Download a model: from `hugging face` mlx model named: `Ornith-1.0-9B-6bit`
+
+| Models Tested | Comments       |
+| ------------- | -------------- |
+| **Ornith-1.0-9B-6bit** | Run in 32GB RAMN. M3. Model in Hugging Face |
+| **Qwen3.6-27B-PARO** |INT4 quantization close to FP16 in accuracy. Good at reasoning and coding. |
+
+### Set environment variables
+
 Edit the repo-root `.env` (or set `DOTENV_FILE` to an external file):
 
 | Variable | Purpose |
@@ -49,7 +68,7 @@ Translate-only runs use `--skip-deploy` and do not need Confluent Cloud credenti
 
 ```bash
 cp .env.example .env
-export DOTENV_FILE=/path/to/reusable.env  # optional -- default is repository  .env
+export DOTENV_FILE=/path/to/.env  # optional -- default is repository  .env
 ```
 
 Fill LLM and Flink credentials in `.env`
@@ -62,7 +81,7 @@ Fill LLM and Flink credentials in `.env`
 | `ksql-flink-migrate` | `ksql-to-flink-skill/harness` |
 | `spark-flink-migrate` | `spark-to-flink-skill/harness` |
 
-*Developer: see the `piproject.toml` under flink-skill-common, ksql-to-flink-skill and spark-to-flink-skill*
+*Developer: see the `pyproject.toml` under flink-skill-common, ksql-to-flink-skill and spark-to-flink-skill*
 
 ## Skills: Agno vs Cursor/Claude Code
 

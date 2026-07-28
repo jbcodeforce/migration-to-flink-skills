@@ -39,7 +39,6 @@ plugins:
   - minify:
       minify_html: true
   - mkdocstrings
-  - table-reader
   - mermaid2
 markdown_extensions:
   - abbr

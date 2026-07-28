@@ -17,6 +17,7 @@ Think step by step, follow core principles.
 
 Confluent Cloud for Flink. Every ksqlDB `CREATE STREAM` or `CREATE TABLE` becomes Flink `CREATE TABLE IF NOT EXISTS`. Flink has no `CREATE STREAM`.
 
+<!-- runtime:cursor,claude -->
 ## Required inputs
 
 Every migration pass receives **two ksql inputs** plus naming parameters:
@@ -28,12 +29,11 @@ Every migration pass receives **two ksql inputs** plus naming parameters:
 | **`table_name`** | Flink **sink** name for output files (`ddl.{table}.sql`, `dml.{table}.sql`) and `INSERT INTO` |
 | **`source_name`** | ksql object identifier in the current `statement` (provided by harness when available) |
 
-How to use `full_ksql_script`:
-
 1. Scan every `CREATE STREAM` / `CREATE TABLE` block in the full script
 2. Build a map: ksql object name → columns, types, PRIMARY KEY hints
 3. Use those **object names verbatim** in DML `FROM` / `JOIN` clauses
 4. Do **not** substitute `KAFKA_TOPIC` values for object names (see [Table naming](#table-naming))
+<!-- runtime:cursor,claude -->
 
 ## Multi-statement files
 
@@ -42,7 +42,7 @@ When a `.ksql` file contains multiple `CREATE STREAM` or `CREATE TABLE` statemen
 
 1. Split on each `CREATE STREAM` / `CREATE TABLE` (through the terminating `;`)
 2. Clean each fragment (remove comments, `DROP`, `SET`)
-3. Translate with the Agno agent (DDL + DML in ```sql blocks only)
+3. Translate with the DDL + DML in ```sql blocks only
 4. Harness runs `clean_flink_sql_and_validate` → source stubs → validate → deploy after each pass
 
 Use this for large pipeline scripts (many streams/tables in one file). Each Agno agent call receives **only one** CREATE — including a CSAS body when present — not the whole file.

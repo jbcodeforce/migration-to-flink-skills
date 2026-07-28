@@ -96,7 +96,7 @@ def migrate(
     ),
     file: Path = typer.Option(..., "--file", "-f"),
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o"),
-    skip_deploy: bool = typer.Option(False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
+    skip_deploy: bool = typer.Option(True, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
 ) -> None:
     """
     Migrate ksqlDB CREATE statements to Flink DDL/DML, one statement at a time.

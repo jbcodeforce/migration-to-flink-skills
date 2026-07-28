@@ -3,12 +3,13 @@ name = "ksql-flink-skill"
 version = "0.1.0"
 description = "Harness and CLI for ksqlDB to Flink SQL migration skill"
 readme = "../README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "agno>=2.0.0",
     "debugpy>=1.8.0",
     "flink-skill-common",
     "openai>=1.40.0",
+    "pytest>=9.0.3",
     "python-dotenv>=1.0.0",
     "typer>=0.12.0",
 ]

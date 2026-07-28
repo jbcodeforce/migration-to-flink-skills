@@ -9,12 +9,16 @@ The approach uses LLM agents local or remote. After this lab you should be able 
 
 The core idea is to leverage LLMs and parser tools to understand the source SQL semantics and to translate them to Flink SQLs. 
 
-**This is github repository is not production ready, the LLM can generate hallucinations, and one to one mapping between source like ksqlDB or Spark to Flink is sometime not the best approach.** We expect that this agentic solution could be a strong foundation for better results, and can be enhanced over time.
+![](../images/ai_agent_new_flow.drawio.png)
+
+And validate with Confluent Cloud deployment. 
+
+**This github repository is not production ready, the LLM can generate hallucinations, and one to one mapping between source like ksqlDB or Spark to Flink is sometime not the best approach.** We expect this agentic solution will be a strong foundation for better results, and can be enhanced over time.
 
 **Migration** is a one time shot, and should not be a practice to develop Flink solution.
 
 ???+ warning "Lab Environment"
-	The Lab was developed and tested on Mac.
+	The Lab was developed and tested on Mac M3 and M5.
 
 ## Prerequisites
 
@@ -22,13 +26,31 @@ Be sure to have done the [Setup Lab](setup_lab.md) and [Setup script](https://gi
 
 ## Different runtimes
 
-**Agno harness (CLI)** — translation and validation run via Python agents and `ksql-flink-migrate` / `spark-flink-migrate`. The harness loads `skill/SKILL.md` directly. Flink SQL validation uses `flink-skill-validate` or skill scripts under `flink-skill-common/skill/scripts/`.
+The goal is to try to limit cost and expose logic to SaaS LLM inference. For that smaller model, open weights, can be run locally to computer with at least 32GB of memory. Specially the Mac with their memory architectyure share with GPUs.
 
-**Cursor (IDE)** — skills under `.cursor/skills/` are generated with MCP-oriented instructions. **You** (the IDE assistant) translate SQL using the skill rules. Validation and deploy use the `flink-skill-common` MCP server (`validate_flink_sql_offline`, `create_flink_statement`, etc.). Do **not** run `ksql-flink-migrate` or `spark-flink-migrate` in the IDE workflow. Enable MCP in Cursor Settings.
+Running local, leverages [Agno](https://docs.agno.com/) framework. Skill are defined to be adapted if user wants to use Claude Code or Cursor. 
+
+**Agno harness (CLI)** — translation and validation run via Python agents and `ksql-flink-migrate` / `spark-flink-migrate` CLIs. The harness loads `skill/SKILL.md` directly. Flink SQL validation uses `flink-skill-validate` or skill scripts under `flink-skill-common/skill/scripts/`.
+
+**Cursor (IDE)** — skills under `.cursor/skills/` are generated with MCP-oriented instructions. **You** (the IDE assistant) translate SQL using the skill rules. Validation and deploy use the `flink-skill-common` MCP server (`validate_flink_sql_offline`, `create_flink_statement`, etc.). Do **not** run `ksql-flink-migrate` or `spark-flink-migrate` in the IDE workflow. 
 
 **Claude Code (IDE)** — skills under `*/.claude/skills/`. **You** translate SQL using the skill rules. Validation uses `flink-skill-validate` CLI or bundled `validate_offline.py` scripts. Deploy uses the `flink-skill-common` MCP server when configured (`flink-skill-mcp`). Do **not** run Agno migration CLIs for IDE translation.
 
 After editing any canonical `skill/SKILL.md`, run `./scripts/adapt-skills.sh --target cursor` and/or `./scripts/adapt-skills.sh --target claude` before using IDE workflows.
+
+
+## Setup
+
+Assume [Setup Lab](./setup_lab.md) has already run (`./scripts/setup.sh`). This script generates Claude and Cursor skills,  copied under each package's `.claude/skills/` or `.cursor/skills`.
+
+* When skills are modified in one of the following sources
+
+| Skill file | Role |
+| -----------| ---------- |
+| **flink-skill-common/skill/validate-flink-sql/SKILL.md** | Used with tools to deploy a fink statement to Confluent Cloud and fix issues with Agent | 
+| **flink-skill-common/skill/source-ddl/SKILL.md** | It is possible that a statements fails because dependent tables are not present in Confluent Claude, this skill helps LLM to find the definition of those tables and create DDL for testing. | 
+| **ksql-to-flink-skill/skill/SKILL.md** | Specific for ksql to flink sql migration |
+
 
 ### Claude Code integration
 
@@ -41,14 +63,18 @@ This section covers two skill scopes: Flink SQL validation and ksqlDB to Flink m
 | spark SQL to Flink migration | [`spark-to-flink-skill`](https://github.com/jbcodeforce/migration-to-flink-skills/tree/main/spark-to-flink-skill/) | `spark-to-flink-skill/.claude/skills/spark-to-flink/` |
 
 
-## Setup
+## Commands
 
-Assume [Setup Lab](./setup_lab.md) has already run (`./scripts/setup.sh`). That generates Claude skill copies under each package's `.claude/skills/`.
+### Ksql to Flink
 
-
-1. **Environment** — repo-root `.env` with optional `FLINK_*` for remote validation and deploy.
-2. **Optional remote validation / deploy** — fill `FLINK_*` in `.env` when using `flink-skill-validate remote` or MCP deploy tools (`create_flink_statement`, etc.).
-
+* Get the last CLI documentation
+  ```sh
+  ./scripts/run-migration.sh --help
+  ```
+* Migrate ksql statements included in one file, without Confluent Cloud deployment:
+  ```sh
+  ./scripts/run-migration.sh --file ksql-statements.sql --out-dir ../project/staging 
+  ```
 
 ## Scope 1: Flink SQL validation
 

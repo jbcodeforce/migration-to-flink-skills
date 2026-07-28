@@ -30,13 +30,99 @@ The role of this component is to process the generated Flink SQL with static ana
     ```sh
     uv run pytest -vs tests/it/
     ```
-## References
 
-The references folder includes flink migrated statements from ksql and [Confluent tutorial]()
+### ksql-to-flink CLI migrate flow
 
-## Application Flows
+The `ksql-flink-migrate` command (`cli.py`) migrates one CREATE statement at a time. 
 
-### Processing Flow for Flink SQL validation
+```sh
+uv run ksql-flink-migrate --file routing.sql --out-dir ../staging/
+```
+
+But it can load a file with multiple create tables or streams and with some DML logic. If so, it will split the files in multiple separate files with a manifest to track the migration process. 
+
+```sh
+└── terminal_history.statements
+        ├── 001_SHIP_REFERENCES.ksql
+        ├── 002_SHIP_DETAILS.ksql
+        └── manifest.json
+```
+
+Cli is reentrant and resumes from the file in the manifest where the source SHA is changed. 
+
+```json
+  "statements": [
+    {
+      "index": 1,
+      "name": "ship_refs",
+      "file": "001_SHIP_REFERENCES.ksql",
+      "table": "shit_refs",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-21T02:07:19.104550+00:00"
+    },
+```
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant CLI as migrate (cli.py)
+    participant Progress as ProgressReporter
+    participant LLM as LLM server
+    participant Manifest as migration_manifest
+    participant Utils as ksql_utils
+    participant Agent as run_migration
+    participant Conv as clean_flink_sql_and_validate
+    participant FS as out_dir / statements_dir
+
+    User->>CLI: migrate --file .ksql [--table] [--out-dir] [--skip-deploy]
+    CLI->>Progress: banner (model, fixer, deploy mode)
+    CLI->>CLI: assert file exists
+    CLI->>LLM: llm_reachable()
+    LLM-->>CLI: ok
+    CLI->>FS: read source .ksql text
+
+    alt source SHA matches existing manifest
+        CLI->>Manifest: try_load_matching_manifest()
+        Manifest-->>CLI: manifest + statements_dir (resume)
+    else new or changed source
+        CLI->>Utils: split_ksql_create_statements()
+        Utils-->>CLI: CREATE STREAM/TABLE list
+        CLI->>Manifest: init_or_load_manifest()
+        Manifest->>FS: write statement_N.ksql + manifest.json
+        Manifest-->>CLI: manifest + statements_dir
+    end
+
+    CLI->>Manifest: pending_entries(manifest)
+    Manifest-->>CLI: entries not yet migrated
+
+    loop each pending statement
+        CLI->>FS: read_statement_sql(entry)
+        CLI->>Utils: clean_ksql_input()
+        CLI->>Manifest: update_status(in_progress)
+        CLI->>Progress: header [i/n] name → table
+
+        CLI->>Agent: run_migration(table, cleaned ksql, src context)
+        Agent-->>CLI: agent response (DDL/DML JSON text)
+        CLI->>Progress: agent_event(response)
+
+        CLI->>Conv: clean_flink_sql_and_validate(response, table, skip_deploy, out_dir)
+        Note over Conv: offline sqlglot → optional agent fixer → optional CC deploy
+        alt success (or DDL-only, no DML)
+            Conv-->>CLI: ConvergenceResult success / None
+            Conv->>FS: write ddl.{table}.sql, dml.{table}.sql
+            CLI->>Manifest: update_status(migrated)
+        else validation or deploy failed
+            Conv-->>CLI: ConvergenceResult failure
+            CLI->>Manifest: update_status(failed, error)
+            CLI-->>User: exit 1
+        end
+    end
+
+    CLI-->>User: Done. Processed N statement(s). Output: out_dir
+```
+
+### Processing flow for Flink SQL validation
 
 ```mermaid
 sequenceDiagram
