@@ -25,6 +25,18 @@ _ctx: HarnessContext | None = None
 _DOTENV_ENV_VAR = "DOTENV_FILE"
 
 
+def find_repo_root(start: Path | None = None) -> Path:
+    """Walk parents until ``references/flink/valid`` exists."""
+    here = (start or Path(__file__)).resolve()
+    for parent in [here.parent, *here.parents]:
+        if (parent / "references" / "flink" / "valid").is_dir():
+            return parent
+    raise FileNotFoundError(
+        "Could not locate repo root containing references/flink/valid "
+        f"(started from {here})"
+    )
+
+
 # Private API 
 def _resolve_dotenv_path(ctx: HarnessContext) -> Path | None:
     """Resolve the shared .env file path for a harness context."""

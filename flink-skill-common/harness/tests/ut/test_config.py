@@ -14,6 +14,7 @@ from flink_skill_common.config import (
     cli_log_level,
     configure,
     dotenv_path,
+    find_repo_root,
     flink_api_key,
     flink_api_secret,
     flink_catalog_name,
@@ -309,6 +310,25 @@ def test_agent_settings_from_shared_dotenv():
     assert flink_api_key() is not None
     assert flink_api_secret() is not None
     assert flink_rest_endpoint() is not None
+
+
+def test_find_repo_root_from_nested_path(tmp_path):
+    marker = tmp_path / "references" / "flink" / "valid"
+    marker.mkdir(parents=True)
+    nested = tmp_path / "flink-skill-common" / "harness" / "src"
+    nested.mkdir(parents=True)
+    assert find_repo_root(nested) == tmp_path.resolve()
+
+
+def test_find_repo_root_raises_when_missing(tmp_path):
+    with pytest.raises(FileNotFoundError, match="references/flink/valid"):
+        find_repo_root(tmp_path / "nowhere")
+
+
+def test_find_repo_root_real_monorepo():
+    root = find_repo_root()
+    assert (root / "references" / "flink" / "valid").is_dir()
+    assert (root / "flink-skill-common").is_dir()
 
 
 def test_resolve_dotenv_default_code_root(tmp_path, monkeypatch):
