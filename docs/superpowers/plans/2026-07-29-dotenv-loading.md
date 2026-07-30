@@ -43,11 +43,11 @@
 **Interfaces:**
 - Produces: `find_repo_root(start: Path | None = None) -> Path`
 
-- [ ] **Step 1:** Add failing tests `test_find_repo_root_*` in `test_config.py` (tmp tree with `references/flink/valid`; missing marker raises)
-- [ ] **Step 2:** Run tests — expect fail (symbol missing)
-- [ ] **Step 3:** Implement `find_repo_root` in `config.py`; re-export from `flink_sql_compare` if that module defines it
-- [ ] **Step 4:** Run `test_config.py` — pass
-- [ ] **Step 5:** Commit
+- [x] **Step 1:** Add failing tests `test_find_repo_root_*` in `test_config.py` (tmp tree with `references/flink/valid`; missing marker raises)
+- [x] **Step 2:** Run tests — expect fail (symbol missing)
+- [x] **Step 3:** Implement `find_repo_root` in `config.py`; re-export from `flink_sql_compare` if that module defines it
+- [x] **Step 4:** Run `test_config.py` — pass
+- [x] **Step 5:** Commit
 
 ### Task 2: Fix harness callers (`project_root` = monorepo)
 
@@ -57,10 +57,10 @@
 - Modify: `ksql-to-flink-skill/harness/tests/it/debug.py`
 - Test: light asserts in `test_config.py` or existing smoke that configured context `project_root` name ends with monorepo / contains `references`
 
-- [ ] **Step 1:** Add failing test(s) that bootstrap paths resolve to monorepo `.env` location (or assert `get_context().project_root` after import patterns)
-- [ ] **Step 2:** Fix each caller: `harness_root` = skill package, `project_root` = monorepo (prefer `find_repo_root()` where parents are error-prone)
-- [ ] **Step 3:** Run unit tests + `verify_setup` path smoke if feasible
-- [ ] **Step 4:** Commit
+- [x] **Step 1:** Add failing test(s) that bootstrap paths resolve to monorepo `.env` location (or assert `get_context().project_root` after import patterns)
+- [x] **Step 2:** Fix each caller: `harness_root` = skill package, `project_root` = monorepo (prefer `find_repo_root()` where parents are error-prone)
+- [x] **Step 3:** Run unit tests + `verify_setup` path smoke if feasible
+- [x] **Step 4:** Commit
 
 ### Task 3: Align `cc-tools` dotenv loading
 
@@ -69,15 +69,15 @@
 - Create: `cc-tools/tests/ut/test_load_dotenv_file.py`
 - Modify: docstring referencing `~/.confluent/.env`
 
-- [ ] **Step 1:** Failing UT: `DOTENV_FILE` wins; else repo-root `.env`; no `CONFLUENT_ENV_FILE`
-- [ ] **Step 2:** Implement local `find_repo_root` + `load_dotenv_file` per spec
-- [ ] **Step 3:** Run cc-tools UTs — pass
-- [ ] **Step 4:** Commit
+- [x] **Step 1:** Failing UT: `DOTENV_FILE` wins; else repo-root `.env`; no `CONFLUENT_ENV_FILE`
+- [x] **Step 2:** Implement local `find_repo_root` + `load_dotenv_file` per spec
+- [x] **Step 3:** Run cc-tools UTs — pass
+- [x] **Step 4:** Commit
 
 ### Task 4: Docs touch-up
 
 **Files:**
 - Modify only lines that document `CONFLUENT_ENV_FILE` / `~/.confluent/.env`
 
-- [ ] **Step 1:** Grep and update
-- [ ] **Step 2:** Commit
+- [x] **Step 1:** Grep and update (docstring in `deploy_flink_statements.py`; no other user docs referenced `CONFLUENT_ENV_FILE`)
+- [x] **Step 2:** Commit
