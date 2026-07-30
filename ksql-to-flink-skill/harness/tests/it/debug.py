@@ -3,8 +3,9 @@ import os
 
 from typer.testing import CliRunner
 
-_HARNESS_ROOT = Path(__file__).resolve().parents[2]
-_PROJECT_ROOT = _HARNESS_ROOT.parent
+_HARNESS_DIR = Path(__file__).resolve().parents[2]
+_SKILL_PACKAGE_ROOT = _HARNESS_DIR.parent
+_PROJECT_ROOT = _SKILL_PACKAGE_ROOT.parent
 
 from flink_skill_common.config import (
     HarnessContext,
@@ -14,12 +15,12 @@ from flink_skill_common.config import (
     llm_reachable
 )
 
-configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
+configure(HarnessContext(harness_root=_SKILL_PACKAGE_ROOT, project_root=_PROJECT_ROOT))
 
 
 from ksql_to_flink.cli import app
 
-print(f"_HARNESS_ROOT: {_HARNESS_ROOT}")
+print(f"_SKILL_PACKAGE_ROOT: {_SKILL_PACKAGE_ROOT}")
 print(f"_PROJECT_ROOT: {_PROJECT_ROOT}")
 base_url = llm_base_url()
 api_key = llm_api_key()

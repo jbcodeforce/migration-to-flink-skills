@@ -15,9 +15,9 @@ from flink_skill_common.sql_validate import SqlValidationIssue
 
 @pytest.fixture(autouse=True)
 def _configure_harness():
-    harness_root = Path(__file__).resolve().parents[2]
-    project_root = harness_root.parent
-    configure(HarnessContext(harness_root=harness_root, project_root=project_root))
+    skill_package = Path(__file__).resolve().parents[3]
+    project_root = skill_package.parent
+    configure(HarnessContext(harness_root=skill_package, project_root=project_root))
     mcp_server._deploy_tools = None
     yield
     mcp_server._deploy_tools = None

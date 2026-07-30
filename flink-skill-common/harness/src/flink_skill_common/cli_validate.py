@@ -8,7 +8,13 @@ from typing import Any
 
 import typer
 
-from flink_skill_common.config import FlinkDeployNotReadyError, HarnessContext, configure, load_env
+from flink_skill_common.config import (
+    FlinkDeployNotReadyError,
+    HarnessContext,
+    configure,
+    find_repo_root,
+    load_env,
+)
 from flink_skill_common.sql_validate import (
     SqlValidationIssue,
     validate_statements_remote,
@@ -18,8 +24,8 @@ from flink_skill_common.sql_parse import is_create_table_statement, is_insert_in
 from flink_skill_common.convergence import ConvergenceContext, converge_flink_sql
 
 
-_HARNESS_ROOT = Path(__file__).resolve().parents[2]
-_PROJECT_ROOT = _HARNESS_ROOT.parent
+_HARNESS_ROOT = Path(__file__).resolve().parents[3]
+_PROJECT_ROOT = find_repo_root(_HARNESS_ROOT)
 configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT))
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)

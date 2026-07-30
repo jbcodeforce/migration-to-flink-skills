@@ -70,20 +70,21 @@ def verify_agno_agents(repo_root: Path) -> None:
 
     agent_code = """
 from pathlib import Path
-from flink_skill_common.agents.factory import build_migration_agent, make_openai_model
-from flink_skill_common.config import HarnessContext, configure, llm_api_key, llm_base_url
+from flink_skill_common.agents.factory import build_skilled_agent, make_openai_model
+from flink_skill_common.config import HarnessContext, configure, find_repo_root, llm_api_key, llm_base_url
 
 harness_root = Path({harness!r})
-project_root = harness_root.parent
-configure(HarnessContext(harness_root=harness_root, project_root=project_root))
+skill_package = harness_root.parent
+project_root = find_repo_root(skill_package)
+configure(HarnessContext(harness_root=skill_package, project_root=project_root))
 model = make_openai_model(
     base_url=llm_base_url(),
     api_key=llm_api_key(),
     model_id="setup-verify",
 )
-agent = build_migration_agent(
+agent = build_skilled_agent(
     name={name!r},
-    skill_dir=project_root / "skill",
+    skill_dirs=[skill_package / "skill"],
     instructions=["Setup verification only."],
     model=model,
 )
@@ -169,20 +170,24 @@ def verify_llm(repo_root: Path) -> None:
     common_harness = repo_root / "flink-skill-common" / "harness"
     llm_code = """
 from pathlib import Path
-from flink_skill_common.config import HarnessContext, configure, llm_base_url
-from flink_skill_common.llm import (
-    LlmConfigError,
-    ensure_model_context,
-    llm_reachable,
+from flink_skill_common.agents.factory import (
+    fetch_model_context_windows,
     resolve_llm_model,
+)
+from flink_skill_common.config import (
+    HarnessContext,
+    configure,
+    find_repo_root,
+    llm_base_url,
+    llm_reachable,
 )
 
 repo_root = Path(%r)
-common_harness = repo_root / "flink-skill-common" / "harness"
+common_package = repo_root / "flink-skill-common"
 configure(
     HarnessContext(
-        harness_root=common_harness,
-        project_root=common_harness.parent,
+        harness_root=common_package,
+        project_root=find_repo_root(common_package),
     )
 )
 base = llm_base_url()
@@ -193,13 +198,16 @@ if not llm_reachable():
     )
 try:
     model = resolve_llm_model()
-except LlmConfigError as exc:
+except RuntimeError as exc:
     raise SystemExit(str(exc)) from exc
-try:
-    ensure_model_context(model, min_tokens=8000)
-except LlmConfigError as exc:
-    raise SystemExit(str(exc)) from exc
-print(f"  LLM ok at {base} model={model}")
+windows = fetch_model_context_windows()
+ctx = int(windows.get(model) or 0)
+if ctx and ctx < 8000:
+    raise SystemExit(
+        f"Model {model!r} context window is {ctx} tokens (need >= 8000). "
+        "Set SL_LLM_MODEL to a larger-context model."
+    )
+print(f"  LLM ok at {base} model={model}" + (f" ctx={ctx}" if ctx else ""))
 """ % str(
         repo_root
     )

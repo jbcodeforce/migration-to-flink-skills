@@ -7,12 +7,13 @@ from flink_skill_common.config import cli_log_file
 from flink_skill_common.config import FlinkDeployNotReadyError, HarnessContext, configure, flink_deploy_settings, llm_reachable
 
 HARNESS_ROOT = Path(__file__).resolve().parents[2]
+SKILL_PACKAGE_ROOT = HARNESS_ROOT.parent
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FLINK_REF = REPO_ROOT / "references/flink"
 
 @pytest.fixture(autouse=True)
 def _configure_harness_context():
-    configure(HarnessContext(harness_root=HARNESS_ROOT, project_root=HARNESS_ROOT.parent))
+    configure(HarnessContext(harness_root=SKILL_PACKAGE_ROOT, project_root=REPO_ROOT))
 
 @pytest.fixture(autouse=True)
 def _clear_logs_file(_configure_harness_context):

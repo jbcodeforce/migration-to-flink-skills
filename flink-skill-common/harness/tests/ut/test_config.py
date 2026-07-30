@@ -331,6 +331,24 @@ def test_find_repo_root_real_monorepo():
     assert (root / "flink-skill-common").is_dir()
 
 
+def test_cli_validate_project_root_is_monorepo():
+    import flink_skill_common.cli_validate as cli_validate
+
+    assert cli_validate._PROJECT_ROOT == find_repo_root()
+    assert cli_validate._HARNESS_ROOT.name == "flink-skill-common"
+    assert (cli_validate._HARNESS_ROOT / "skill").is_dir()
+
+
+def test_mcp_bootstrap_project_root_is_monorepo(monkeypatch):
+    from flink_skill_common.mcp import server as mcp_server
+
+    mcp_server._bootstrap_env()
+    ctx = get_context()
+    assert ctx.project_root == find_repo_root()
+    assert ctx.harness_root.name == "flink-skill-common"
+    configure(_HARNESS)
+
+
 def test_resolve_dotenv_default_code_root(tmp_path, monkeypatch):
     monkeypatch.delenv("DOTENV_FILE", raising=False)
     ctx = _make_ctx(tmp_path)

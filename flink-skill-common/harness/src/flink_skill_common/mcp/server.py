@@ -12,6 +12,7 @@ from flink_skill_common.config import (
     FlinkDeployNotReadyError,
     HarnessContext,
     configure,
+    find_repo_root,
     load_env,
 )
 from flink_skill_common.deploy.llm_tools import FlinkStatementLLMTools
@@ -27,8 +28,8 @@ _deploy_tools: FlinkStatementLLMTools | None = None
 
 
 def _bootstrap_env() -> None:
-    harness_root = Path(__file__).resolve().parents[3]
-    project_root = harness_root.parent
+    harness_root = Path(__file__).resolve().parents[4]
+    project_root = find_repo_root(harness_root)
     configure(HarnessContext(harness_root=harness_root, project_root=project_root))
     load_env()
 
