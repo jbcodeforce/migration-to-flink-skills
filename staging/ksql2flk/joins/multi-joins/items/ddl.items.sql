@@ -4,7 +4,10 @@ CREATE TABLE IF NOT EXISTS items (
     PRIMARY KEY (item_id) NOT ENFORCED
 ) DISTRIBUTED BY HASH(item_id) INTO 1 BUCKETS
 WITH (
+       'changelog.mode' = 'upsert',
+    'key.format' = 'json-registry',
     'value.format' = 'json-registry',
+    'scan.bounded.mode' = 'unbounded',
     'scan.startup.mode' = 'earliest-offset',
-    'scan.bounded.mode' = 'unbounded'
+    'value.fields-include' = 'all'
 );

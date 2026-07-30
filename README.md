@@ -1,13 +1,27 @@
-# Migration to Confluent Flink Skill and Tools
+# [Migration to Confluent Flink Skill and Tools](https://jbcodeforce.github.io/migration-to-flink-skills)
 
 **DISCLAIMER: the tools in this repository are not Confluent's product. It is just an open sourced project that may help developer, using AI to do migration from Spark SQL or KSQL statements to Flink SQL (for Confluent Cloud deployment). This is to take as-is but contributions are strongly encouraged. Do not blame Confluent, just try to help me helping you.**
 
+
+## Introduction 
 
 This repository is a consolidation of multiple initiatives I have started since 12/2024 on using AI to migrate from Spark SQL to Flink SQL and from Confluent KsqlDB to Flink SQL. The initial implementation was using OpenAI API to interact with local LLM running with Ollama. In 2026,  I am adopting Agno as a framework to do agentic solution. Claude Code and other generic agentic cli leverage skills to do a lot of automation. 
 
 I am convince that dedicated agents will be more efficient than generic LLM, and also local LLM inference is needed to avoid sending SQL code to Frontier LLM that keep communication information. Also long term memory, managed locally will enhance the quality of the migration over time: the more it is used, the better it should be.
 
 I'm also convince that small LLM, well prompted, with efficients tool can do a lot of such migrations. I plan also to do fine tuning for small LLM on multiple use case.
+
+[Read project documentation.](https://jbcodeforce.github.io/migration-to-flink-skills)
+
+## Change Log
+* 07/2026: 
+    - add Confluent Cloud tools to deploy and build manifest to test deployments
+    - support currated mapping 
+* 06/2026:
+    - add common layer for anything related to Flink SQL and deployment 
+    - improve 
+* 05/2026:
+    - integrate all ksql examples from Confluent Web Site in references sources
 
 ## Some design assumptions
 

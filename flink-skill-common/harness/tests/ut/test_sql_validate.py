@@ -273,7 +273,7 @@ def test_validate_statements_accepts_valid_fixture():
 
 
 def test_offline_valid_raw_classical_songs():
-    src_dir = REFERENCES_ROOT / "flink" / "valid" / "raw_classical_songs"
+    src_dir = REFERENCES_ROOT / "flink" / "valid" / "seeds" / "raw_classical_songs"
     ddls, dmls, src_dir = load_flink_pair(src_dir)
     issues = validation_issues(ddls, dmls, remote=False)
     assert_no_errors(issues)

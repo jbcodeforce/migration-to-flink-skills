@@ -20,18 +20,20 @@ Use Agno agent with skills to translate KSQL to Flink SQL.
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
+
 from flink_skill_common.agents.factory import (
     build_skilled_agent,
     make_openai_model,
     run_agent_process_response,
-    resolve_llm_model
+    resolve_llm_model,
 )
-
 from flink_skill_common.config import (
     llm_api_key,
     llm_base_url,
     skill_dir,
 )
+from flink_skill_common.curated_mappings import build_curated_context_block
 
 
 def build_ksql_migrate_agent():
@@ -43,12 +45,14 @@ def build_ksql_migrate_agent():
             "Migrate one ksqlDB CREATE STREAM/TABLE statement at a time to Confluent Cloud Flink SQL.",
             "Call get_skill_instructions('ksql-to-flink') before translating.",
             "Return DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
-         ],
+            "When a curated Flink reference is present in the prompt, match its PRIMARY KEY, "
+            "join, and changelog shape; adapt names/columns to this statement; serdes may differ.",
+        ],
         model=make_openai_model(
-                    base_url=llm_base_url(),
-                    api_key=llm_api_key(),
-                    model_id=resolve_llm_model(),
-                ),
+            base_url=llm_base_url(),
+            api_key=llm_api_key(),
+            model_id=resolve_llm_model(),
+        ),
         tools=[],
     )
 
@@ -57,9 +61,14 @@ def _migrate_prompt(
     table_name: str,
     ksql: str,
     src_ksql: str,
-    source_name: str | None = None) -> str:
+    source_name: str | None = None,
+    curated_context: str = "",
+) -> str:
     """Build a structured migration request for the agent."""
     source = source_name or "the ksql object in this statement"
+    curated = ""
+    if curated_context.strip():
+        curated = f"\n\n{curated_context.strip()}\n"
     return (
         f"Migrate the following single ksqlDB CREATE statement to Flink SQL.\n"
         f"Target Flink table name: `{table_name}`.\n"
@@ -69,7 +78,8 @@ def _migrate_prompt(
         f"Return DDL and DML in labeled ```sql blocks.\n\n"
         f"Full ksql script (for upstream table names and schemas):\n"
         f"```sql\n{src_ksql.strip()}\n```\n\n"
-        f"The harness validates and deploys after translation — do not validate or deploy yourself.\n\n"
+        f"The harness validates and deploys after translation — do not validate or deploy yourself."
+        f"{curated}\n"
         f"Statement to migrate:\n"
         f"```sql\n{ksql.strip()}\n```"
     )
@@ -81,17 +91,27 @@ def run_migration(
     src_ksql: str,
     *,
     source_name: str | None = None,
+    src_file: Path | str | None = None,
+    category: str | None = None,
     on_event: Callable[[str], None] | None = None,
 ) -> str:
     """Run migration agent and return response content."""
+    curated = build_curated_context_block(
+        table_name=table_name,
+        ksql=ksql,
+        src_ksql=src_ksql,
+        src_file=src_file,
+        category=category,
+    )
     agent = build_ksql_migrate_agent()
     return run_agent_process_response(
-            agent,
-            _migrate_prompt(
-                table_name=table_name, 
-                ksql=ksql, 
-                src_ksql=src_ksql, 
-                source_name=source_name
-                ),
-            on_event=on_event,
-         )
+        agent,
+        _migrate_prompt(
+            table_name=table_name,
+            ksql=ksql,
+            src_ksql=src_ksql,
+            source_name=source_name,
+            curated_context=curated,
+        ),
+        on_event=on_event,
+    )

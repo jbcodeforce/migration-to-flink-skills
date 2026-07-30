@@ -31,8 +31,17 @@ def get_config() -> dict[str, str]:
     """Build Flink connection config from environment variables."""
     api_key = os.environ.get("FLINK_API_KEY") or os.environ.get("CONFLUENT_CLOUD_API_KEY")
     api_secret = os.environ.get("FLINK_API_SECRET") or os.environ.get("CONFLUENT_CLOUD_API_SECRET")
-    org_id = os.environ.get("ORGANIZATION_ID") or os.environ.get("ORG_ID")
-    env_id = os.environ.get("ENVIRONMENT_ID") or os.environ.get("ENV_ID")
+    org_id = (
+        os.environ.get("FLINK_ORG_ID")
+        or os.environ.get("ORGANIZATION_ID")
+        or os.environ.get("ORG_ID")
+    )
+    env_id = (
+        os.environ.get("FLINK_ENV_ID")
+        or os.environ.get("CC_ENV_ID")
+        or os.environ.get("ENVIRONMENT_ID")
+        or os.environ.get("ENV_ID")
+    )
     pool_id = os.environ.get("FLINK_COMPUTE_POOL_ID") or os.environ.get("CPOOLID")
     database = os.environ.get("FLINK_DATABASE_NAME")
     cloud = os.environ.get("CLOUD_PROVIDER") or "aws"
@@ -43,9 +52,9 @@ def get_config() -> dict[str, str]:
     if not api_key or not api_secret:
         missing.append("FLINK_API_KEY and FLINK_API_SECRET (or CONFLUENT_CLOUD_API_KEY/SECRET)")
     if not org_id:
-        missing.append("ORGANIZATION_ID")
+        missing.append("FLINK_ORG_ID (or ORGANIZATION_ID / ORG_ID)")
     if not env_id:
-        missing.append("ENVIRONMENT_ID or ENV_ID")
+        missing.append("FLINK_ENV_ID (or ENVIRONMENT_ID / ENV_ID / CC_ENV_ID)")
     if not pool_id:
         missing.append("FLINK_COMPUTE_POOL_ID")
     if not database:

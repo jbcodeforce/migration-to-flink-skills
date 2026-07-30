@@ -13,7 +13,7 @@ from flink_ref_fixtures import (
 pytestmark = pytest.mark.integration
 
 def test_remote_valid_raw_classical_songs(require_deploy):
-    src_dir = REFERENCES_ROOT / "flink" / "valid" / "raw_classical_songs"
+    src_dir = REFERENCES_ROOT / "flink" / "valid" / "seeds" / "raw_classical_songs"
     ddls, dmls, src_dir = load_flink_pair(src_dir)
     issues = validation_issues(ddls, dmls, remote=True)
     assert_no_errors(issues)

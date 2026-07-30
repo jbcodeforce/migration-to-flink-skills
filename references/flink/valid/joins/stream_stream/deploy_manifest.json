@@ -1,0 +1,50 @@
+{
+  "user_agent": "cc-sql-tools/0.1",
+  "groups": {
+    "ddl": [
+      {
+        "name": "stream-stream-orders-ddl-orders",
+        "file": "orders/ddl.orders.sql"
+      },
+      {
+        "name": "stream-stream-shipments-ddl-shipments",
+        "file": "shipments/ddl.shipments.sql"
+      },
+      {
+        "name": "stream-stream-shipped-orders-ddl-shipped-orders",
+        "file": "shipped_orders/ddl.shipped_orders.sql"
+      }
+    ],
+    "pipeline": [
+      {
+        "name": "stream-stream-shipped-orders-pipeline-shipped-orders",
+        "file": "shipped_orders/dml.shipped_orders.sql"
+      }
+    ],
+    "data": [
+      {
+        "name": "stream-stream-shipped-orders-tests-data-insert-orders",
+        "file": "shipped_orders/tests/insert_orders.sql"
+      },
+      {
+        "name": "stream-stream-shipped-orders-tests-data-insert-shipments",
+        "file": "shipped_orders/tests/insert_shipments.sql"
+      }
+    ]
+  },
+  "deploy_all": [
+    "ddl",
+    "pipeline",
+    "data"
+  ],
+  "undeploy_all": [
+    "data",
+    "pipeline"
+  ],
+  "drop_tables": [
+    "shipped_orders",
+    "shipments",
+    "orders"
+  ],
+  "drop_statement_prefix": "stream-stream-drop"
+}

@@ -38,12 +38,6 @@ markers = [
     "integration_agent: integration tests requiring reachable LLM for deploy-fixer agent",
 ]
 
-[tool.pyright]
-include = ["src", "tests"]
-extraPaths = ["src", "tests", "tests/it"]
-pythonVersion = "3.11"
-typeCheckingMode = "basic"
-
 [dependency-groups]
 dev = [
     "debugpy>=1.8.21",

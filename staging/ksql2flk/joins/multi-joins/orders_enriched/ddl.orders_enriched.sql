@@ -1,14 +1,16 @@
 CREATE TABLE IF NOT EXISTS orders_enriched (
-    customer_id STRING,
+    customer_id STRING NOT NULL,
+    order_id STRING NOT NULL,
+    item_id STRING NOT NULL,
     customer_name STRING,
-    order_id STRING,
     purchase_date STRING,
-    item_id STRING,
     item_name STRING,
-    PRIMARY KEY (order_id) NOT ENFORCED
-) DISTRIBUTED BY HASH(order_id) INTO 1 BUCKETS
+    PRIMARY KEY (customer_id, order_id, item_id) NOT ENFORCED
+) DISTRIBUTED BY HASH(customer_id, order_id, item_id) INTO 6 BUCKETS
 WITH (
-    'value.format' = 'json-registry',
+    'key.format' = 'avro-registry',
+    'value.format' = 'avro-registry',
+    'changelog.mode' = 'upsert',
     'scan.startup.mode' = 'earliest-offset',
     'kafka.retention.time' = '0',
     'kafka.producer.compression.type' = 'snappy',

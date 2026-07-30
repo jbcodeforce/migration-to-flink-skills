@@ -77,3 +77,12 @@ def test_malformed_watermark_raises():
     sql = "CREATE TABLE t (WATERMARK FOR ts AS)"
     with pytest.raises(ParseError):
         sqlglot.parse_one(sql, read="flink")
+
+
+def test_parse_tumble_table_argument():
+    sql = """INSERT INTO detected_clicks
+SELECT ip_address, COUNT(*) AS c
+FROM TABLE(TUMBLE(TABLE clicks, DESCRIPTOR($rowtime), INTERVAL '2' MINUTE))
+GROUP BY ip_address, window_start, window_end"""
+    ast = sqlglot.parse_one(sql, read="flink")
+    assert isinstance(ast, sqlglot.exp.Insert)

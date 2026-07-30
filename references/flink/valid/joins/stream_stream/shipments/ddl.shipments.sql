@@ -11,6 +11,5 @@ CREATE TABLE IF NOT EXISTS shipments (
     'scan.bounded.mode' = 'unbounded',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
-    'value.json-registry.schema-context' = '.flink-dev',
     'value.format' = 'json-registry'
 );

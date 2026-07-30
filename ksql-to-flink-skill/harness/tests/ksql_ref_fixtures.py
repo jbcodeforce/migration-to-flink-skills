@@ -79,7 +79,14 @@ def staging_out_dir(tmp_path: Path, case: KsqlMigrateCase) -> Path:
     return tmp_path / case.category / stem
 
 
-def run_and_assert_cli(case):
+def flink_reference_dir(case: KsqlMigrateCase) -> Path:
+    """Resolve ``references/flink/valid/{category}/{stem}`` for a migrate case."""
+    from flink_skill_common.flink_sql_compare import reference_pipeline_dir
+
+    return reference_pipeline_dir(case)
+
+
+def run_and_assert_cli(case) -> Path:
     source = ksql_source_path(case)
     statements_dir = statements_dir_for(source)
     if statements_dir.exists():
@@ -100,3 +107,4 @@ def run_and_assert_cli(case):
     )
     print(result.output)
     assert result.exit_code == 0, result.output
+    return out_dir

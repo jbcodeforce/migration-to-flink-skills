@@ -3,6 +3,28 @@
   "typeCheckingMode": "basic",
   "venvPath": "flink-skill-common/harness",
   "venv": ".venv",
+  "include": [
+    "cc-tools/src",
+    "cc-tools/tests",
+    "flink-skill-common/harness/src",
+    "flink-skill-common/harness/tests",
+    "ksql-to-flink-skill/harness/src",
+    "ksql-to-flink-skill/harness/tests",
+    "spark-to-flink-skill/harness/src",
+    "spark-to-flink-skill/harness/tests",
+    "flink-qa-skill/harness/src",
+    "flink-qa-skill/harness/tests"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "**/.*",
+    "references",
+    "staging",
+    "**/output",
+    "**/tmp"
+  ],
   "executionEnvironments": [
     {
       "root": "cc-tools",

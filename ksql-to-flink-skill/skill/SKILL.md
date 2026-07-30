@@ -63,6 +63,31 @@ Use this for large pipeline scripts (many streams/tables in one file). Each pass
 `table_name` is the Flink target table name for output files on every pass. To migrate a subset, use a smaller `.ksql` file or a file with only the CREATEs you need.
 <!-- /runtime:cursor,claude -->
 
+## Curated references in harness context
+
+<!-- runtime:agno -->
+The Agno harness may inject **curated Flink goldens** into the migrate prompt when a matching pair exists under `references/flink/valid/{category}/`:
+
+| Match | Behavior |
+|-------|----------|
+| **Exact pipeline** | Source stem maps to `references/flink/valid/{category}/{stem}/` → inject that table’s `ddl`/`dml` |
+| **Category exemplars** | No exact pipeline → inject 1–2 sibling pipelines from the same category |
+| **Path category** | Prefer category from the source path (`.../joins/...`, `.../routing/...`, …) |
+| **LLM classify** | Only when the path is outside known category folders; may return `unknown` (no curated context) |
+
+When curated SQL is present:
+
+- Treat it as a **pattern example** for PRIMARY KEY, join, and changelog shape
+- Adapt names/columns to the statement being migrated — do **not** copy table names blindly
+- Serdes (`key.format` / `value.format`) may differ from the golden
+
+Category folders: `joins`, `routing`, `aggregations`, `windows`, `transformations`, `misc`.
+<!-- /runtime:agno -->
+
+<!-- runtime:cursor,claude -->
+Without harness injection, open [examples.md](references/examples.md) via `get_skill_reference` for path pointers to goldens. The harness path is stronger when available because it embeds the live Flink SQL.
+<!-- /runtime:cursor,claude -->
+
 ## Workflow
 
 <!-- runtime:agno -->

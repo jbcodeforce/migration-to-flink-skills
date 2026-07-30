@@ -137,16 +137,28 @@ def strip_sql_comments_and_drops(sql: str, *, strip_set_statements: bool = False
             continue
         if stripped.startswith("--"):
             continue
-        if "/*" in stripped and "*/" in stripped:
-            continue
-        if "/*" in stripped:
-            in_block = True
-            continue
-        if "*/" in stripped:
-            in_block = False
-            continue
+
         if in_block:
+            if "*/" not in stripped:
+                continue
+            stripped = stripped.split("*/", 1)[1].strip()
+            in_block = False
+            if not stripped:
+                continue
+
+        while "/*" in stripped:
+            before, rest = stripped.split("/*", 1)
+            if "*/" in rest:
+                _, after = rest.split("*/", 1)
+                stripped = f"{before}{after}".strip()
+            else:
+                in_block = True
+                stripped = before.strip()
+                break
+
+        if not stripped:
             continue
+
         upper = stripped.upper()
         if upper.startswith("DROP TABLE") or upper.startswith("DROP STREAM"):
             continue

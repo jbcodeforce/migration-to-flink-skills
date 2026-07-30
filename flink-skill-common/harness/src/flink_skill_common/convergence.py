@@ -212,7 +212,7 @@ def converge_flink_sql(
             offline_errors = [i for i in offline_issues if i.severity == "error"]
             ddl_path, dml_path = _resolve_paths(ctx.table_name, current_ddls, current_dmls, ctx.out_dir)
             if offline_errors:
-                error_messages = [msg for err in offline_errors for msg in err.message]
+                error_messages = [err.message for err in offline_errors]
                 if not use_agent:
                     raise SqlValidationError(offline_errors)
                 if ddl_path is None:

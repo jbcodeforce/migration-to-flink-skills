@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from sqlglot import exp
 from sqlglot.parsers.spark import SparkParser
+from sqlglot.tokens import TokenType
 
 from flink_skill_common.sqlglot_flink.expressions import MetadataColumnConstraint, Watermark
 
@@ -15,6 +16,15 @@ class FlinkParser(SparkParser):
         **SparkParser.CONSTRAINT_PARSERS,
         "WATERMARK": lambda self: self._parse_watermark(),
     }
+
+    def _parse_primary(self) -> exp.Expr | None:
+        # Flink window TVFs: TUMBLE(TABLE clicks, DESCRIPTOR(ts), ...)
+        index = self._index
+        if self._match(TokenType.TABLE):
+            if not self._match(TokenType.L_PAREN, advance=False):
+                return self._parse_table_parts()
+            self._retreat(index)
+        return super()._parse_primary()
 
     def _parse_watermark(self) -> Watermark:
         self._match_text_seq("FOR")

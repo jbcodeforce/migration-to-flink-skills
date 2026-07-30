@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS customers (
     customer_name STRING,
     PRIMARY KEY (customer_id) NOT ENFORCED
 ) DISTRIBUTED BY HASH(customer_id) INTO 6 BUCKETS WITH (
-    'changelog.mode' = 'upsert',
+    'changelog.mode' = 'append',
     'key.format' = 'avro-registry',
     'value.format' = 'avro-registry',
     'kafka.retention.time' = '0',

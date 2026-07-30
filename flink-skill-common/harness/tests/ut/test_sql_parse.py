@@ -35,6 +35,17 @@ CREATE TABLE t (id STRING);
     assert "-- comment" not in cleaned
 
 
+def test_strip_inline_block_comment_keeps_select():
+    sql = """INSERT INTO orders_enriched
+SELECT /* STATE_TTL('orders'='1d') */
+    orders.customer_id AS customer_id
+FROM orders;"""
+    cleaned = strip_sql_comments_and_drops(sql)
+    assert "STATE_TTL" not in cleaned
+    assert "SELECT" in cleaned
+    assert "orders.customer_id" in cleaned
+
+
 def test_strip_set_statements():
     sql = "SET 'auto.offset.reset'='earliest';\nCREATE STREAM s (id STRING);"
     without_set = strip_sql_comments_and_drops(sql, strip_set_statements=False)

@@ -15,8 +15,6 @@ CREATE TABLE IF NOT EXISTS shipped_orders (
     'scan.bounded.mode' = 'unbounded',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
-    'key.json-registry.schema-context' = '.flink-dev',
-    'value.json-registry.schema-context' = '.flink-dev',
     'key.format' = 'json-registry',
     'value.format' = 'json-registry'
 );
