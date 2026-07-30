@@ -320,6 +320,12 @@ def test_find_repo_root_from_nested_path(tmp_path):
     assert find_repo_root(nested) == tmp_path.resolve()
 
 
+def test_find_repo_root_when_start_is_repo_root(tmp_path):
+    marker = tmp_path / "references" / "flink" / "valid"
+    marker.mkdir(parents=True)
+    assert find_repo_root(tmp_path) == tmp_path.resolve()
+
+
 def test_find_repo_root_raises_when_missing(tmp_path):
     with pytest.raises(FileNotFoundError, match="references/flink/valid"):
         find_repo_root(tmp_path / "nowhere")

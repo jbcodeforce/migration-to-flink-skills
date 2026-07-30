@@ -28,7 +28,8 @@ _DOTENV_ENV_VAR = "DOTENV_FILE"
 def find_repo_root(start: Path | None = None) -> Path:
     """Walk parents until ``references/flink/valid`` exists."""
     here = (start or Path(__file__)).resolve()
-    for parent in [here.parent, *here.parents]:
+    search = here if here.is_dir() else here.parent
+    for parent in [search, *search.parents]:
         if (parent / "references" / "flink" / "valid").is_dir():
             return parent
     raise FileNotFoundError(
