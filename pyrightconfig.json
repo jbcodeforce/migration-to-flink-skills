@@ -5,6 +5,11 @@
   "venv": ".venv",
   "executionEnvironments": [
     {
+      "root": "cc-tools",
+      "extraPaths": ["src", "tests", "tests/it"],
+      "pythonVersion": "3.12"
+    },
+    {
       "root": "flink-skill-common/harness",
       "extraPaths": ["src", "tests", "tests/it"]
     },

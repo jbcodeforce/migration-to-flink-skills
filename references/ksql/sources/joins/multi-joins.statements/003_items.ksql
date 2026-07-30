@@ -1,0 +1,4 @@
+CREATE TABLE items (item_id STRING PRIMARY KEY, item_name STRING)
+    WITH (KAFKA_TOPIC='items',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);

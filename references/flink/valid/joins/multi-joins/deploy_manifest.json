@@ -1,0 +1,59 @@
+{
+  "user_agent": "cc-sql-tools/0.1",
+  "groups": {
+    "ddl": [
+      {
+        "name": "multi-joins-customers-ddl-customers",
+        "file": "customers/ddl.customers.sql"
+      },
+      {
+        "name": "multi-joins-items-ddl-items",
+        "file": "items/ddl.items.sql"
+      },
+      {
+        "name": "multi-joins-orders-ddl-orders",
+        "file": "orders/ddl.orders.sql"
+      },
+      {
+        "name": "multi-joins-orders-enriched-ddl-orders-enriched",
+        "file": "orders_enriched/ddl.orders_enriched.sql"
+      }
+    ],
+    "pipeline": [
+      {
+        "name": "multi-joins-orders-enriched-pipeline-orders-enriched",
+        "file": "orders_enriched/dml.orders_enriched.sql"
+      }
+    ],
+    "data": [
+      {
+        "name": "multi-joins-orders-enriched-tests-data-insert-customers",
+        "file": "orders_enriched/tests/insert_customers.sql"
+      },
+      {
+        "name": "multi-joins-orders-enriched-tests-data-insert-items",
+        "file": "orders_enriched/tests/insert_items.sql"
+      },
+      {
+        "name": "multi-joins-orders-enriched-tests-data-insert-orders",
+        "file": "orders_enriched/tests/insert_orders.sql"
+      }
+    ]
+  },
+  "deploy_all": [
+    "ddl",
+    "pipeline",
+    "data"
+  ],
+  "undeploy_all": [
+    "data",
+    "pipeline"
+  ],
+  "drop_tables": [
+    "orders_enriched",
+    "orders",
+    "items",
+    "customers"
+  ],
+  "drop_statement_prefix": "multi-joins-drop"
+}

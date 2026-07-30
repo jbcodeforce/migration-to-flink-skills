@@ -1,0 +1,4 @@
+CREATE STREAM orders (order_id STRING KEY, customer_id STRING, item_id STRING, purchase_date STRING)
+    WITH (KAFKA_TOPIC='orders',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);

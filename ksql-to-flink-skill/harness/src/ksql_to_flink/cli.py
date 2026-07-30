@@ -94,7 +94,7 @@ def migrate(
         "-t",
         help="Flink table name override (single-statement files only).",
     ),
-    file: Path = typer.Option(..., "--file", "-f"),
+    src_file: Path = typer.Option(..., "--file", "-f"),
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o"),
     skip_deploy: bool = typer.Option(True, "--skip-deploy", help="Translate only; do not deploy to CC Flink."),
 ) -> None:
@@ -107,14 +107,14 @@ def migrate(
     logger.info(
         "migrate start table=%s file=%s out_dir=%s skip_deploy=%s",
         table,
-        file,
+        src_file,
         out_dir,
         skip_deploy,
     )
     try:
         progress.banner(
             table=table or "(per-statement)",
-            file=str(file),
+            file=str(src_file),
             out_dir=str(out_dir),
             deploy="skipped" if skip_deploy else "enabled",
             model=resolve_llm_model(),
@@ -123,9 +123,9 @@ def migrate(
             log=str(cli_log_file()),
         )
 
-        if not file.exists():
-            logger.error("File not found: %s (cwd=%s)", file.resolve(), Path.cwd())
-            typer.echo(f"File not found: {file}", err=True)
+        if not src_file.exists():
+            logger.error("File not found: %s (cwd=%s)", src_file.resolve(), Path.cwd())
+            typer.echo(f"File not found: {src_file}", err=True)
             raise typer.Exit(1)
 
         progress.step(1, f"Checking LLM at {llm_base_url()} ...")
@@ -139,12 +139,12 @@ def migrate(
             )
             raise typer.Exit(1)
         progress.done(1, f"LLM reachable at {llm_base_url()}")
-        src_ksql_text = file.read_text()
+        src_ksql_text = src_file.read_text()
         statements_dir = None
         manifest = None
         rebuilt = False
 
-        matched = try_load_matching_manifest(file, src_ksql_text)
+        matched = try_load_matching_manifest(src_file, src_ksql_text)
         if matched is not None:
             manifest, statements_dir = matched
             total = len(manifest.statements)
@@ -181,7 +181,7 @@ def migrate(
             )
 
             manifest, statements_dir, rebuilt = init_or_load_manifest(
-                file,
+                src_file,
                 ksql_statements,
                 src_ksql_text,
                 names=statement_names,
@@ -334,7 +334,7 @@ def migrate(
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     except Exception as exc:
-        logger.exception("migrate failed table=%s file=%s", table, file)
+        logger.exception("migrate failed table=%s file=%s", table, src_file)
         typer.echo(f"Error: {format_user_error(exc)}", err=True)
         raise typer.Exit(1) from exc
 

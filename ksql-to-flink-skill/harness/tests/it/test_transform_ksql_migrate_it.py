@@ -11,6 +11,6 @@ def test_llm_reachable():
 
 
 def test_migrate_ksql_col_diff( require_llm, require_deploy):
-    case = KsqlMigrateCase("transformations/col_diff.ksql", "customer_purchases", "transformations")
+    case = KsqlMigrateCase("transformations/col_diff.ksql","customer_purchases", "transformations")
     run_and_assert_cli(case)
 

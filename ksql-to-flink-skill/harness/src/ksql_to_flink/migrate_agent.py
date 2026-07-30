@@ -43,8 +43,7 @@ def build_ksql_migrate_agent():
             "Migrate one ksqlDB CREATE STREAM/TABLE statement at a time to Confluent Cloud Flink SQL.",
             "Call get_skill_instructions('ksql-to-flink') before translating.",
             "Return DDL and DML as separate labeled ```sql fenced blocks (DDL first, then DML).",
-            "Do not validate, deploy, or generate source stub DDL — the harness runs convergence after translation.",
-        ],
+         ],
         model=make_openai_model(
                     base_url=llm_base_url(),
                     api_key=llm_api_key(),

@@ -1,0 +1,4 @@
+CREATE TABLE customers (customer_id STRING PRIMARY KEY, customer_name STRING)
+    WITH (KAFKA_TOPIC='customers',
+          VALUE_FORMAT='JSON',
+          PARTITIONS=1);

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "source_file": "/Users/jerome/Documents/Code/migration-to-flink-skills/references/ksql/sources/joins/multi-joins.ksql",
+  "source_sha256": "a3c7182292d6dd3bc38693d429c8936a72a3904d05b0fffbcff30771a4c1fe44",
+  "created_at": "2026-07-29T16:19:38.468000+00:00",
+  "updated_at": "2026-07-29T16:27:34.175250+00:00",
+  "statements": [
+    {
+      "index": 1,
+      "name": "orders",
+      "file": "001_orders.ksql",
+      "table": "orders",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-29T16:21:25.571719+00:00"
+    },
+    {
+      "index": 2,
+      "name": "customers",
+      "file": "002_customers.ksql",
+      "table": "customers",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-29T16:22:26.834832+00:00"
+    },
+    {
+      "index": 3,
+      "name": "items",
+      "file": "003_items.ksql",
+      "table": "items",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-29T16:23:17.063174+00:00"
+    },
+    {
+      "index": 4,
+      "name": "orders_enriched",
+      "file": "004_orders_enriched.ksql",
+      "table": "orders_enriched",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-29T16:27:34.175250+00:00"
+    }
+  ]
+}

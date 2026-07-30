@@ -8,9 +8,8 @@
 
 ```bash
 cd ksql-to-flink-skill/harness
-uv run pytest tests/it/test_ksql_migrate_it.py -m integration -v
-# single case:
-uv run pytest tests/it/test_ksql_migrate_it.py -k "routing/filtering" -vs
+uv run pytest tests/it/test_aggregation_ksql_migrate_it.py -m integration -v
+
 ```
 
 Fixture manifest: [`ksql_ref_fixtures.py`](ksql_ref_fixtures.py).

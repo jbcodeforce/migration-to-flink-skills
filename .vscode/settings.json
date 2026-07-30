@@ -1,12 +1,20 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/flink-skill-common/harness/.venv/bin/python",
   "python.analysis.include": [
+    "cc-tools/src",
+    "cc-tools/tests",
+    "flink-skill-common/harness/src",
     "flink-skill-common/harness/tests",
-    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/src",
     "ksql-to-flink-skill/harness/tests",
-    "spark-to-flink-skill/harness/tests"
+    "spark-to-flink-skill/harness/src",
+    "spark-to-flink-skill/harness/tests",
+    "flink-qa-skill/harness/src",
+    "flink-qa-skill/harness/tests"
   ],
   "python.analysis.extraPaths": [
+    "cc-tools/src",
+    "cc-tools/tests",
     "flink-skill-common/harness/src",
     "flink-skill-common/harness/tests",
     "flink-skill-common/harness/tests/it",
@@ -14,15 +22,25 @@
     "ksql-to-flink-skill/harness/tests",
     "ksql-to-flink-skill/harness/tests/it",
     "spark-to-flink-skill/harness/src",
-    "spark-to-flink-skill/harness/tests"
+    "spark-to-flink-skill/harness/tests",
+    "flink-qa-skill/harness/src",
+    "flink-qa-skill/harness/tests"
   ],
   "cursorpyright.analysis.include": [
+    "cc-tools/src",
+    "cc-tools/tests",
+    "flink-skill-common/harness/src",
     "flink-skill-common/harness/tests",
-    "flink-skill-common/harness/tests/it",
+    "ksql-to-flink-skill/harness/src",
     "ksql-to-flink-skill/harness/tests",
-    "spark-to-flink-skill/harness/tests"
+    "spark-to-flink-skill/harness/src",
+    "spark-to-flink-skill/harness/tests",
+    "flink-qa-skill/harness/src",
+    "flink-qa-skill/harness/tests"
   ],
   "cursorpyright.analysis.extraPaths": [
+    "cc-tools/src",
+    "cc-tools/tests",
     "flink-skill-common/harness/src",
     "flink-skill-common/harness/tests",
     "flink-skill-common/harness/tests/it",
@@ -30,6 +48,8 @@
     "ksql-to-flink-skill/harness/tests",
     "ksql-to-flink-skill/harness/tests/it",
     "spark-to-flink-skill/harness/src",
-    "spark-to-flink-skill/harness/tests"
+    "spark-to-flink-skill/harness/tests",
+    "flink-qa-skill/harness/src",
+    "flink-qa-skill/harness/tests"
   ]
 }
