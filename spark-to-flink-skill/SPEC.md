@@ -118,14 +118,17 @@ research/spark-to-flink-skill/
 ├── harness/
 │   ├── pyproject.toml
 │   ├── .env.example
-│   ├── src/spark_flink_skill/
-│   │   ├── pipeline.py
-│   │   ├── prompts/                 # synced from shift_left via scripts/sync-prompts.sh
-│   │   └── agents/migrate_agent.py
+│   ├── src/spark_to_flink/
+│   │   ├── cli.py
+│   │   ├── migrate_agent.py
+│   │   ├── config.py
+│   │   ├── sql_utils.py
+│   │   ├── compare.py
+│   │   └── output.py
 │   └── tests/
-│       ├── test_pipeline_offline.py
-│       ├── test_c360_golden.py      # integration; compares to c360_flink_processing
-│       └── test_spark_project.py    # optional feature scripts
+│       ├── spark_ref_fixtures.py    # c360 golden pair catalog (test-only)
+│       ├── ut/                      # offline unit tests
+│       └── it/                      # integration (c360 golden; live LLM)
 ├── scripts/
 │   ├── sync-prompts.sh
 │   └── run-migration.sh
@@ -182,9 +185,10 @@ SL_LLM_MODEL=qwen3-coder-30b-a3b-instruct-mlx-4bit
 SL_LLM_API_KEY=no_llm_key
 ```
 
-CLI: `uv run spark-flink-migrate --table NAME --file PATH [--out-dir DIR]`
+CLI: `uv run spark-flink-migrate --file PATH [--table NAME] [--out-dir DIR]`
+(`--table` optional; `--skip-deploy` defaults to true / offline validate)
 
-Smoke: `uv run spark-flink-migrate --table fct_customer_360_profile --file path/to/fct_customer_360_profile.sql --out-dir output/ --skip-deploy`
+Smoke: `uv run spark-flink-migrate --file path/to/fct_customer_360_profile.sql --out-dir output/`
 
 ## Deployment
 
@@ -215,8 +219,8 @@ README documents copy/symlink steps for both runtimes.
 
 ### Harness
 
-1. `uv run pytest harness/tests/test_pipeline_offline.py` passes without LLM.
-2. With oMLX running, `test_c360_golden.py` passes on at least `src_customers.sql` and `fct_customer_360_profile.sql` with ≥80% DDL/DML match vs `c360_flink_processing`.
+1. `uv run pytest harness/tests/ut/test_sql_parsing.py` passes without LLM.
+2. With oMLX running, `tests/it/test_c360_golden.py` passes on at least `src_customers` with ≥80% DDL/DML match vs c360 Flink goldens.
 3. `uv run spark-flink-migrate` writes DDL/DML for a given c360 Spark file.
 4. Agno agent smoke completes without tool errors.
 

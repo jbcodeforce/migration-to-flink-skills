@@ -1,1 +1,0 @@
-{{ dedup(ref('app_raw.bpm_participants'), 'enterprise_id, workflow_id, task_id, user_id') }} 

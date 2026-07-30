@@ -1,6 +1,6 @@
 # Spark SQL to Flink SQL migration skill
 
-Portable agent skill for migrating Apache Spark SQL to Confluent Cloud for Flink SQL. Encodes the same rules and pipeline as `shift_left_utils` `SparkToFlinkSqlAgent`, packaged for Claude Code, Cursor, and other `SKILL.md` runtimes.
+Portable agent skill for migrating Apache Spark SQL to Confluent Cloud for Flink SQL. Encodes the same rules and pipeline packaged for Claude Code, Cursor, and other `SKILL.md` runtimes.
 
 See [SPEC.md](SPEC.md) for full specification.
 
@@ -8,7 +8,7 @@ See [SPEC.md](SPEC.md) for full specification.
 
 1. **Skill** (`skill/SKILL.md` + `skill/references/`) — agent playbook with translation and validation rules.
 2. **Harness** (`harness/`) — Agno agent with `LocalSkills` loading the same skill, calling oMLX via `OpenAIChat`. Shared Python utilities live in [`../flink-skill-common/`](../flink-skill-common/) (`compare`, `output`, `llm`, etc.).
-3. **Golden references** — Spark inputs in `flink_project_demos/customer_360/c360_spark_processing/`, Flink outputs in `c360_flink_processing/pipelines/**/sql-scripts/`.
+3. **Golden references** — Spark inputs in `references/spark/c360/`, Flink outputs in ``.
 
 Harness steps: clean → detect CREATE statements (deterministic) → agent migration via skill (LLM) → parse DDL/DML → write files.
 
@@ -32,9 +32,10 @@ Start oMLX or any OpenAI-compatible server, then:
 
 ```bash
 uv run spark-flink-migrate \
-  --table src_c360_customers \
   --file ../../../flink_project_demos/customer_360/c360_spark_processing/sources/src_customers.sql \
   --out-dir output/
+# Optional: --table src_c360_customers (single-statement override)
+# Deploy is off by default; omit --skip-deploy or pass it explicitly for offline-only.
 ```
 
 ## Deploy skill — Cursor
@@ -82,12 +83,20 @@ See [assets/FIXTURES.md](assets/FIXTURES.md) for golden pair paths.
 
 | Test file | LLM required | Purpose |
 |-----------|--------------|---------|
-| `test_pipeline_offline.py` | No | clean, split, detect |
-| `test_fixtures.py` | No | c360 paths exist |
-| `test_compare.py` | No | compare utility |
-| `test_agent_skills.py` | No | LocalSkills loads spark-to-flink skill |
-| `test_output.py` | No | DDL/DML response parsing |
-| `test_c360_golden.py` | Yes (`integration`) | live agent migration vs golden |
+| `tests/ut/test_sql_parsing.py` | No | clean, split, detect, object name |
+| `tests/ut/test_fixtures.py` | No | c360 golden catalog registration |
+| `tests/ut/test_compare.py` | No | compare utility |
+| `tests/ut/test_agent_skills.py` | No | LocalSkills loads spark-to-flink skill |
+| `tests/ut/test_cli_migrate*.py` | No | manifest resume / progress (mocked) |
+| `tests/it/test_c360_golden.py` | Yes (`integration`) | live agent migration vs golden |
+| `tests/it/test_src_customer_profiles_migrate_it.py` | Yes (`integration`) | live migrate + dump LLM prompt/response |
+
+Trace one live migration (prints prompt/response; needs reachable LLM):
+
+```bash
+cd harness
+uv run pytest tests/it/test_src_customer_profiles_migrate_it.py -m integration -s -v
+```
 
 ## Environment
 

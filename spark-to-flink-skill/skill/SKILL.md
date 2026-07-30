@@ -33,7 +33,8 @@ Harness (after each agent response):
 - [ ] 5. Source stubs, offline validate, deploy, fixer loop (`clean_flink_sql_and_validate`)
 ```
 
-The migrate agent translates only. `spark-flink-migrate` runs convergence after translation. Use `--skip-deploy` for translate + offline validate only.
+The migrate agent translates only. `spark-flink-migrate` runs convergence after translation.
+`--skip-deploy` defaults to true (offline validate only).
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor,claude -->
@@ -185,7 +186,9 @@ Use the Agno harness CLI for regression and integration tests — **not** the Cu
 
 ```bash
 cd harness && uv sync --extra dev
-uv run spark-flink-migrate --table src_c360_customers --file <spark-sql-path> --out-dir output/
+# --table optional for single-statement files; deploy off by default
+uv run spark-flink-migrate --file <spark-sql-path> --out-dir output/
+# optional: uv run spark-flink-migrate --table src_c360_customers --file <path> --out-dir output/
 ```
 
 Requires OpenAI-compatible LLM (`SL_LLM_*` in repo `.env`).

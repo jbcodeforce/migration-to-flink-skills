@@ -41,16 +41,12 @@ Think step by step, follow core princiles but I bet 200$ you can't solve this co
 
 Add those properties if the format is JSON:
 ```
-'key.json-registry.schema-context' = '.flink-dev',
-'value.json-registry.schema-context' = '.flink-dev',
 'key.format' = 'json-registry',
 'value.format' = 'json-registry',
 ```
 
 Add the following properties if the format is AVRO:
 ```
-'key.avro-registry.schema-context' = '.flink-dev',
-'value.avro-registry.schema-context' = '.flink-dev',
 'key.format' = 'avro-registry',
 'value.format' = 'avro-registry',
 ```

@@ -33,7 +33,7 @@ From a migration point of view there two main steps:
 
 The current intentional split the code into:
 
-1. Migration agents ([ksql migrate_agent.py](ksql-to-flink-skill/harness/src/ksql_to_flink/migrate_agent.py)): tools=[], loads ksql-to-flink skill — translation only. Or [Spark migration agent](spark-to-flink-skill/harness/src/spark_to_flink/agents/migrate_agent.py)
+1. Migration agents ([ksql migrate_agent.py](ksql-to-flink-skill/harness/src/ksql_to_flink/migrate_agent.py)): tools=[], loads ksql-to-flink skill — translation only. Or [Spark migration agent](spark-to-flink-skill/harness/src/spark_to_flink/migrate_agent.py)
 1. Deploy fixer agent ([deploy_fixer.py](flink-skill-common/harness/src/flink_skill_common/agents/deploy_fixer.py)): validate-flink-sql skill + FlinkStatementLLMTools — fix loop only.
 1. Convergence loop ([convergence.py](flink-skill-common/harness/src/flink_skill_common/convergence.py)): deterministic Python orchestration; agent is optional on failure.
 

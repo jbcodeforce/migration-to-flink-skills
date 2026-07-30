@@ -102,7 +102,8 @@ Examples:
   uv run ksql-flink-migrate --table my_table --file path/to.ksql --out-dir output/ --skip-deploy
 
   cd spark-to-flink-skill/harness
-  uv run spark-flink-migrate --table my_table --file path/to.sql --out-dir output/ --skip-deploy
+  uv run spark-flink-migrate --file path/to.sql --out-dir output/
+  # optional: --table my_table ; deploy off by default (--skip-deploy)
 
 Deploy to Confluent Cloud requires FLINK_* credentials in .env (optional for translate-only runs).
 

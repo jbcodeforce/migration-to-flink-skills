@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS acting_events (
     PRIMARY KEY (name) NOT ENFORCED
 ) DISTRIBUTED BY HASH(name) INTO 1 BUCKETS WITH (
     'value.format' = 'avro-registry',
-    'value.avro-registry.schema-context' = '.flink-dev',
-    'key.avro-registry.schema-context' = '.flink-dev',
     'scan.startup.mode' = 'earliest-offset',
     'value.fields-include' = 'all',
     'kafka.retention.time' = '0',
@@ -97,8 +95,6 @@ Generate response in JSON format with two fields:
 * `'value_format' = 'JSON'` → `'value.format' = 'json-registry'`
 * `'value_format' = 'AVRO'` → `'value.format' = 'avro-registry'`
 * `'key_format' = 'KAFKA'` → `'key.format' = 'json-registry'`
-* Add avro schema context: `'key.avro-registry.schema-context' = '.flink-dev'`
-* Add json schema context: `'key.json-registry.schema-context' = '.flink-dev'`
 * Add startup mode: `'scan.startup.mode' = 'earliest-offset'`
 * Include all fields: `'value.fields-include' = 'all'`
 * Add 'kafka.retention.time' = '0',

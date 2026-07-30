@@ -158,7 +158,8 @@ Use the Agno harness CLI for regression and integration tests — **not** the Cu
 
 ```bash
 cd harness && uv sync --extra dev
-uv run spark-flink-migrate --table src_c360_customers --file <spark-sql-path> --out-dir output/
+# --table optional for single-statement files; deploy off by default
+uv run spark-flink-migrate --file <spark-sql-path> --out-dir output/
 ```
 
 Requires OpenAI-compatible LLM (`SL_LLM_*` in repo `.env`).
