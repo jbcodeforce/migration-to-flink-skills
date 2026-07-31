@@ -21,6 +21,10 @@ def test_local_skills_loads_spark_to_flink():
 
     skill = skills.get_skill("spark-to-flink")
     assert skill is not None
+    print(f"\n====== {skill.name} ====== DESCRIPTION \n{skill.description}")
+    print(f"\n====== {skill.name} ====== INSTRUCTIONS \n{skill.instructions}")
+    print(f"\n====== {skill.name} ====== REFERENCES \n{skill.references}")
+
     assert "Flink SQL" in skill.description or "Flink SQL" in skill.instructions
     assert "translation-rules.md" in skill.references
     assert "validation-rules.md" in skill.references

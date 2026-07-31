@@ -4,10 +4,11 @@
 **/.pytest_cache/
 **/.ruff_cache/
 **/.vscode/*
-!.vscode/settings.json
+!**/.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
 **/.cursorrules
 **/.cursor/
-**/.cursor/rules/
 **/.cursor/rules/
 **/.env
 **/site/

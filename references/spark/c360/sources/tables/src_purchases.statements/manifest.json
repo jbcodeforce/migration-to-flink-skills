@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "source_file": "/Users/jerome/Documents/Code/migration-to-flink-skills/references/spark/c360/sources/tables/src_purchases.sql",
+  "source_sha256": "bd1a52267a3633e94f71cc09c5110a58ca57279127a4b9ecd688e76d1d918b89",
+  "created_at": "2026-07-31T00:24:50.430466+00:00",
+  "updated_at": "2026-07-31T00:27:05.885821+00:00",
+  "statements": [
+    {
+      "index": 1,
+      "name": "src_purchases",
+      "file": "001_src_purchases.sql",
+      "table": "src_purchases",
+      "status": "migrated",
+      "error": null,
+      "updated_at": "2026-07-31T00:27:05.885821+00:00"
+    }
+  ]
+}

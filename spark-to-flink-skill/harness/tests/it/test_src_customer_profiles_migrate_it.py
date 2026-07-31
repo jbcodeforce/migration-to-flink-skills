@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from flink_skill_common.curated_mappings import build_curated_context_block
-from spark_ref_fixtures import C360_SPARK_ROOT, REPO_ROOT
+from spark_ref_fixtures import SparkMigrateCase, spark_source_path
 from spark_to_flink.migrate_agent import (
     _migrate_prompt,
     build_spark_migrate_agent,
@@ -23,15 +23,13 @@ from spark_to_flink.sql_utils import (
 
 pytestmark = pytest.mark.integration
 
-SOURCE_REL = Path("references/spark/c360/sources/tables/src_customer_profiles.sql")
+_CASE = SparkMigrateCase(
+    "tables/src_customer_profiles.sql", "src_customer_profiles", "tables"
+)
 
 
 def _source_path() -> Path:
-    path = REPO_ROOT / SOURCE_REL
-    if path.is_file():
-        return path
-    alt = C360_SPARK_ROOT / "sources" / "tables" / "src_customer_profiles.sql"
-    return alt
+    return spark_source_path(_CASE)
 
 
 def _agent_with_debug(seen: dict):

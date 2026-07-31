@@ -1,11 +1,12 @@
 # Translation rules
 
-Vendored from `shift_left_utils/.../prompts/spark_fsql/translator.txt`. Re-sync with `scripts/sync-prompts.sh`.
+
+* PRESERVE the column name casing (camelCase for kpiName etc, or snake_case, etc.).
 
 ## Data types
 
 - `VARCHAR` → `STRING`
-- `TIMESTAMP` → `TIMESTAMP(3)`
+- `TIMESTAMP` → `TIMESTAMP(3)` or `TIMESTAMP_LTZ(3)`
 - `NUMERIC` → `DECIMAL(p,s)`
 - Lowercase table names; do not quote table names
 
@@ -14,6 +15,10 @@ Vendored from `shift_left_utils/.../prompts/spark_fsql/translator.txt`. Re-sync 
 - `CREATE TABLE` → `CREATE TABLE IF NOT EXISTS`
 - Add `PRIMARY KEY NOT ENFORCED` on natural or surrogate key
 - `DISTRIBUTED BY HASH(key_column) INTO N BUCKETS`
+
+## DML
+- Start `INSERT INTO {table_name}`
+- End each `SELECT` clause line with comma (except the last)
 
 ## Connector WITH properties
 
@@ -27,8 +32,6 @@ Vendored from `shift_left_utils/.../prompts/spark_fsql/translator.txt`. Re-sync 
 Always add:
 
 ```
-'key.avro-registry.schema-context' = '.flink-dev'
-'value.avro-registry.schema-context' = '.flink-dev'
 'scan.startup.mode' = 'earliest-offset'
 'value.fields-include' = 'all'
 'kafka.retention.time' = '0'
@@ -44,6 +47,10 @@ Always add:
 - `split_part()` → `REGEXP_EXTRACT()` when possible
 - `DATEDIFF()` → `TIMESTAMPDIFF()`
 - `CURRENT_DATE()` → `CURRENT_DATE`
+-  start CONCAT_WS with ',' as delimiter: `MD5(CONCAT_WS(',', ...))`
+-  `DATEADD()` → ` TIMESTAMPDIFF(DAY, CAST(created_date AS TIMESTAMP_LTZ(3)), CURRENT_DATE) as `
+
+
 
 ## Joins
 

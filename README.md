@@ -54,6 +54,14 @@ See [book view](https://jbcodeforce.github.io/migration-to-flink-skills/)
 
 ## Environment setup
 
+Open the repo as a **multi-root workspace** (required for reliable Python Go to Definition / rename):
+
+```bash
+cursor migration-to-flink.code-workspace
+```
+
+Do not open the monorepo folder alone — Pyright hangs across packages in single-root mode.
+
 Run the setup script to install all harness dependencies and verify local Agno + LLM configuration:
 
 ```bash

@@ -1,15 +1,15 @@
 # Validation rules
 
-From `shift_left_utils/.../prompts/common/mandatory_validation.txt`.
-
 ## Primary key
 
 - Every `CREATE TABLE` must declare `PRIMARY KEY (column) NOT ENFORCED`
-- PK column must match `DISTRIBUTED BY HASH(column)`
+- PK column must match `DISTRIBUTED BY HASH(column)`. Place this clause after the last column declaration and before the WITH clause.
+- If no DISTRIBUTED BY exists, use the first column as primary key
 
 ## Columns
 
 - DML column names must match DDL
+- Ensure proper data type declarations
 - Remove `$rowtime TIMESTAMP(3) METADATA FROM 'timestamp'` from DDL
 - Backtick reserved words: `` `state` ``, `` `order` ``, etc.
 
@@ -29,11 +29,17 @@ Default avro-registry block:
 'scan.bounded.mode' = 'unbounded',
 'scan.startup.mode' = 'earliest-offset',
 'value.fields-include' = 'all',
-'key.avro-registry.schema-context' = '.flink-dev',
-'value.avro-registry.schema-context' = '.flink-dev',
 'key.format' = 'avro-registry',
 'value.format' = 'avro-registry'
 ```
+
+Use those properties if the format is JSON:
+```
+'key.format' = 'json-registry',
+'value.format' = 'json-registry',
+```
+
+Prefer Avro.
 
 ## Syntax
 

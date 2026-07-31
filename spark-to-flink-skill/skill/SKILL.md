@@ -11,30 +11,40 @@ description: >-
 
 ## Scope
 
-Confluent Cloud for Flink only. Convert Spark batch SQL (and eventually PySpark) into unbounded Flink streaming SQL with Kafka registry connectors.
+Confluent Cloud for Flink only. Convert Spark batch SQL into unbounded Flink streaming SQL with Kafka registry connectors. Insert values for tests are translated as insert values too.
 
 ## Required inputs
 
 - `table_name` — target Flink table (lowercase, unquoted)
-- Spark SQL source — file path or pasted SQL
-- Optional `schema_context` — default `.flink-dev`
+- Spark SQL source pasted SQL
+- Optional `schema_context` as json, avro or protobuf schema
 
 ## Workflow checklist
 
 <!-- runtime:agno -->
 ```
-Agent (translation only):
-- [ ] 1. Clean input (harness)
-- [ ] 2. Detect CREATE TABLE / TEMPORARY VIEW statements (harness)
-- [ ] 3. Translate each statement to Flink DDL + DML (Agno agent — ```sql blocks only)
+- [ ] 1. Translate each statement to Flink DDL + DML as ```sql blocks only.
+- [ ] 2. Keep insert into with value as a DML for seed SQL
+- [ ] 3. Perform some validations
 
-Harness (after each agent response):
-- [ ] 4. Extract SQL, write output files
-- [ ] 5. Source stubs, offline validate, deploy, fixer loop (`clean_flink_sql_and_validate`)
+## Step 1 — Translate
+
+Apply rules from [translation-rules.md](references/translation-rules.md). Output JSON only:
+
+```json
+{
+  "sql_input": "<original spark sql>",
+  "flink_ddl_output": "CREATE TABLE IF NOT EXISTS ...",
+  "flink_dml_output": "INSERT INTO ..."
+}
 ```
 
-The migrate agent translates only. `spark-flink-migrate` runs convergence after translation.
-`--skip-deploy` defaults to true (offline validate only).
+Spark `CREATE OR REPLACE TEMPORARY VIEW` becomes Flink `INSERT INTO` continuous query reading upstream Kafka tables. CSV/temporary view setup in Spark is replaced by existing `src_*` raw Kafka tables in the Flink project.
+
+## Step 3 — Mandatory validation
+
+The migrate agent does **not** validate or deploy. After translation, `spark-flink-migrate` calls `clean_flink_sql_and_validate` (same convergence path as ksql). Apply [validation-rules.md](references/validation-rules.md) mentally when translating; harness enforces them during convergence.
+```
 <!-- /runtime:agno -->
 
 <!-- runtime:cursor,claude -->
@@ -47,7 +57,6 @@ The migrate agent translates only. `spark-flink-migrate` runs convergence after 
 ```
 
 **You** perform translation using this skill. Do **not** run `uv run spark-flink-migrate` — that invokes a separate Agno local agent.
-<!-- /runtime:cursor,claude -->
 
 ## Step 1 — Clean input
 
@@ -56,6 +65,7 @@ Remove `DROP TABLE`, `DROP STREAM`, `--` line comments, and `/* */` block commen
 ## Step 2 — Detect statements
 
 If multiple `CREATE TABLE` or `CREATE OR REPLACE TEMPORARY VIEW` blocks exist, translate each separately.
+
 
 ## Step 3 — Translate
 
@@ -74,6 +84,7 @@ Spark `CREATE OR REPLACE TEMPORARY VIEW` becomes Flink `INSERT INTO` continuous 
 ## Step 4 — Mandatory validation
 
 Apply [validation-rules.md](references/validation-rules.md), then validate with `flink-skill-common` tools:
+<!-- /runtime:cursor,claude -->
 
 <!-- runtime:cursor -->
 - Call MCP `validate_flink_sql_offline` on DDL and DML. On errors, apply the `validate-flink-sql` skill and re-validate.
@@ -87,11 +98,18 @@ Apply [validation-rules.md](references/validation-rules.md), then validate with 
 - On deploy failure: follow **`validate-flink-sql` fix loop** (CLI validate + MCP deploy tools when configured).
 <!-- /runtime:claude -->
 
-<!-- runtime:agno -->
-The migrate agent does **not** validate or deploy. After translation, `spark-flink-migrate` calls `clean_flink_sql_and_validate` (same convergence path as ksql). Apply [validation-rules.md](references/validation-rules.md) mentally when translating; harness enforces them during convergence.
-<!-- /runtime:agno -->
+<!-- runtime:cursor,claude -->
+## Step 5 — Write output files
 
-Convention checks:
+```
+ddl.{table_name}.sql   — CREATE TABLE IF NOT EXISTS
+dml.{table_name}.sql   — INSERT INTO ... SELECT ...
+```
+<!-- /runtime:cursor,claude -->
+
+## Core translation rules (summary)
+
+### Convention checks
 
 - Every `CREATE TABLE` has `PRIMARY KEY (...) NOT ENFORCED`
 - `DISTRIBUTED BY HASH(pk_column) INTO 1 BUCKETS` uses same column as PK
@@ -99,15 +117,6 @@ Convention checks:
 - Default format: avro-registry with `.flink-dev` schema context
 - Replace `!=` with `<>`
 - Backtick SQL reserved words used as column names (`state`, `order`, etc.)
-
-## Step 5 — Write output files
-
-```
-ddl.{table_name}.sql   — CREATE TABLE IF NOT EXISTS
-dml.{table_name}.sql   — INSERT INTO ... SELECT ...
-```
-
-## Core translation rules (summary)
 
 ### Types
 
@@ -143,8 +152,6 @@ CREATE TABLE IF NOT EXISTS table_name (
 ) DISTRIBUTED BY HASH(col1) INTO 1 BUCKETS
 WITH (
     'changelog.mode' = 'append',
-    'key.avro-registry.schema-context' = '.flink-dev',
-    'value.avro-registry.schema-context' = '.flink-dev',
     'key.format' = 'avro-registry',
     'value.format' = 'avro-registry',
     'kafka.retention.time' = '0',
@@ -179,24 +186,9 @@ SELECT ... FROM step;
 
 See [examples.md](references/examples.md) for c360 `src_customers` and `src_loyalty_program` pairs.
 
-## Harness (golden tests / CI only)
-
-<!-- runtime:agno,cursor,claude -->
-Use the Agno harness CLI for regression and integration tests — **not** the Cursor or Claude Code IDE workflow:
-
-```bash
-cd harness && uv sync --extra dev
-# --table optional for single-statement files; deploy off by default
-uv run spark-flink-migrate --file <spark-sql-path> --out-dir output/
-# optional: uv run spark-flink-migrate --table src_c360_customers --file <path> --out-dir output/
-```
-
-Requires OpenAI-compatible LLM (`SL_LLM_*` in repo `.env`).
-<!-- /runtime:agno,cursor,claude -->
-
 ## References
 
 - [translation-rules.md](references/translation-rules.md) — full rule set from shift_left prompts
 - [validation-rules.md](references/validation-rules.md) — post-translation fix-up
 - [function-mapping.md](references/function-mapping.md) — Spark → Flink function table
-- [examples.md](references/examples.md) — worked c360 migrations
+

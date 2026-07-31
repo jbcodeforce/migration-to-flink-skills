@@ -1,17 +1,12 @@
-"""Verify c360 golden fixture paths exist."""
+"""Verify spark reference migrate cases resolve to real source files."""
 
-import pytest
-
-from spark_ref_fixtures import assert_fixtures_exist, c360_golden_pairs
+from spark_ref_fixtures import SPARK_MIGRATE_CASES, spark_source_path
 
 
-def test_c360_pairs_registered():
-    pairs = c360_golden_pairs()
-    assert len(pairs) >= 5
+def test_spark_cases_registered():
+    assert len(SPARK_MIGRATE_CASES) >= 4
 
 
-def test_c360_fixture_files_exist():
-    try:
-        assert_fixtures_exist()
-    except FileNotFoundError as exc:
-        pytest.skip(f"c360 golden fixtures not present: {exc}")
+def test_spark_source_files_exist():
+    for case in SPARK_MIGRATE_CASES:
+        assert spark_source_path(case).is_file(), case.rel_path

@@ -2559,3 +2559,299 @@ WITH customer_profiles AS (
     FROM src_customer_profiles
 )
 SELECT * FROM customer_profiles;
+2026-07-30 17:24:50,382 DEBUG [flink_migration_skill.cli] config.py:101 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-30 17:24:50,382 INFO [flink_migration_skill.cli] cli.py:448 skill_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/skill
+2026-07-30 17:24:50,382 INFO [flink_migration_skill.cli] cli.py:450 migrate start table=src_purchases file=/Users/jerome/Documents/Code/migration-to-flink-skills/references/spark/c360/sources/tables/src_purchases.sql out_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/staging/spark2flk/seed/src_purchases skip_deploy=True
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 migrate to flink CLI
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 table: src_purchases
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 file: /Users/jerome/Documents/Code/migration-to-flink-skills/references/spark/c360/sources/tables/src_purchases.sql
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 out_dir: /Users/jerome/Documents/Code/migration-to-flink-skills/staging/spark2flk/seed/src_purchases
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 deploy: skipped
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 model: Ornith-1.0-9B-6bit
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer: enabled
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer_retries: 2
+2026-07-30 17:24:50,406 INFO [flink_migration_skill.cli] cli_progress.py:16 log: /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log
+2026-07-30 17:24:50,407 INFO [flink_migration_skill.cli] cli_progress.py:16 → 1. Checking LLM at http://10.0.0.148:7999/v1 ...
+2026-07-30 17:24:50,429 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. LLM reachable at http://10.0.0.148:7999/v1
+2026-07-30 17:24:50,429 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Splitting Spark SQL statements...
+2026-07-30 17:24:50,429 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Found 1 CREATE statement(s) (src_purchases)
+2026-07-30 17:24:50,431 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Wrote statement files to src_purchases.statements/ (1 file(s))
+2026-07-30 17:24:50,431 INFO [flink_migration_skill.cli] cli_progress.py:16 === [1/1] src_purchases → src_purchases ===
+2026-07-30 17:24:50,431 INFO [flink_migration_skill.cli] cli.py:312 Migrating statement 1/1 source=src_purchases target=src_purchases spark=CREATE TABLE IF NOT EXISTS src_purchases (
+purchase_id BIGINT NOT NULL,
+customer_id BIGINT NOT NULL,
+order_id STRING NOT NULL,
+product_id STRING,
+product_name STRING,
+category STRING,
+quantity INT,
+unit_price DECIMAL(10,2),
+amount DECIMAL(10,2) NOT NULL,
+discount_amount DECIMAL(10,2),
+tax_amount DECIMAL(10,2),
+total_amount DECIMAL(10,2),
+currency_code STRING,
+payment_method STRING,
+payment_status STRING,
+purchase_date DATE NOT NULL,
+purchase_timestamp TIMESTAMP NOT NULL,
+shipping_address STRING,
+billing_address STRING,
+promotion_code STRING,
+sales_channel STRING,
+store_location STRING,
+sales_rep_id BIGINT,
+refund_amount DECIMAL(10,2),
+refund_date DATE,
+return_reason STRING,
+customer_satisfaction_score INT,
+created_date TIMESTAMP,
+updated_date TIMESTAMP
+)
+USING DELTA
+PARTITIONED BY (DATE_TRUNC('MONTH', purchase_date))
+TBLPROPERTIES (
+'description' = 'Purchase transaction and order data',
+'quality.expectations.purchase_id.not_null' = 'true',
+'quality.expectations.customer_id.not_null' = 'true',
+'quality.expectations.order_id.not_null' = 'true',
+'quality.expectations.amount.not_null' = 'true',
+'quality.expectations.purchase_date.not_null' = 'true',
+'quality.expectations.purchase_timestamp.not_null' = 'true',
+'quality.expectations.payment_status.values' = 'pending,completed,failed,refunded,cancelled',
+'quality.expectations.sales_channel.values' = 'online,retail,mobile,phone,partner'
+);
+2026-07-30 17:24:50,431 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned Spark SQL input (1404 chars)
+2026-07-30 17:24:50,431 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
+2026-07-30 17:24:50,452 INFO [flink_migration_skill.cli] factory.py:127 agent: starting run (non-streaming)
+2026-07-30 17:25:21,090 INFO [flink_migration_skill.cli] factory.py:130 agent: run finished (4 chars)
+2026-07-30 17:25:21,178 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run started
+2026-07-30 17:25:21,178 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run started
+2026-07-30 17:25:47,206 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool: get_skill_instructions
+2026-07-30 17:25:47,207 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool: get_skill_instructions
+2026-07-30 17:25:47,208 INFO [flink_migration_skill.cli] factory.py:122 agent: Tool completed: get_skill_instructions
+2026-07-30 17:25:47,208 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Tool completed: get_skill_instructions
+2026-07-30 17:27:05,482 INFO [flink_migration_skill.cli] factory.py:122 agent: Agent run completed
+2026-07-30 17:27:05,483 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: Agent run completed
+2026-07-30 17:27:05,871 INFO [flink_migration_skill.cli] factory.py:160 agent: run finished (1495 chars)
+2026-07-30 17:27:05,872 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: 
+
+
+
+```sql
+CREATE TABLE IF NOT EXISTS src_purchases (
+    purchase_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,
+    order_id STRING NOT NULL,
+    product_id STRING,
+    product_name STRING,
+    category STRING,
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    amount DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2),
+    tax_amount DECIMAL(10,2),
+    total_amount DECIMAL(10,2),
+    currency_code STRING,
+    payment_method STRING,
+    payment_status STRING,
+    purchase_date DATE NOT NULL,
+    purchase_timestamp TIMESTAMP(3) NOT NULL,
+    shipping_address STRING,
+    billing_address STRING,
+    promotion_code STRING,
+    sales_channel STRING,
+    store_location STRING,
+    sales_rep_id BIGINT,
+    refund_amount DECIMAL(10,2),
+    refund_date DATE,
+    return_reason STRING,
+    customer_satisfaction_score INT,
+    created_date TIMESTAMP(3),
+    updated_date TIMESTAMP(3),
+    PRIMARY KEY (purchase_id) NOT ENFORCED
+) DISTRIBUTED BY HASH(purchase_id) INTO 1 BUCKETS
+WITH (
+    'changelog.mode' = 'upsert',
+    'key.avro-registry.schema-context' = '.flink-dev',
+    'value.avro-registry.schema-context' = '.flink-dev',
+    'key.format' = 'avro-registry',
+    'value.format' = 'avro-registry',
+    'kafka.retention.time' = '0',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded',
+    'scan.startup.mode' = 'earliest-offset',
+    'value.fields-include' = 'all'
+);
+```
+
+```sql
+INSERT INTO src_purchases
+SELECT * FROM src_purchases;
+```
+2026-07-30 17:27:05,872 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (1495 chars)
+2026-07-30 17:27:05,872 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
+2026-07-30 17:27:05,873 INFO [flink_migration_skill.cli] response_io.py:57 DDL: 
+2026-07-30 17:27:05,874 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-30 17:27:05,874 INFO [flink_migration_skill.cli] response_io.py:85 DDL: CREATE TABLE IF NOT EXISTS src_purchases (
+    purchase_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,
+    order_id STRING NOT NULL,
+    product_id STRING,
+    product_name STRING,
+    category STRING,
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    amount DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2),
+    tax_amount DECIMAL(10,2),
+    total_amount DECIMAL(10,2),
+    currency_code STRING,
+    payment_method STRING,
+    payment_status STRING,
+    purchase_date DATE NOT NULL,
+    purchase_timestamp TIMESTAMP(3) NOT NULL,
+    shipping_address STRING,
+    billing_address STRING,
+    promotion_code STRING,
+    sales_channel STRING,
+    store_location STRING,
+    sales_rep_id BIGINT,
+    refund_amount DECIMAL(10,2),
+    refund_date DATE,
+    return_reason STRING,
+    customer_satisfaction_score INT,
+    created_date TIMESTAMP(3),
+    updated_date TIMESTAMP(3),
+    PRIMARY KEY (purchase_id) NOT ENFORCED
+) DISTRIBUTED BY HASH(purchase_id) INTO 1 BUCKETS
+WITH (
+    'changelog.mode' = 'upsert',
+    'key.avro-registry.schema-context' = '.flink-dev',
+    'value.avro-registry.schema-context' = '.flink-dev',
+    'key.format' = 'avro-registry',
+    'value.format' = 'avro-registry',
+    'kafka.retention.time' = '0',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded',
+    'scan.startup.mode' = 'earliest-offset',
+    'value.fields-include' = 'all'
+);
+2026-07-30 17:27:05,874 INFO [flink_migration_skill.cli] response_io.py:86 DML: INSERT INTO src_purchases
+SELECT * FROM src_purchases;
+2026-07-30 17:27:05,875 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 1 DML
+2026-07-30 17:27:05,875 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 1 DML
+2026-07-30 17:27:05,875 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/spark2flk/seed/src_purchases/src_purchases
+2026-07-30 17:27:05,876 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /Users/jerome/Documents/Code/migration-to-flink-skills/staging/spark2flk/seed/src_purchases/src_purchases
+2026-07-30 17:27:05,877 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=src_purchases
+2026-07-30 17:27:05,877 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-30 17:27:05,877 INFO [flink_migration_skill.cli] cli_progress.py:16 Convergence attempt 1 of 2
+2026-07-30 17:27:05,884 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-30 17:27:05,884 INFO [flink_migration_skill.cli] cli_progress.py:16 Offline validation passed.
+2026-07-30 17:27:05,884 INFO [flink_migration_skill.cli] convergence.py:40 Skipped deploy (--skip-deploy).
+2026-07-30 17:27:05,884 INFO [flink_migration_skill.cli] cli_progress.py:16 Skipped deploy (--skip-deploy).
+2026-07-30 17:27:05,885 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Validation finished (ddl.src_purchases.sql)
+2026-07-30 17:27:05,885 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: CREATE TABLE IF NOT EXISTS src_purchases (
+    purchase_id BIGINT NOT NULL,
+    customer_id BIGINT NOT NULL,
+    order_id STRING NOT NULL,
+    product_id STRING,
+    product_name STRING,
+    category STRING,
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    amount DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2),
+    tax_amount DECIMAL(10,2),
+    total_amount DECIMAL(10,2),
+    currency_code STRING,
+    payment_method STRING,
+    payment_status STRING,
+    purchase_date DATE NOT NULL,
+    purchase_timestamp TIMESTAMP(3) NOT NULL,
+    shipping_address STRING,
+    billing_address STRING,
+    promotion_code STRING,
+    sales_channel STRING,
+    store_location STRING,
+    sales_rep_id BIGINT,
+    refund_amount DECIMAL(10,2),
+    refund_date DATE,
+    return_reason STRING,
+    customer_satisfaction_score INT,
+    created_date TIMESTAMP(3),
+    updated_date TIMESTAMP(3),
+    PRIMARY KEY (purchase_id) NOT ENFORCED
+) DISTRIBUTED BY HASH(purchase_id) INTO 1 BUCKETS
+WITH (
+    'changelog.mode' = 'upsert',
+    'key.avro-registry.schema-context' = '.flink-dev',
+    'value.avro-registry.schema-context' = '.flink-dev',
+    'key.format' = 'avro-registry',
+    'value.format' = 'avro-registry',
+    'kafka.retention.time' = '0',
+    'kafka.producer.compression.type' = 'snappy',
+    'scan.bounded.mode' = 'unbounded',
+    'scan.startup.mode' = 'earliest-offset',
+    'value.fields-include' = 'all'
+);
+2026-07-30 17:27:05,885 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: INSERT INTO src_purchases
+SELECT * FROM src_purchases;
+2026-07-30 17:27:05,886 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 4. Offline validation passed
+2026-07-30 17:44:07,921 DEBUG [flink_migration_skill.cli] config.py:101 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-30 17:44:07,924 ERROR [flink_migration_skill.cli] config.py:143 Error fetching models payload from http://10.0.0.148:7999/v1/models: <urlopen error timed out>
+2026-07-30 19:35:54,694 DEBUG [flink_migration_skill.cli] config.py:101 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-30 19:35:54,694 INFO [flink_migration_skill.cli] cli.py:449 skill_dir=/Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/skill
+2026-07-30 19:35:54,694 INFO [flink_migration_skill.cli] cli.py:451 migrate start table=customers file=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/input.sql out_dir=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/output skip_deploy=True
+2026-07-30 19:35:54,694 INFO [flink_migration_skill.cli] cli_progress.py:16 migrate to flink CLI
+2026-07-30 19:35:54,694 INFO [flink_migration_skill.cli] cli_progress.py:16 table: customers
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 file: /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/input.sql
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 out_dir: /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/output
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 skill: /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/skill
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 deploy: skipped
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 model: test-model
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer: enabled
+2026-07-30 19:35:54,695 INFO [flink_migration_skill.cli] cli_progress.py:16 agent_fixer_retries: 2
+2026-07-30 19:35:54,696 INFO [flink_migration_skill.cli] cli_progress.py:16 log: /Users/jerome/Documents/Code/migration-to-flink-skills/spark-to-flink-skill/logs/ksql-flink-cli.log
+2026-07-30 19:35:54,696 INFO [flink_migration_skill.cli] cli_progress.py:16 → 1. Checking LLM at http://10.0.0.148:7999/v1 ...
+2026-07-30 19:35:54,696 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. LLM reachable at http://10.0.0.148:7999/v1
+2026-07-30 19:35:54,696 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Splitting Spark SQL statements...
+2026-07-30 19:35:54,696 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Found 1 CREATE statement(s) (customers)
+2026-07-30 19:35:54,697 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Wrote statement files to input.statements/ (1 file(s))
+2026-07-30 19:35:54,698 INFO [flink_migration_skill.cli] cli_progress.py:16 === [1/1] customers → customers ===
+2026-07-30 19:35:54,698 INFO [flink_migration_skill.cli] cli.py:313 Migrating statement 1/1 source=customers target=customers spark=CREATE TABLE customers (id INT);
+2026-07-30 19:35:54,698 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 1. Cleaned Spark SQL input (32 chars)
+2026-07-30 19:35:54,698 INFO [flink_migration_skill.cli] cli_progress.py:16 → 2. Running translation agent...
+2026-07-30 19:35:54,698 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: DDL
+```sql
+CREATE TABLE IF NOT EXISTS customers (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+```
+DML
+```sql
+INSERT INTO customers SELECT id FROM src;
+```
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 2. Translation agent finished (198 chars)
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] cli_progress.py:16 → 3. Extracting SQL blocks and validating...
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS customers (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO customers SELECT id FROM src;
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 1 DML
+2026-07-30 19:35:54,699 INFO [flink_migration_skill.cli] cli_progress.py:16 Extracted 1 DDL, 1 DML
+2026-07-30 19:35:54,700 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/output/customers
+2026-07-30 19:35:54,700 INFO [flink_migration_skill.cli] cli_progress.py:16 Writing output files to /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-36/test_migrate_verbose_progress_0/output/customers
+2026-07-30 19:35:54,700 INFO [flink_migration_skill.cli] cli_progress.py:16 Running offline validation...
+2026-07-30 19:35:54,701 INFO [flink_migration_skill.cli] cli_progress.py:16 Offline validation passed.
+2026-07-30 19:35:54,701 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 3. Validation finished (ddl.customers.sql)
+2026-07-30 19:35:54,701 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: CREATE TABLE IF NOT EXISTS customers (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-30 19:35:54,701 INFO [flink_migration_skill.cli] cli_progress.py:16 agent: INSERT INTO customers SELECT id FROM src;
+2026-07-30 19:35:54,701 INFO [flink_migration_skill.cli] cli_progress.py:16 ✓ 4. Offline validation passed

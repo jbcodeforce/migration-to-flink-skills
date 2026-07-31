@@ -1,0 +1,157 @@
+{
+  "folders": [
+    {
+      "name": "flink-skill-common",
+      "path": "flink-skill-common/harness"
+    },
+    {
+      "name": "ksql-to-flink",
+      "path": "ksql-to-flink-skill/harness"
+    },
+    {
+      "name": "spark-to-flink",
+      "path": "spark-to-flink-skill/harness"
+    },
+    {
+      "name": "flink-qa",
+      "path": "flink-qa-skill/harness"
+    },
+    {
+      "name": "cc-tools",
+      "path": "cc-tools"
+    },
+    {
+      "name": "references",
+      "path": "references"
+    }
+  ],
+  "settings": {
+    "cursorpyright.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.terminal.activateEnvironment": true
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "fsc Pytest (start + attach)",
+        "type": "debugpy",
+        "request": "attach",
+        "preLaunchTask": "fsc-debugpy-listen",
+        "connect": {
+          "host": "127.0.0.1",
+          "port": 5678
+        },
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder:flink-skill-common}",
+            "remoteRoot": "${workspaceFolder:flink-skill-common}"
+          }
+        ],
+        "justMyCode": false
+      },
+      {
+        "name": "fsc Pytest (attach only)",
+        "type": "debugpy",
+        "request": "attach",
+        "connect": {
+          "host": "127.0.0.1",
+          "port": 5678
+        },
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder:flink-skill-common}",
+            "remoteRoot": "${workspaceFolder:flink-skill-common}"
+          }
+        ],
+        "justMyCode": false
+      },
+      {
+        "name": "fsc Pytest Current File (launch)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "args": ["${file}", "-v", "-s"],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:flink-skill-common}",
+        "envFile": "${workspaceFolder:flink-skill-common}/../../.env",
+        "python": "${workspaceFolder:flink-skill-common}/.venv/bin/python",
+        "justMyCode": false
+      },
+      {
+        "name": "k2f Pytest Current File (launch)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "args": ["${file}", "-v", "-s"],
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:ksql-to-flink}",
+        "envFile": "${workspaceFolder:ksql-to-flink}/../../.env",
+        "python": "${workspaceFolder:ksql-to-flink}/.venv/bin/python",
+        "justMyCode": false
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "fsc-debugpy-listen",
+        "type": "shell",
+        "command": "${workspaceFolder:flink-skill-common}/tests/it/run_debug_attach.sh",
+        "options": {
+          "cwd": "${workspaceFolder:flink-skill-common}",
+          "env": {
+            "DOTENV_FILE": "${workspaceFolder:flink-skill-common}/../../.env",
+            "FSC_DEBUG_TEST_TARGET": "${file}"
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": {
+          "owner": "fsc-debugpy",
+          "pattern": { "regexp": "." },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".",
+            "endsPattern": "Waiting for debugger attach"
+          }
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "focus": false
+        }
+      },
+      {
+        "label": "k2f-debugpy-listen",
+        "type": "shell",
+        "command": "${workspaceFolder:ksql-to-flink}/tests/it/run_debug_attach.sh",
+        "options": {
+          "cwd": "${workspaceFolder:ksql-to-flink}"
+        },
+        "isBackground": true,
+        "problemMatcher": {
+          "owner": "k2f-debugpy",
+          "pattern": { "regexp": "." },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".",
+            "endsPattern": "Waiting for debugger attach"
+          }
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "focus": false
+        }
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "anysphere.cursorpyright",
+      "ms-python.debugpy"
+    ]
+  }
+}

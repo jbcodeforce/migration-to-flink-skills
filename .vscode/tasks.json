@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "fsc-debugpy-listen",
+            "type": "shell",
+            "command": "${workspaceFolder}/flink-skill-common/harness/tests/it/run_debug_attach.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/flink-skill-common/harness",
+                "env": {
+                    "DOTENV_FILE": "${workspaceFolder}/.env",
+                    "FSC_DEBUG_TEST_TARGET": "${file}"
+                }
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "fsc-debugpy",
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".",
+                    "endsPattern": "Waiting for debugger attach"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false
+            }
+        },
+        {
+            "label": "k2f-debugpy-listen",
+            "type": "shell",
+            "command": "${workspaceFolder}/ksql-to-flink-skill/harness/tests/it/run_debug_attach.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/ksql-to-flink-skill/harness"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "k2f-debugpy",
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".",
+                    "endsPattern": "Waiting for debugger attach"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false
+            }
+        }
+    ]
+}

@@ -26,3 +26,11 @@ packages = ["src/manifest", "src/cc_deploy"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.pyright]
+include = ["src", "tests"]
+extraPaths = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "basic"

@@ -113,6 +113,7 @@ def _print_migrate_banner(
         table=table or "(per-statement)",
         file=str(src_file),
         out_dir=str(out_dir),
+        skill=str(skill_dir()),
         deploy="skipped" if skip_deploy else "enabled",
         model=resolve_llm_model(),
         agent_fixer="enabled" if agent_fixer_enabled() else "disabled",
@@ -397,6 +398,9 @@ def _process_pending_statements(
     skip_deploy: bool,
     out_dir: Path,
 ) -> None:
+    """Process pending statements."""
+    logger = get_logger()
+    logger.info("process_pending_statements start to_process=%d", len(to_process))
     processed = 0
     current_entry: StatementEntry | None = None
     try:
@@ -440,7 +444,7 @@ def migrate(
     src_file: Path = typer.Option(..., "--file", "-f"),
     out_dir: Path = typer.Option(Path("output"), "--out-dir", "-o"),
     skip_deploy: bool = typer.Option(
-        True, "--skip-deploy", help="Translate only; do not deploy to CC Flink."
+        False, "--skip-deploy", help="Translate only; do not deploy to CC Flink."
     ),
 ) -> None:
     """Migrate Spark SQL CREATE statements to Flink DDL/DML, one statement at a time."""

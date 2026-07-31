@@ -1,0 +1,55 @@
+{
+    // Cursor: direct "launch" often stops immediately ("Debug stopped"). Prefer attach configs.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "fsc Pytest (start + attach)",
+            "type": "debugpy",
+            "request": "attach",
+            "preLaunchTask": "fsc-debugpy-listen",
+            "connect": {
+                "host": "127.0.0.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceFolder}"
+                }
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "fsc Pytest (attach only)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.0.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceFolder}"
+                }
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "fsc Pytest Current File (launch)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/flink-skill-common/harness",
+            "envFile": "${workspaceFolder}/.env",
+            "python": "${workspaceFolder}/flink-skill-common/harness/.venv/bin/python",
+            "justMyCode": false
+        }
+    ]
+}

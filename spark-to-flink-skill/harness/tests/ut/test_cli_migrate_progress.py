@@ -69,6 +69,8 @@ def test_migrate_verbose_progress_with_mocks(tmp_path: Path):
     assert result.exit_code == 0, result.output
     output = result.output
     assert "migrate to flink CLI" in output
+    assert "skill:" in output
+    assert "spark-to-flink-skill/skill" in output.replace("\\", "/")
     assert "test-model" in output
     assert "Found 1 CREATE statement(s)" in output
     assert "Wrote statement files to input.statements/" in output
