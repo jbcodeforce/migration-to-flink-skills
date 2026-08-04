@@ -2,26 +2,54 @@
 Copyright 2024-2026 Confluent, Inc.
 KSQL to Flink SQL Translation Agent
 
-Flink statement lifecycle via confluent-sql REST driver.
+Migration-oriented Flink deploy adapter over cc_deploy statement lifecycle.
 """
 
 from __future__ import annotations
 
 import json
 import re
-import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterator, Literal
 
-from confluent_sql import connect
-from confluent_sql.exceptions import OperationalError, StatementNotFoundError
+from cc_deploy.flink_deploy import flink_connection
+from cc_deploy.statement_lifecycle import (
+    FAILURE_PHASES,
+    SUCCESS_PHASES,
+    StatementLifecycleError,
+    check_statement_health as lifecycle_check_health,
+    classify_sql as lifecycle_classify_sql,
+    create_statement as lifecycle_create_statement,
+    delete_statement as lifecycle_delete_statement,
+    drop_table as lifecycle_drop_table,
+    get_statement_exceptions as lifecycle_get_exceptions,
+    list_statements as lifecycle_list_statements,
+    statement_status,
+    wait_for_phase as lifecycle_wait_for_phase,
+)
 
 from flink_skill_common.cli_interrupt import interruptible_sleep
 from flink_skill_common.config import FlinkDeploySettings, flink_deploy_settings, get_logger
 from flink_skill_common.sql_parse import extract_statement_table_name
+
+# Re-export phase sets for callers / tests
+__all__ = [
+    "SUCCESS_PHASES",
+    "FAILURE_PHASES",
+    "StatementManagerError",
+    "DeployError",
+    "DeployResult",
+    "FlinkStatementManager",
+    "classify_sql",
+    "normalize_statement_prefix",
+    "ddl_statement_name",
+    "dml_statement_name",
+    "discover_source_ddl_files",
+    "settings_to_cc_config",
+]
 
 
 def _logger():
@@ -32,12 +60,27 @@ def _logger():
 
         return logging.getLogger("flink_migration_skill.deploy")
 
+
 SqlKind = Literal["snapshot_ddl", "streaming_dml", "batch_dml", "streaming_ddl"]
 
-SUCCESS_PHASES = frozenset({"RUNNING", "COMPLETED", "STOPPED", "DELETED"})
-FAILURE_PHASES = frozenset({"FAILED", "FAILING"})
-
 STATEMENT_NAME_RE = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+
+
+def settings_to_cc_config(settings: FlinkDeploySettings) -> dict[str, str]:
+    """Map FlinkDeploySettings to cc_deploy connection config dict."""
+    cfg: dict[str, str] = {
+        "FLINK_API_KEY": settings.flink_api_key,
+        "FLINK_API_SECRET": settings.flink_api_secret,
+        "ORGANIZATION_ID": settings.organization_id,
+        "ENVIRONMENT_ID": settings.environment_id,
+        "FLINK_COMPUTE_POOL_ID": settings.compute_pool_id,
+        "FLINK_DATABASE_NAME": settings.database_name,
+        "CLOUD_PROVIDER": settings.cloud_provider,
+        "CLOUD_REGION": settings.cloud_region,
+    }
+    if settings.endpoint:
+        cfg["FLINK_REST_ENDPOINT"] = settings.endpoint.rstrip("/")
+    return cfg
 
 
 def normalize_statement_prefix(table_name: str) -> str:
@@ -59,7 +102,7 @@ def dml_statement_name(table_name: str) -> str:
 
 
 def discover_source_ddl_files(tests_dir: Path) -> list[tuple[str, Path]]:
-    """Return (table_name, path) for each tests/ddl.{table}.sql source stub."""
+    """Return (table_name, path) for each tests/*.sql source stub with a table name."""
     if not tests_dir.is_dir():
         return []
     results: list[tuple[str, Path]] = []
@@ -94,120 +137,44 @@ class DeployResult:
 
 def classify_sql(sql: str) -> SqlKind:
     """Classify SQL for the correct confluent-sql execution path."""
-    s = sql.strip().lower()
-    while s.startswith("--"):
-        nl = s.find("\n")
-        if nl == -1:
-            return "snapshot_ddl"
-        s = s[nl + 1 :].lstrip()
-
-    if s.startswith("insert into"):
-        if " select " in s:
-            return "streaming_dml"
-        return "batch_dml"
-    if s.startswith("create table ") and " as select " in s:
-        return "streaming_ddl"
-    if s.startswith(("create table ", "drop table ")):
-        return "snapshot_ddl"
-    return "snapshot_ddl"
-
-
-def _statement_phase(stmt: Any) -> str:
-    status = getattr(stmt, "status", None)
-    if isinstance(status, dict):
-        return str(status.get("phase", "UNKNOWN"))
-    return "UNKNOWN"
-
-
-def _statement_detail(stmt: Any) -> str:
-    status = getattr(stmt, "status", None)
-    if isinstance(status, dict):
-        return str(status.get("detail", ""))
-    return ""
+    return lifecycle_classify_sql(sql)  # type: ignore[return-value]
 
 
 class FlinkStatementManager:
-    """Manage Confluent Cloud Flink SQL statements via confluent-sql."""
+    """Thin adapter: migration deploy orchestration over cc_deploy lifecycle."""
 
     def __init__(self, settings: FlinkDeploySettings | None = None) -> None:
         self._settings = settings or flink_deploy_settings()
+        self._config = settings_to_cc_config(self._settings)
 
-    def drop_table(self, table_name: str) -> None:
-        """Drop a table."""
-        tname =table_name.lower().replace("_", "-")
-        sql = f"DROP TABLE IF EXISTS `{table_name}`;"
-        self.create_statement("drop-"+tname, sql)
-        self.delete_statement("drop-"+tname)
-        
     @property
     def settings(self) -> FlinkDeploySettings:
         return self._settings
 
+    @property
+    def config(self) -> dict[str, str]:
+        return self._config
+
     @contextmanager
     def connect(self) -> Iterator[Any]:
-        """Open a confluent-sql connection."""
-        connect_kwargs: dict[str, Any] = {
-            "flink_api_key": self._settings.flink_api_key,
-            "flink_api_secret": self._settings.flink_api_secret,
-            "environment_id": self._settings.environment_id,
-            "compute_pool_id": self._settings.compute_pool_id,
-            "organization_id": self._settings.organization_id,
-            "database": self._settings.database_name,
-            "http_user_agent": self._settings.http_user_agent,
-        }
-        if self._settings.endpoint:
-            connect_kwargs["endpoint"] = self._settings.endpoint
-        else:
-            connect_kwargs["cloud_provider"] = self._settings.cloud_provider
-            connect_kwargs["cloud_region"] = self._settings.cloud_region
-
-        conn = connect(**connect_kwargs)
-        try:
+        """Open a confluent-sql connection via cc_deploy."""
+        with flink_connection(
+            self._config, user_agent=self._settings.http_user_agent
+        ) as conn:
             yield conn
-        finally:
-            conn.close()
+
+    def _wrap(self, exc: StatementLifecycleError) -> StatementManagerError:
+        return StatementManagerError(str(exc))
 
     def get_statement(self, statement_name: str) -> dict[str, Any]:
         """Return normalized statement status."""
         with self.connect() as conn:
-            try:
-                stmt = conn.get_statement(statement_name)
-            except StatementNotFoundError:
-                return {
-                    "name": statement_name,
-                    "phase": "NOT_FOUND",
-                    "detail": "Statement not found",
-                }
-            return {
-                "name": statement_name,
-                "phase": _statement_phase(stmt),
-                "detail": _statement_detail(stmt),
-            }
+            return statement_status(conn, statement_name)
 
     def list_statements(self, page_size: int = 50) -> dict[str, Any]:
         """List Flink statements (first REST page)."""
         with self.connect() as conn:
-            resp = conn._request(  # noqa: SLF001
-                "/statements",
-                params={"page_size": page_size},
-            )
-            payload = resp.json() if hasattr(resp, "json") else {}
-            items = payload.get("data") if isinstance(payload, dict) else payload
-            if not isinstance(items, list):
-                items = []
-            normalized = []
-            for item in items:
-                if not isinstance(item, dict):
-                    continue
-                status = item.get("status") or {}
-                normalized.append(
-                    {
-                        "name": item.get("name") or item.get("statementName") or "",
-                        "phase": status.get("phase", "UNKNOWN"),
-                        "detail": status.get("detail", ""),
-                    }
-                )
-            return {"statements": normalized, "count": len(normalized)}
+            return lifecycle_list_statements(conn, page_size=page_size)
 
     def _delete_statement_safe(self, statement_name: str) -> None:
         """Delete a statement; log and continue on failure."""
@@ -234,104 +201,68 @@ class FlinkStatementManager:
                 except StatementManagerError:
                     _logger().warning("Failed to drop source table %s", source_table)
 
+    def drop_table(self, table_name: str) -> None:
+        """Drop a table via ephemeral statement."""
+        tname = table_name.lower().replace("_", "-")
+        statement_name = "drop-" + tname
+        with self.connect() as conn:
+            try:
+                lifecycle_drop_table(
+                    conn,
+                    self._config,
+                    table_name,
+                    statement_name,
+                    timeout=self._settings.timeout_seconds,
+                    poll=self._settings.poll_seconds,
+                    sleep=interruptible_sleep,
+                )
+            except StatementLifecycleError as exc:
+                raise self._wrap(exc) from exc
+
     def delete_statement(self, statement_name: str) -> dict[str, Any]:
         """Delete a statement and wait until it is gone."""
         with self.connect() as conn:
             try:
-                conn.delete_statement(statement_name)
-            except StatementNotFoundError:
-                return {"name": statement_name, "status": "not_found"}
+                return lifecycle_delete_statement(
+                    conn,
+                    statement_name,
+                    timeout=self._settings.timeout_seconds,
+                    poll=self._settings.poll_seconds,
+                    sleep=interruptible_sleep,
+                )
+            except StatementLifecycleError as exc:
+                raise self._wrap(exc) from exc
 
-            deadline = time.monotonic() + self._settings.timeout_seconds
-            poll = self._settings.poll_seconds
-            while time.monotonic() < deadline:
-                try:
-                    conn.get_statement(statement_name)
-                except StatementNotFoundError:
-                    return {"name": statement_name, "status": "deleted"}
-                interruptible_sleep(poll)
-
-            raise StatementManagerError(
-                f"Statement {statement_name} still present after delete timeout"
-            )
-
-    def _submit_on_connection(
+    def create_statement(
         self,
-        conn: Any,
         statement_name: str,
         sql: str,
+        *,
+        dry_run: bool = False,
     ) -> dict[str, Any]:
-        kind = classify_sql(sql)
-        pool = self._settings.compute_pool_id
-        timeout = int(self._settings.timeout_seconds)
-        props: dict[str, str] = {
-            "sql.dry-run": "true",
-            "sql.inline-result": "false"
-        }
-        if kind == "snapshot_ddl":
-            stmt = conn.execute_snapshot_ddl(
-                sql,
-                statement_name=statement_name,
-                properties=props,
-                compute_pool_id=pool,
-                timeout=timeout,
-            )
-        elif kind in ("streaming_dml", "batch_dml", "streaming_ddl"):
-            props['sql.dry-run']='true'
-            with conn.closing_streaming_cursor() as cur:
-                cur.execute(
-                    sql,
-                    statement_name=statement_name,
-                    properties=props,
-                    compute_pool_id=pool,
-                    timeout=timeout,
-                )
-                stmt = cur.statement
-        else:
-            raise StatementManagerError(f"Unsupported SQL kind for {statement_name}: {kind}")
-        _logger().info(
-            "Statement %s submitted (kind=%s, phase=%s)",
-            statement_name,
-            kind,
-            _statement_phase(stmt),
-        )
-        return {
-            "name": statement_name,
-            "phase": _statement_phase(stmt),
-            "detail": _statement_detail(stmt),
-            "kind": kind,
-        }
-
-    def create_statement(self, statement_name: str, sql: str) -> dict[str, Any]:
         """Create a Flink statement; on 409 conflict delete and retry once."""
         with self.connect() as conn:
             try:
-                return self._submit_on_connection(conn, statement_name, sql)
-            except OperationalError as exc:
-                _logger().warning("OperationalError creating %s: %s", statement_name, exc)
-                if exc.http_status_code != 409:
-                    detail = str(exc)
-                    if exc.http_status_code is not None:
-                        detail = f"{detail} (HTTP {exc.http_status_code})"
-                    raise StatementManagerError(
-                        f"Failed to create {statement_name}: {detail}"
-                    ) from exc
-                try:
-                    conn.delete_statement(statement_name)
-                except StatementNotFoundError:
-                    pass
-                deadline = time.monotonic() + self._settings.timeout_seconds
-                while time.monotonic() < deadline:
-                    try:
-                        conn.get_statement(statement_name)
-                        interruptible_sleep(self._settings.poll_seconds)
-                    except StatementNotFoundError:
-                        break
-                else:
-                    raise StatementManagerError(
-                        f"Statement {statement_name} still exists after delete before retry"
-                    )
-                return self._submit_on_connection(conn, statement_name, sql)
+                result = lifecycle_create_statement(
+                    conn,
+                    self._config,
+                    statement_name,
+                    sql,
+                    dry_run=dry_run,
+                    timeout=self._settings.timeout_seconds,
+                    poll=self._settings.poll_seconds,
+                    sleep=interruptible_sleep,
+                )
+            except StatementLifecycleError as exc:
+                _logger().warning("Error creating %s: %s", statement_name, exc)
+                raise self._wrap(exc) from exc
+            _logger().info(
+                "Statement %s submitted (kind=%s, phase=%s)",
+                statement_name,
+                result.get("kind"),
+                result.get("phase"),
+            )
+            return result
 
     def wait_for_phase(
         self,
@@ -342,66 +273,38 @@ class FlinkStatementManager:
     ) -> dict[str, Any]:
         """Poll until statement reaches an accepted or terminal phase."""
         accepted = accepted_phases or SUCCESS_PHASES
-        deadline = time.monotonic() + (timeout or self._settings.timeout_seconds)
-        poll = self._settings.poll_seconds
-        last: dict[str, Any] = {}
-
-        while time.monotonic() < deadline:
-            last = self.get_statement(statement_name)
-            phase = last.get("phase", "UNKNOWN")
-            if phase in accepted or phase in FAILURE_PHASES or phase == "NOT_FOUND":
-                _logger().info(
-                    "Statement %s reached phase %s (detail=%s)",
+        with self.connect() as conn:
+            try:
+                last = lifecycle_wait_for_phase(
+                    conn,
                     statement_name,
-                    phase,
-                    last.get("detail", ""),
+                    accepted,
+                    timeout=timeout if timeout is not None else self._settings.timeout_seconds,
+                    poll=self._settings.poll_seconds,
+                    sleep=interruptible_sleep,
+                    treat_failure_as_terminal=True,
                 )
-                return last
-            _logger().debug(
-                "Statement %s phase %s; polling again in %.1fs",
+            except StatementLifecycleError as exc:
+                raise self._wrap(exc) from exc
+            _logger().info(
+                "Statement %s reached phase %s (detail=%s)",
                 statement_name,
-                phase,
-                poll,
+                last.get("phase"),
+                last.get("detail", ""),
             )
-            interruptible_sleep(poll)
-
-        raise StatementManagerError(
-            f"Timeout waiting for {statement_name}; last status: {json.dumps(last)}"
-        )
+            return last
 
     def get_statement_exceptions(self, statement_name: str) -> dict[str, Any]:
         """Fetch recent exceptions for a statement via Flink REST."""
         with self.connect() as conn:
-            resp = conn._request(  # noqa: SLF001
-                f"/statements/{statement_name}/exceptions",
-                method="GET",
-                raise_for_status=False,
-            )
-            status = getattr(resp, "status_code", 200)
-            if status == 404:
-                return {"name": statement_name, "exceptions": []}
-            if isinstance(status, int) and status >= 400:
-                return {
-                    "name": statement_name,
-                    "error": f"HTTP {status}",
-                    "body": getattr(resp, "text", str(resp)),
-                }
-            try:
-                return resp.json()
-            except Exception:
-                return {"name": statement_name, "raw": str(resp)}
+            return lifecycle_get_exceptions(conn, statement_name)
 
     def check_statement_health(self, statement_name: str) -> dict[str, Any]:
         """Simple health summary from statement phase."""
-        status = self.get_statement(statement_name)
-        phase = status.get("phase", "UNKNOWN")
-        healthy = phase in SUCCESS_PHASES
-        return {
-            "statement_name": statement_name,
-            "phase": phase,
-            "healthy": healthy,
-            "detail": status.get("detail", ""),
-        }
+        with self.connect() as conn:
+            return lifecycle_check_health(
+                conn, statement_name, success_phases=SUCCESS_PHASES
+            )
 
     def _wait_for_deploy_phase(self, statement_name: str) -> str:
         try:
@@ -415,7 +318,7 @@ class FlinkStatementManager:
         tests_dir: Path | None,
         messages: list[str],
     ) -> list[tuple[str, str]]:
-        """Deploy source stub DDLs from tests/ddl.*.sql before target statements."""
+        """Deploy source stub DDLs from tests/*.sql before target statements."""
         source_statements: list[tuple[str, str]] = []
         if tests_dir is None:
             return source_statements
@@ -427,7 +330,7 @@ class FlinkStatementManager:
             source_name = ddl_statement_name(source_table)
             _logger().info("Deploying source DDL %s from %s", source_name, source_path)
             try:
-                self.create_statement(source_name, source_sql)
+                self.create_statement(source_name, source_sql, dry_run=False)
             except StatementManagerError as exc:
                 raise DeployError(
                     f"create-flink-statement failed for {source_name}: {exc}"
@@ -475,7 +378,7 @@ class FlinkStatementManager:
         statement_name: str | None = None,
     ) -> list[Any]:
         """
-        Submit SQL to CC Flink with a temporary statement name;
+        Submit SQL to CC Flink with dry-run and a temporary statement name;
         delete after check.
         """
         stripped = sql.strip()
@@ -485,7 +388,7 @@ class FlinkStatementManager:
         name = statement_name or f"validate-{uuid.uuid4().hex[:12]}"
         try:
             try:
-                result = self.create_statement(name, stripped)
+                result = self.create_statement(name, stripped, dry_run=True)
             except StatementManagerError as exc:
                 return [self._validation_issue(sql, kind, index, str(exc))]
 
@@ -535,7 +438,7 @@ class FlinkStatementManager:
         ddls: list[str],
         dmls: list[str],
     ) -> list[Any]:
-        """Validate DDL and DML statement lists on CC Flink."""
+        """Validate DDL and DML statement lists on CC Flink (dry-run)."""
         issues: list[Any] = []
         for index, sql in enumerate(ddls):
             issues.extend(self.validate_sql(sql, kind="ddl", index=index))
@@ -551,8 +454,8 @@ class FlinkStatementManager:
         tests_dir: Path | None = None,
     ) -> DeployResult:
         """
-        Deploy source DDLs (tests/), target DDL, 
-        then DML to Confluent Cloud Flink.
+        Deploy source DDLs (tests/), target DDL,
+        then DML to Confluent Cloud Flink (real deploy, no dry-run).
         """
         ddl_sql = ddl_path.read_text().strip()
         dml_sql = dml_path.read_text().strip() if dml_path.is_file() else ""
@@ -568,7 +471,7 @@ class FlinkStatementManager:
 
         _logger().info("Deploying target DDL %s from %s", ddl_name, ddl_path)
         try:
-            self.create_statement(ddl_name, ddl_sql)
+            self.create_statement(ddl_name, ddl_sql, dry_run=False)
         except StatementManagerError as exc:
             raise DeployError(f"create-flink-statement failed for {ddl_name}: {exc}") from exc
         messages.append(f"Created DDL statement {ddl_name}")
@@ -589,7 +492,7 @@ class FlinkStatementManager:
         if dml_sql:
             _logger().info("Deploying target DML %s from %s", dml_name, dml_path)
             try:
-                self.create_statement(dml_name, dml_sql)
+                self.create_statement(dml_name, dml_sql, dry_run=False)
             except StatementManagerError as exc:
                 raise DeployError(f"create-flink-statement failed for {dml_name}: {exc}") from exc
             messages.append(f"Created DML statement {dml_name}")

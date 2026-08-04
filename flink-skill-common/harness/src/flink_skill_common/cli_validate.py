@@ -1,4 +1,6 @@
-"""CLI for offline and remote Flink SQL validation."""
+"""
+CLI for offline and remote Flink SQL validation complemented with agent convergence
+"""
 
 from __future__ import annotations
 
@@ -31,7 +33,7 @@ configure(HarnessContext(harness_root=_HARNESS_ROOT, project_root=_PROJECT_ROOT)
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 
-def _issue_dict(issue: SqlValidationIssue) -> dict[str, Any]:
+def _issue_as_dict(issue: SqlValidationIssue) -> dict[str, Any]:
     return {
         "statement_index": issue.statement_index,
         "kind": issue.kind,
@@ -45,7 +47,7 @@ def _validation_result(issues: list[SqlValidationIssue]) -> dict[str, Any]:
     errors = [issue for issue in issues if issue.severity == "error"]
     return {
         "ok": not errors,
-        "issues": [_issue_dict(issue) for issue in issues],
+        "issues": [_issue_as_dict(issue) for issue in issues],
         "error_count": len(errors),
     }
 
@@ -107,7 +109,7 @@ def syntax_only(
     _emit_result(_validation_result(issues))
 
 
-@app.command()
+
 def remote(
     ddl: list[Path] = typer.Option([], "--ddl", help="DDL SQL file(s); repeatable."),
     dml: list[Path] = typer.Option([], "--dml", help="DML SQL file(s); repeatable."),
@@ -137,7 +139,7 @@ def validate_flink_sqls(
     flink_sql_dir: Path = typer.Option(...),
     target_dir: Path = typer.Option(...),
 ) -> None:
-    """Validate Flink DDL/DML using the Confluent Cloud Flink and Agent Fixer."""
+    """Validate Flink DDL/DML using the Confluent Cloud Flink and the 'Fixer' Agent."""
     load_env()
     if not flink_sql_dir.is_dir():
         raise FileNotFoundError(f"Fixture case not found: {flink_sql_dir}")

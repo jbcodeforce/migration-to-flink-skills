@@ -6,12 +6,16 @@ readme = "../README.md"
 requires-python = ">=3.12"
 dependencies = [
     "agno>=2.0.0",
+    "cc-tools",
     "confluent-sql>=0.3.1",
     "mcp>=1.6.0",
     "openai>=1.40.0",
     "python-dotenv>=1.0.0",
     "sqlglot>=26.0.0",
 ]
+
+[tool.uv.sources]
+cc-tools = { path = "../../cc-tools", editable = true }
 
 [project.scripts]
 flink-skill-mcp = "flink_skill_common.mcp.server:main"

@@ -18,13 +18,20 @@ from pathlib import Path
 from typing import Any, Iterable, Literal
 
 import confluent_sql
-from confluent_sql.exceptions import OperationalError, StatementNotFoundError
+from confluent_sql.exceptions import OperationalError
 from confluent_sql.execution_mode import ExecutionMode
 
+from cc_deploy.statement_lifecycle import (
+    POLL_INTERVAL_SEC,
+    STATEMENT_TIMEOUT_SEC,
+    StatementLifecycleError,
+    classify_sql,
+    delete_statement as lifecycle_delete_statement,
+    statement_properties,
+    submit_statement as lifecycle_submit_statement,
+    wait_for_phase as lifecycle_wait_for_phase,
+)
 from manifest.manifest import DEFAULT_USER_AGENT, DeployManifest, StatementRef
-
-POLL_INTERVAL_SEC = float(os.environ.get("FLINK_POLL_INTERVAL", "5"))
-STATEMENT_TIMEOUT_SEC = int(os.environ.get("FLINK_STATEMENT_TIMEOUT", "600"))
 
 
 def get_config() -> dict[str, str]:
@@ -86,33 +93,6 @@ def read_sql(sql_dir: Path, rel: str) -> str:
     return path.read_text().strip()
 
 
-def classify_sql(sql: str) -> str:
-    s = sql.strip().lower()
-    while s.startswith("--"):
-        nl = s.find("\n")
-        if nl == -1:
-            return "snapshot_ddl"
-        s = s[nl + 1 :].lstrip()
-
-    if s.startswith("insert into"):
-        if " select " in s:
-            return "streaming_dml"
-        return "batch_dml"
-    if s.startswith("create table ") and " as select " in s:
-        return "streaming_dml"
-    elif s.startswith("create table ") or s.startswith("drop table "):
-        return "snapshot_ddl"
-    return "snapshot_dml"
-
-
-def statement_properties(config: dict[str, str]) -> dict[str, str]:
-    return {}
-    # return {
-    #     "sql.current-catalog": config["ENVIRONMENT_ID"],
-    #     "sql.current-database": config["FLINK_DATABASE_NAME"],
-    # }
-
-
 @contextmanager
 def flink_connection(config: dict[str, str], *, user_agent: str = DEFAULT_USER_AGENT):
     connect_kwargs: dict = {
@@ -144,63 +124,40 @@ def wait_for_phases(
     *,
     timeout: int = STATEMENT_TIMEOUT_SEC,
 ) -> None:
-    deadline = time.monotonic() + timeout
-    poll = POLL_INTERVAL_SEC
+    """CLI wrapper: wait for accepted phases; raise on failure."""
+    try:
+        status = lifecycle_wait_for_phase(
+            conn,
+            statement_name,
+            accepted,
+            timeout=float(timeout),
+            treat_failure_as_terminal=True,
+        )
+    except StatementLifecycleError as exc:
+        raise TimeoutError(str(exc)) from exc
 
-    while time.monotonic() < deadline:
-        stmt = conn.get_statement(statement_name)
-        phase = stmt.phase.name
-        if phase in accepted:
-            print(f"  {statement_name}: {phase}")
-            return
-        if phase in ("FAILED", "FAILING"):
-            detail = ""
-            if isinstance(stmt.status, dict):
-                detail = stmt.status.get("detail", "")
-            raise RuntimeError(f"Statement {statement_name} {phase}: {detail}")
-        time.sleep(poll)
-
+    phase = status.get("phase", "UNKNOWN")
+    if phase in accepted:
+        print(f"  {statement_name}: {phase}")
+        return
+    if phase in ("FAILED", "FAILING"):
+        raise RuntimeError(
+            f"Statement {statement_name} {phase}: {status.get('detail', '')}"
+        )
     raise TimeoutError(
         f"Statement {statement_name} did not reach {sorted(accepted)} within {timeout}s"
     )
 
 
 def submit_statement(conn, config: dict[str, str], name: str, sql: str) -> None:
-    props = statement_properties(config)
-    kind = classify_sql(sql)
-    pool = config["FLINK_COMPUTE_POOL_ID"]
-
-    if kind == "snapshot_ddl":
-        conn.execute_snapshot_ddl(
-            sql,
-            statement_name=name,
-            properties=props,
-            compute_pool_id=pool,
-            timeout=STATEMENT_TIMEOUT_SEC,
-        )
-        #wait_for_phases(conn, name, {"RUNNING", "COMPLETED"})
-        return
-
-    if kind in ("streaming_dml", "batch_dml"):
-        with conn.closing_streaming_cursor() as cur:
-            cur.execute(
-                sql,
-                statement_name=name,
-                properties=props,
-                compute_pool_id=pool,
-                timeout=STATEMENT_TIMEOUT_SEC,
-            )
-        accepted = {"RUNNING", "COMPLETED"} if kind == "streaming_dml" else {"RUNNING", "COMPLETED"}
-        #wait_for_phases(conn, name, accepted)
-        return
-
-    raise ValueError(f"Unsupported SQL classification for {name}: {kind}")
+    """CLI wrapper around library submit (real deploy, no dry-run)."""
+    lifecycle_submit_statement(conn, config, name, sql, dry_run=False)
 
 
 def run_create(conn, config: dict[str, str], name: str, sql_content: str) -> None:
     print(f"Creating statement: {name}")
     try:
-        submit_statement(conn, config, name, sql_content)
+        lifecycle_submit_statement(conn, config, name, sql_content, dry_run=False)
     except OperationalError as exc:
         if exc.http_status_code != 409:
             detail = str(exc)
@@ -209,31 +166,28 @@ def run_create(conn, config: dict[str, str], name: str, sql_content: str) -> Non
             raise RuntimeError(f"Failed to create {name}: {detail}") from exc
         print(f"  {name}: already exists (409), deleting and retrying")
         run_delete(conn, name, quiet=True)
-        submit_statement(conn, config, name, sql_content)
+        try:
+            lifecycle_submit_statement(conn, config, name, sql_content, dry_run=False)
+        except OperationalError as retry_exc:
+            detail = str(retry_exc)
+            if retry_exc.http_status_code is not None:
+                detail = f"{detail} (HTTP {retry_exc.http_status_code})"
+            raise RuntimeError(f"Failed to create {name}: {detail}") from retry_exc
+    except StatementLifecycleError as exc:
+        raise RuntimeError(str(exc)) from exc
 
 
 def run_delete(conn, name: str, *, quiet: bool = False) -> None:
     if not quiet:
         print(f"Deleting statement: {name}")
     try:
-        conn.delete_statement(name)
-    except StatementNotFoundError:
-        if not quiet:
-            print(f"  {name}: not found")
-        return
-
-    deadline = time.monotonic() + STATEMENT_TIMEOUT_SEC
-    poll = POLL_INTERVAL_SEC
-    while time.monotonic() < deadline:
-        try:
-            conn.get_statement(name)
-        except StatementNotFoundError:
-            if not quiet:
-                print(f"  {name}: deleted")
-            return
-        time.sleep(poll)
-
-    raise TimeoutError(f"Statement {name} still present after delete")
+        result = lifecycle_delete_statement(conn, name)
+    except StatementLifecycleError as exc:
+        raise TimeoutError(str(exc)) from exc
+    if result.get("status") == "not_found" and not quiet:
+        print(f"  {name}: not found")
+    elif result.get("status") == "deleted" and not quiet:
+        print(f"  {name}: deleted")
 
 
 def deploy_statements(
@@ -264,24 +218,14 @@ def run_drop_table(
     table: str,
     statement_name: str,
 ) -> None:
-    sql = f"DROP TABLE IF EXISTS `{table}`"
+    from cc_deploy.statement_lifecycle import drop_table as lifecycle_drop_table
+
     print(f"Dropping table: {table} (statement: {statement_name})")
     try:
-        submit_statement(conn, config, statement_name, sql)
-    except OperationalError as exc:
-        if exc.http_status_code == 409:
-            run_delete(conn, statement_name, quiet=True)
-            submit_statement(conn, config, statement_name, sql)
-            return
-        detail = str(exc)
-        if exc.http_status_code is not None:
-            detail = f"{detail} (HTTP {exc.http_status_code})"
-        print(f"  warning: could not drop {table}: {detail}", file=sys.stderr)
-        return
-    except RuntimeError as exc:
+        lifecycle_drop_table(conn, config, table, statement_name)
+    except (StatementLifecycleError, OperationalError, RuntimeError) as exc:
         print(f"  warning: could not drop {table}: {exc}", file=sys.stderr)
         return
-    run_delete(conn, statement_name, quiet=True)
 
 
 def drop_tables(

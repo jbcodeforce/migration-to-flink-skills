@@ -1612,3 +1612,194 @@ WHERE author = 'George R. R. Martin';
 2026-07-29 21:36:40,380 DEBUG [flink_migration_skill.cli] config.py:101 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
 2026-07-29 21:36:40,380 ERROR [flink_migration_skill.cli] config.py:143 Error fetching models payload from http://localhost:7999/v1/models: <urlopen error [Errno 61] Connection refused>
 2026-07-29 21:36:40,381 ERROR [flink_migration_skill.cli] config.py:143 Error fetching models payload from http://localhost:7999/v1/models: <urlopen error [Errno 61] Connection refused>
+2026-07-31 16:12:01,618 DEBUG [flink_migration_skill.cli] config.py:101 Logging to /Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/logs/ksql-flink-cli.log (level=DEBUG)
+2026-07-31 16:12:01,618 INFO [flink_migration_skill.cli] flink_statement_manager.py:259 Statement t-ddl submitted (kind=snapshot_ddl, phase=COMPLETED)
+2026-07-31 16:12:01,618 INFO [flink_migration_skill.cli] flink_statement_manager.py:259 Statement t-ddl submitted (kind=snapshot_ddl, phase=COMPLETED)
+2026-07-31 16:12:01,630 INFO [flink_migration_skill.cli] flink_statement_manager.py:259 Statement t-ddl submitted (kind=snapshot_ddl, phase=RUNNING)
+2026-07-31 16:12:01,644 INFO [flink_migration_skill.cli] flink_statement_manager.py:289 Statement t-ddl reached phase RUNNING (detail=)
+2026-07-31 16:12:01,705 INFO [flink_migration_skill.cli] flink_statement_manager.py:472 Deploying target DDL my-table-ddl from /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_deploy_table_deletes_ddl_0/ddl.my_table.sql
+2026-07-31 16:12:01,705 INFO [flink_migration_skill.cli] flink_statement_manager.py:493 Deploying target DML my-table-dml from /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_deploy_table_deletes_ddl_0/dml.my_table.sql
+2026-07-31 16:12:01,707 ERROR [flink_migration_skill.cli] llm_tools.py:26 create_flink_statement failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 51, in <lambda>
+    lambda: self._manager.create_statement(statement_name, sql),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.StatementManagerError: Failed to create clicks-ddl: Schema Registry subject 'clicks-key' doesn't match.
+2026-07-31 16:12:01,709 ERROR [flink_migration_skill.cli] llm_tools.py:26 wait_flink_statement_phase failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 43, in _run_tool
+    return json.dumps(fn(), indent=2)
+                      ^^^^
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/deploy/llm_tools.py", line 95, in _wait
+    return self._manager.wait_for_phase(statement_name, phases)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: Timeout waiting for clicks-ddl
+2026-07-31 16:12:01,710 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,711 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,711 INFO [flink_migration_skill.cli] convergence.py:40 Skipped deploy (--skip-deploy).
+2026-07-31 16:12:01,712 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,712 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [ddl#0]: Expecting )
+2026-07-31 16:12:01,713 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,713 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,713 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_success0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_success0/dml.my_table.sql
+2026-07-31 16:12:01,713 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,713 INFO [flink_migration_skill.cli] convergence.py:40 Deploy OK: my-table-ddl (COMPLETED), my-table-dml (COMPLETED)
+2026-07-31 16:12:01,714 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,714 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,715 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,715 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,715 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_error_wit0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_error_wit0/dml.my_table.sql
+2026-07-31 16:12:01,716 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,716 ERROR [flink_migration_skill.cli] convergence.py:282 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 278, in converge_flink_sql
+    result = _manager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-31 16:12:01,716 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,716 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,717 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=my_table
+2026-07-31 16:12:01,717 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-31 16:12:01,717 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [ddl#0]: syntax error
+2026-07-31 16:12:01,717 INFO [flink_migration_skill.cli] convergence.py:112 Validation failed, invoking agent fix (attempt 1): [ddl#0] syntax error
+2026-07-31 16:12:01,717 INFO [flink_migration_skill.cli] convergence.py:40 Validation failed: [ddl#0] syntax error Agent fixer will attempt to correct SQL automatically (attempt 1/2).
+2026-07-31 16:12:01,717 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 2 of 2 for table=my_table
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 2 of 2
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,718 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_off0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_off0/dml.my_table.sql
+2026-07-31 16:12:01,719 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,719 INFO [flink_migration_skill.cli] convergence.py:40 Deploy OK: my-table-ddl (COMPLETED), my-table-dml (COMPLETED)
+2026-07-31 16:12:01,719 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,719 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,720 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=my_table
+2026-07-31 16:12:01,720 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-31 16:12:01,720 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,720 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-31 16:12:01,720 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,720 ERROR [flink_migration_skill.cli] convergence.py:282 Deploy failed for table=my_table: DDL failed
+Traceback (most recent call last):
+  File "/Users/jerome/Documents/Code/migration-to-flink-skills/flink-skill-common/harness/src/flink_skill_common/convergence.py", line 278, in converge_flink_sql
+    result = _manager().deploy_table(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerome/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1202, in _execute_mock_call
+    raise result
+flink_skill_common.deploy.flink_statement_manager.DeployError: DDL failed
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:112 Deploy failed, invoking agent fix (attempt 1): DDL failed
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:40 Deploy failed: DDL failed Agent fixer will attempt to correct SQL automatically (attempt 1/2).
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 2 of 2 for table=my_table
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 2 of 2
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,721 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_dep0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_dep0/dml.my_table.sql
+2026-07-31 16:12:01,722 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,722 INFO [flink_migration_skill.cli] convergence.py:40 Deploy OK: my-table-ddl (COMPLETED), my-table-dml (COMPLETED)
+2026-07-31 16:12:01,722 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,722 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_unhealthy0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_deploy_unhealthy0/dml.my_table.sql
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:40 deploy failed
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:40 Deploy unhealthy: DDL=FAILED DML=SKIPPED
+2026-07-31 16:12:01,723 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,724 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,725 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=my_table
+2026-07-31 16:12:01,725 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-31 16:12:01,725 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,725 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-31 16:12:01,725 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Deploy unhealthy: DDL=FAILED DML=SKIPPED
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:112 Deploy unhealthy, invoking agent fix (attempt 1): DDL=FAILED DML=SKIPPED exceptions=timeout
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Deploy unhealthy: DDL=FAILED DML=SKIPPED exceptions=timeout Agent fixer will attempt to correct SQL automatically (attempt 1/2).
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS my_table (
+    id INT
+) DISTRIBUTED BY HASH(id) INTO 1 BUCKETS
+WITH ('changelog.mode' = 'append');
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO my_table SELECT id FROM src;
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 2 of 2 for table=my_table
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 2 of 2
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:274 Deploying table=my_table ddl=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_unh0/ddl.my_table.sql dml=/private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_converge_agent_fix_on_unh0/dml.my_table.sql
+2026-07-31 16:12:01,726 INFO [flink_migration_skill.cli] convergence.py:40 Deploying to Confluent Cloud Flink...
+2026-07-31 16:12:01,727 INFO [flink_migration_skill.cli] convergence.py:40 Deploy OK: my-table-ddl (COMPLETED), my-table-dml (COMPLETED)
+2026-07-31 16:12:01,727 INFO [flink_migration_skill.cli] convergence.py:370 Cleaning up deployed statements for table=my_table
+2026-07-31 16:12:01,727 INFO [flink_migration_skill.cli] convergence.py:40 Cleaning up Confluent Cloud statements...
+2026-07-31 16:12:01,746 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 2 for table=my_table
+2026-07-31 16:12:01,747 INFO [flink_migration_skill.cli] convergence.py:40 Convergence attempt 1 of 2
+2026-07-31 16:12:01,747 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [ddl#0]: syntax error
+2026-07-31 16:12:01,747 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,747 INFO [flink_migration_skill.cli] convergence.py:40 Offline validation passed.
+2026-07-31 16:12:01,748 INFO [flink_migration_skill.cli] convergence.py:40 No tests directory found, skipping deploy
+2026-07-31 16:12:01,748 INFO [flink_migration_skill.cli] convergence.py:206 Convergence attempt 1 of 1 for table=my_table
+2026-07-31 16:12:01,748 ERROR [flink_migration_skill.cli] sql_validate.py:181 SQL validation error [ddl#0]: syntax error
+2026-07-31 16:12:01,749 INFO [flink_migration_skill.cli] convergence.py:112 Validation failed, invoking agent fix (attempt 1): [ddl#0] syntax error
+2026-07-31 16:12:01,749 INFO [flink_migration_skill.cli] convergence.py:40 Validation failed: [ddl#0] syntax error Agent fixer will attempt to correct SQL automatically (attempt 1/1).
+2026-07-31 16:12:01,749 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,750 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,751 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,751 INFO [flink_migration_skill.cli] convergence.py:40 Invoking deploy fixer agent...
+2026-07-31 16:12:01,752 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS t (id INT);
+2026-07-31 16:12:01,752 INFO [flink_migration_skill.cli] response_io.py:58 DML: 
+2026-07-31 16:12:01,752 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 0 DML
+2026-07-31 16:12:01,752 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_clean_flink_sql_and_valid0/t
+2026-07-31 16:12:01,753 INFO [flink_migration_skill.cli] convergence.py:40 No DML in response; skipped validation and deploy
+2026-07-31 16:12:01,753 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS src (id INT);
+CREATE TABLE IF NOT EXISTS target (id INT);
+2026-07-31 16:12:01,753 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO target SELECT id FROM src;
+2026-07-31 16:12:01,753 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 2 DDL, 1 DML
+2026-07-31 16:12:01,753 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_clean_flink_sql_and_valid1/target
+2026-07-31 16:12:01,754 INFO [flink_migration_skill.cli] response_io.py:57 DDL: CREATE TABLE IF NOT EXISTS george_martin_books (bookid BIGINT);
+2026-07-31 16:12:01,754 INFO [flink_migration_skill.cli] response_io.py:58 DML: INSERT INTO george_martin_books SELECT bookid FROM publication_events;
+2026-07-31 16:12:01,754 INFO [flink_migration_skill.cli] convergence.py:40 
+Extracted 1 DDL, 1 DML
+2026-07-31 16:12:01,755 INFO [flink_migration_skill.cli] convergence.py:40 Writing output files to /private/var/folders/db/173vw5n568ggqk093dt16d600000gn/T/pytest-of-jerome/pytest-38/test_clean_flink_sql_and_valid2/george_martin_books
+2026-07-31 16:12:01,755 INFO [flink_migration_skill.cli] convergence.py:40 Missing source tables: publication_events
+2026-07-31 16:12:01,755 INFO [flink_migration_skill.cli] convergence.py:40 Generating source DDL stubs...
+2026-07-31 16:12:01,755 INFO [flink_migration_skill.cli] convergence.py:40 Wrote 1 source DDL stub(s)

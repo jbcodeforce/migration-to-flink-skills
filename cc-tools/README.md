@@ -1,8 +1,12 @@
 # Confluent Cloud Tools
 
+Shared Confluent Cloud Flink helpers used by pipeline CLIs and by `flink-skill-common`
+(statement create/wait/delete, classify, drop, queries). Library entry points live in
+`cc_deploy.statement_lifecycle` and `cc_deploy.flink_deploy`.
+
 ## Build flink pipeline manifest
 
-The manifest folkder includes a CLI to create a manifest file to help deploying flink statements for a set of related statements in a folder. T
+The manifest folder includes a CLI to create a manifest file to help deploying flink statements for a set of related statements in a folder.
 
 ```sh
 ./scripts/create-manifest.sh --sql-dir path/to/demo

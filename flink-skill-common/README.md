@@ -14,7 +14,7 @@ Shared Python library for the ksql-to-flink and spark-to-flink migration. This c
 | `convergence` | Extract SQL from LLM output, validate, deploy, agent fix loop |
 | `agents.factory` | Agno agent construction helpers |
 | `agents.deploy_fixer` | Agno `FlinkSqlDeployFixerAgent` for harness CI only (not IDE fix loop) |
-| `deploy` | Confluent Cloud Flink deploy via confluent-sql REST driver |
+| `deploy` | Migration deploy orchestration (`deploy_table`); statement lifecycle via `cc-tools` (`cc_deploy`) |
 
 ## Convergence loop
 

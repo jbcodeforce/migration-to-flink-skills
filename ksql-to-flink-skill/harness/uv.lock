@@ -73,6 +73,27 @@ wheels = [
 ]
 
 [[package]]
+name = "cc-tools"
+version = "0.1.0"
+source = { editable = "../../cc-tools" }
+dependencies = [
+    { name = "confluent-sql" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "confluent-sql", specifier = ">=0.3.1" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "certifi"
 version = "2026.5.20"
 source = { registry = "https://pypi.org/simple" }
@@ -266,6 +287,7 @@ version = "0.1.0"
 source = { editable = "../../flink-skill-common/harness" }
 dependencies = [
     { name = "agno" },
+    { name = "cc-tools" },
     { name = "confluent-sql" },
     { name = "mcp" },
     { name = "openai" },
@@ -276,6 +298,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "agno", specifier = ">=2.0.0" },
+    { name = "cc-tools", editable = "../../cc-tools" },
     { name = "confluent-sql", specifier = ">=0.3.1" },
     { name = "mcp", specifier = ">=1.6.0" },
     { name = "openai", specifier = ">=1.40.0" },

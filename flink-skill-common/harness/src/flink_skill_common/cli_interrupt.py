@@ -22,10 +22,3 @@ def interruptible_sleep(seconds: float, *, step: float = 0.25) -> None:
             return
         time.sleep(min(step, remaining))
 
-
-def run_typer_app(app: typer.Typer) -> None:
-    try:
-        app()
-    except KeyboardInterrupt:
-        typer.echo("\nMigration interrupted.", err=True)
-        raise typer.Exit(MIGRATION_INTERRUPT_EXIT_CODE) from None

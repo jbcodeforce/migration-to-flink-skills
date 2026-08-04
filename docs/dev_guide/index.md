@@ -1,24 +1,25 @@
 # Developer Guide
 
-## Principles
-
-* prepare KSQL or Spark sources with multiple statements in them, as separate DDLs or/and DMLs
-* Still keep the source as part of the context.
-* Assign different rules for different scope
+This section addresses notes and how to for supporting this project.
 
 ## Components
 
+The following image illustrates the components involved in this solution, which matches the top level folders of the repository
+
 ![](../images/arch.drawio.png)
 
-### flink-skill-common
 
-The role of this component is to process the generated Flink SQL with static analysis or deployment using Confluent Cloud for Flink REST API and to offer a set of common tools, used for migration.
+### Flink-skill-common
+
+The role of this component is to process the generated Flink SQL with static analysis and deployment using Confluent Cloud for Flink REST API and to offer a set of common tools, used for migration.
+
+Statement **lifecycle** (create, wait, delete, exceptions, classify) lives in **`cc-tools`** (`cc_deploy.statement_lifecycle`). `flink-skill-common` depends on that package and keeps migration orchestration (`deploy_table`, MCP/LLM tools, convergence).
 
 | Important Features | Code | Principles |
 | ------ |-------|-----------|
-| Centralize configuration, logs, load ,env | config.py | Common skill and specific skill loading |
-| Factory to build agno agents | agents.factory.py | |
-| Agent for fixing Flink SQL syntax validation and deployment failures.| cc_deployment_fixer.py| Use syntaxic parser, confluent cloud statement deployment and LLM to fix the error and save results to target folder |
+| **Centralize configuration, logs, load ,env** | config.py | Common skill and specific skill loading |
+| **Factory to build agno agents** | agents.factory.py | |
+| **Agent for fixing Flink SQL syntax validation and deployment failures.** | cc_deployment_fixer.py| Uses cc-tools statement lifecycle + LLM to fix errors and save results to target folder |
 
 
 * Unit tests without backends
@@ -30,6 +31,13 @@ The role of this component is to process the generated Flink SQL with static ana
     ```sh
     uv run pytest -vs tests/it/
     ```
+
+* Use as a standalone tool to validate and fix an existing Flink SQL
+
+### cc-tools
+
+Reusable Confluent Cloud Flink deploy library and CLIs (`cc_deploy`). Prefer calling `statement_lifecycle` from Python rather than duplicating confluent-sql REST logic in skill harnesses.
+
 
 ### ksql-to-flink CLI migrate flow
 

@@ -1,6 +1,5 @@
-"""Tests for FlinkStatementManager."""
+"""Tests for FlinkStatementManager migration adapter over cc_deploy."""
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -14,6 +13,7 @@ from flink_skill_common.deploy.flink_statement_manager import (
     classify_sql,
     ddl_statement_name,
     dml_statement_name,
+    settings_to_cc_config,
 )
 from flink_skill_common.sql_parse import extract_statement_table_name
 
@@ -35,9 +35,18 @@ def settings() -> FlinkDeploySettings:
     )
 
 
-def test_classify_sql():
+def test_settings_to_cc_config(settings):
+    cfg = settings_to_cc_config(settings)
+    assert cfg["FLINK_API_KEY"] == "key"
+    assert cfg["ENVIRONMENT_ID"] == "env-1"
+    assert cfg["FLINK_REST_ENDPOINT"] == "https://flink.example.com"
+
+
+def test_classify_sql_delegates():
     assert classify_sql("CREATE TABLE t (id STRING);") == "snapshot_ddl"
     assert classify_sql("INSERT INTO t SELECT id FROM src;") == "streaming_dml"
+    assert classify_sql("CREATE TABLE t AS SELECT id FROM src;") == "streaming_ddl"
+
 
 def test_extract_table_name():
     assert extract_statement_table_name("CREATE TABLE t (id STRING);") == "t"
@@ -61,6 +70,23 @@ def test_create_statement_snapshot_ddl(settings):
 
     assert result["phase"] == "COMPLETED"
     conn.execute_snapshot_ddl.assert_called_once()
+    props = conn.execute_snapshot_ddl.call_args.kwargs["properties"]
+    assert "sql.dry-run" not in props
+
+
+def test_create_statement_dry_run(settings):
+    manager = FlinkStatementManager(settings)
+    conn = MagicMock()
+    stmt = MagicMock()
+    stmt.status = {"phase": "COMPLETED", "detail": "ok"}
+    conn.execute_snapshot_ddl.return_value = stmt
+
+    with patch.object(manager, "connect") as mock_connect:
+        mock_connect.return_value.__enter__.return_value = conn
+        manager.create_statement("t-ddl", "CREATE TABLE t (id STRING);", dry_run=True)
+
+    props = conn.execute_snapshot_ddl.call_args.kwargs["properties"]
+    assert props["sql.dry-run"] == "true"
 
 
 def test_create_statement_retries_on_409(settings):
@@ -88,36 +114,41 @@ def test_create_statement_retries_on_409(settings):
 
 def test_wait_for_phase_success(settings):
     manager = FlinkStatementManager(settings)
-    with patch.object(
-        manager,
-        "get_statement",
-        side_effect=[
-            {"name": "t-ddl", "phase": "PENDING", "detail": ""},
-            {"name": "t-ddl", "phase": "RUNNING", "detail": ""},
-        ],
-    ):
+    conn = MagicMock()
+    pending = MagicMock()
+    pending.status = {"phase": "PENDING", "detail": ""}
+    running = MagicMock()
+    running.status = {"phase": "RUNNING", "detail": ""}
+    conn.get_statement.side_effect = [pending, running]
+
+    with patch.object(manager, "connect") as mock_connect:
+        mock_connect.return_value.__enter__.return_value = conn
         result = manager.wait_for_phase("t-ddl", {"RUNNING"})
     assert result["phase"] == "RUNNING"
 
 
 def test_wait_for_phase_timeout(settings):
     manager = FlinkStatementManager(settings)
-    with patch.object(
-        manager,
-        "get_statement",
-        return_value={"name": "t-ddl", "phase": "PENDING", "detail": ""},
-    ):
+    conn = MagicMock()
+    pending = MagicMock()
+    pending.status = {"phase": "PENDING", "detail": ""}
+    conn.get_statement.return_value = pending
+
+    with patch.object(manager, "connect") as mock_connect:
+        mock_connect.return_value.__enter__.return_value = conn
         with pytest.raises(StatementManagerError, match="Timeout"):
             manager.wait_for_phase("t-ddl", {"RUNNING"}, timeout=0.05)
 
 
 def test_wait_for_phase_propagates_keyboard_interrupt(settings):
     manager = FlinkStatementManager(settings)
-    with patch.object(
-        manager,
-        "get_statement",
-        return_value={"name": "t-ddl", "phase": "PENDING", "detail": ""},
-    ):
+    conn = MagicMock()
+    pending = MagicMock()
+    pending.status = {"phase": "PENDING", "detail": ""}
+    conn.get_statement.return_value = pending
+
+    with patch.object(manager, "connect") as mock_connect:
+        mock_connect.return_value.__enter__.return_value = conn
         with patch(
             "flink_skill_common.deploy.flink_statement_manager.interruptible_sleep",
             side_effect=KeyboardInterrupt,
@@ -171,4 +202,3 @@ def test_cleanup_deployed_table_deletes_dml_and_drops_tables(settings, tmp_path:
     mock_drop.assert_any_call("my_table")
     mock_drop.assert_any_call("src")
     assert mock_drop.call_count == 2
-

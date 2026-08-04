@@ -2,5 +2,6 @@
   // Prefer opening migration-to-flink.code-workspace (multi-root) instead of this folder.
   // A single-root open of the monorepo makes Pyright hang on Go to Definition across packages.
   "cursorpyright.analysis.diagnosticMode": "openFilesOnly",
-  "python.analysis.diagnosticMode": "openFilesOnly"
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }
